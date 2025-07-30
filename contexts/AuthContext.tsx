@@ -1,85 +1,83 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { createContext, useContext, ReactNode } from 'react'
+import { useSession, signIn, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 interface User {
-  email: string;
-  role: 'admin' | 'staff' | 'member';
+  id: string
+  email: string
+  name: string
+  role: 'admin' | 'staff' | 'member'
 }
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, role: 'admin' | 'staff' | 'member') => void;
-  logout: () => void;
-  isLoading: boolean;
+  user: User | null
+  login: (email: string, password: string) => Promise<{ error?: string }>
+  logout: () => Promise<void>
+  isLoading: boolean
+  isAuthenticated: boolean
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
+  const { data: session, status } = useSession()
+  const router = useRouter()
 
-  // Initialize auth state from localStorage
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        localStorage.removeItem('user');
+  const login = async (email: string, password: string) => {
+    try {
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        return { error: result.error }
       }
-    }
-    setIsLoading(false);
-  }, []);
 
-  const login = (email: string, role: 'admin' | 'staff' | 'member') => {
-    const userData = { email, role };
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-    
-    // Redirect based on role
-    switch (role) {
-      case 'admin':
-        router.push('/dashboard/admin');
-        break;
-      case 'staff':
-        router.push('/dashboard/staff');
-        break;
-      case 'member':
-        router.push('/dashboard/member');
-        break;
-      default:
-        router.push('/dashboard');
-    }
-  };
+      if (result?.ok) {
+        return {}
+      }
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    router.push('/auth/login');
-  };
+      return { error: 'Invalid credentials' }
+    } catch (error) {
+      return { error: 'An error occurred during login' }
+    }
+  }
+
+  const logout = async () => {
+    await signOut({ redirect: false })
+    router.push('/auth/login')
+  }
+
+  const user = session?.user ? ({
+    id: session.user.id ?? '',
+    email: session.user.email ?? '',
+    name: session.user.name ?? '',
+    role: session.user.role as 'admin' | 'staff' | 'member',
+  }) : null
+
+  const value = {
+    user,
+    login,
+    logout,
+    isLoading: status === 'loading',
+    isAuthenticated: status === 'authenticated',
+  }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
-// Export the useAuth hook
-export const useAuth = () => {
-  const context = useContext(AuthContext);
+export function useAuth() {
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
-};
-
-// Export the AuthContext as a named export
-export { AuthContext };
+  return context
+}
