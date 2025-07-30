@@ -1,94 +1,99 @@
-import { NextAuthOptions } from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import bcrypt from "bcryptjs"
+import NextAuth from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
 
-// This is a mock database - replace with your actual database
-const users = [
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'staff' | 'member';
+  password: string;
+}
+
+interface Credentials {
+  email: string;
+  password: string;
+}
+
+// Mock users with hashed passwords
+const users: User[] = [
   {
     id: "1",
     email: "admin@example.com",
     name: "Admin User",
-    password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // password: admin123
-    role: "admin" as const,
+    password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // admin123
+    role: "admin",
   },
   {
     id: "2",
     email: "staff@example.com",
     name: "Staff User",
-    password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // password: staff123
-    role: "staff" as const,
+    password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // staff123
+    role: "staff",
   },
   {
     id: "3",
     email: "member@example.com",
     name: "Member User",
-    password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // password: member123
-    role: "member" as const,
+    password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // member123
+    role: "member",
   },
-]
+];
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   providers: [
     CredentialsProvider({
-      name: "credentials",
+      name: 'credentials',
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials: Credentials | undefined) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          return null;
         }
 
-        // Find user in database
-        const user = users.find(u => u.email === credentials.email)
+        const user = users.find((user) => user.email === credentials.email);
         
-        if (!user) {
-          return null
+        if (user && await bcrypt.compare(credentials.password, user.password)) {
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
         }
-
-        // Verify password
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        )
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        // Return a properly typed User object
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
+        
+        return null;
       }
     })
   ],
   session: {
-    strategy: "jwt"
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: "/auth/login",
-    error: "/auth/error",
+    strategy: "jwt" as const,
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
-        token.id = user.id
-        token.role = user.role
+        token.id = user.id;
+        token.role = user.role;
       }
-      return token
+      return token;
     },
-    async session({ session, token }) {
-      if (session.user && token) {
-        session.user.id = token.id as string
-        session.user.role = token.role as "admin" | "staff" | "member"
+    async session({ session, token }: { session: any; token: any }) {
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
-      return session
+      return session;
     }
-  }
-}
+  },
+  pages: {
+    signIn: '/auth/login',
+    error: '/auth/login',
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+};
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
