@@ -1,24 +1,18 @@
-"use client"
+import React from 'react';
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string }
-  reset: () => void
-}) {
+export default function Custom500() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
       <div className="text-center">
         <h1 className="text-6xl font-bold">500</h1>
-        <p className="text-xl mt-2">Something went wrong</p>
-        <button
-          onClick={reset}
+        <p className="text-xl mt-2">Server-side error occurred</p>
+        <a 
+          href="/" 
           className="mt-4 inline-block px-4 py-2 bg-primary text-primary-foreground rounded-md"
         >
-          Try Again
-        </button>
+          Return Home
+        </a>
       </div>
     </div>
-  )
+  );
 }
