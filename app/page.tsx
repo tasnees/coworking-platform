@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,25 +7,20 @@ import { Users, Calendar, QrCode, BarChart3, Smartphone, Zap, Shield, ArrowRight
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
-
 export default function HomePage() {
   const router = useRouter();
-
   const [lastLogin, setLastLogin] = useState<string | null>(null)
   const [lastLoginTime, setLastLoginTime] = useState<string | null>(null)
-
   useEffect(() => {
     const lastLoginValue = localStorage.getItem("lastLogin") || "member@omnispace.app"
     const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
     setLastLogin(lastLoginValue)
     setLastLoginTime(lastLoginTimeValue)
   }, [])
-
   const handleLogout = () => {
     localStorage.removeItem("user");
     router.push("/auth/login");
   };
-
   const features = [
     {
       icon: Users,
@@ -59,7 +53,6 @@ export default function HomePage() {
       description: "Live booking status, instant notifications, and dynamic pricing",
     },
   ]
-
   const plans = [
     {
       name: "Starter",
@@ -100,7 +93,6 @@ export default function HomePage() {
       popular: false,
     },
   ]
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Navigation */}
@@ -148,7 +140,6 @@ export default function HomePage() {
           </div>
         </div>
       </nav>
-
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
@@ -173,7 +164,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Features Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
@@ -201,7 +191,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Pricing Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -258,7 +247,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto text-center">
@@ -284,7 +272,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">

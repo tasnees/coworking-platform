@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Eye, Edit, Trash2, User, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
-
 interface Member {
   id: string
   name: string
@@ -28,7 +26,6 @@ interface Member {
   lastVisit?: string
   totalVisits: number
 }
-
 const mockMembers: Member[] = [
   {
     id: "1",
@@ -109,7 +106,6 @@ const mockMembers: Member[] = [
     totalVisits: 12
   }
 ]
-
 export default function StaffMembersPage() {
   const [members, setMembers] = useState<Member[]>(mockMembers)
   const [searchQuery, setSearchQuery] = useState("")
@@ -120,7 +116,6 @@ export default function StaffMembersPage() {
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
-
   // Form states for create/edit
   const [formData, setFormData] = useState({
     name: "",
@@ -134,7 +129,6 @@ export default function StaffMembersPage() {
     country: "",
     notes: ""
   })
-
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -144,7 +138,6 @@ export default function StaffMembersPage() {
     const matchesType = typeFilter === "all" || member.membershipType === typeFilter
     return matchesSearch && matchesStatus && matchesType
   })
-
   const totalMembers = members.length
   const activeMembers = members.filter(m => m.status === "active").length
   const inactiveMembers = members.filter(m => m.status === "inactive").length
@@ -154,7 +147,6 @@ export default function StaffMembersPage() {
     const now = new Date()
     return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear()
   }).length
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -162,7 +154,6 @@ export default function StaffMembersPage() {
       day: 'numeric'
     })
   }
-
   const getStatusBadgeVariant = (status: Member["status"]) => {
     switch (status) {
       case "active": return "default"
@@ -171,7 +162,6 @@ export default function StaffMembersPage() {
       default: return "default"
     }
   }
-
   const getTypeBadgeVariant = (type: Member["membershipType"]) => {
     switch (type) {
       case "basic": return "outline"
@@ -180,7 +170,6 @@ export default function StaffMembersPage() {
       default: return "default"
     }
   }
-
   const handleCreateMember = () => {
     const newMember: Member = {
       id: Date.now().toString(),
@@ -203,7 +192,6 @@ export default function StaffMembersPage() {
       notes: ""
     })
   }
-
   const handleEditMember = () => {
     if (editingMember) {
       setMembers(members.map(m => 
@@ -213,13 +201,11 @@ export default function StaffMembersPage() {
       setEditingMember(null)
     }
   }
-
   const handleDeleteMember = (id: string) => {
     if (confirm("Are you sure you want to delete this member? This will also remove their bookings and memberships.")) {
       setMembers(members.filter(m => m.id !== id))
     }
   }
-
   const openEditDialog = (member: Member) => {
     setEditingMember(member)
     setFormData({
@@ -236,12 +222,10 @@ export default function StaffMembersPage() {
     })
     setShowEditDialog(true)
   }
-
   const openViewDialog = (member: Member) => {
     setSelectedMember(member)
     setShowViewDialog(true)
   }
-
   return (
     <DashboardLayout userRole="staff">
       <div className="p-6">
@@ -249,7 +233,6 @@ export default function StaffMembersPage() {
           <h1 className="text-3xl font-bold">Member Management</h1>
           <p className="text-muted-foreground">Manage all coworking space members and their information</p>
         </div>
-
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <Card>
@@ -289,7 +272,6 @@ export default function StaffMembersPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Filters and Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
@@ -330,7 +312,6 @@ export default function StaffMembersPage() {
             Add Member
           </Button>
         </div>
-
         {/* Members List */}
         <div className="border rounded-lg">
           <div className="divide-y">
@@ -406,7 +387,6 @@ export default function StaffMembersPage() {
             ))}
           </div>
         </div>
-
         {/* Create/Edit Dialog */}
         <Dialog open={showCreateDialog || showEditDialog} onOpenChange={showCreateDialog ? setShowCreateDialog : setShowEditDialog}>
           <DialogContent className="max-w-2xl">
@@ -546,7 +526,6 @@ export default function StaffMembersPage() {
             </div>
           </DialogContent>
         </Dialog>
-
         {/* View Dialog */}
         <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
           <DialogContent>

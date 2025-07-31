@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,7 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DashboardLayout from "@/components/dashboard-layout"
 import { QrCode, Scan, Clock, MapPin, CheckCircle, AlertCircle, Wifi, Coffee, Users } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-
 interface CheckInSession {
   id: string
   location: string
@@ -17,7 +15,6 @@ interface CheckInSession {
   duration?: string
   amenitiesUsed: string[]
 }
-
 interface Location {
   id: string
   name: string
@@ -26,7 +23,6 @@ interface Location {
   capacity: number
   currentOccupancy: number
 }
-
 export default function MemberCheckInPage() {
   const [activeTab, setActiveTab] = useState("checkin")
   const [isCheckedIn, setIsCheckedIn] = useState(false)
@@ -34,7 +30,6 @@ export default function MemberCheckInPage() {
   const [showQrDialog, setShowQrDialog] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [scanResult, setScanResult] = useState<string | null>(null)
-
   // Mock locations for check-in
   const locations: Location[] = [
     {
@@ -62,7 +57,6 @@ export default function MemberCheckInPage() {
       currentOccupancy: 12
     }
   ]
-
   // Mock check-in history
   const [checkInHistory, setCheckInHistory] = useState<CheckInSession[]>([
     {
@@ -90,7 +84,6 @@ export default function MemberCheckInPage() {
       amenitiesUsed: ["WiFi", "Phone Booth 3", "Printer"]
     }
   ])
-
   // Generate QR code for check-in
   const generateCheckInQr = (location: Location) => {
     const qrData = {
@@ -103,7 +96,6 @@ export default function MemberCheckInPage() {
     }
     return JSON.stringify(qrData)
   }
-
   // Simulate QR code scan
   const handleQrScan = (location: Location) => {
     const qrData = generateCheckInQr(location)
@@ -111,7 +103,6 @@ export default function MemberCheckInPage() {
     setSelectedLocation(location)
     setShowQrDialog(true)
   }
-
   // Handle check-in
   const handleCheckIn = (location: Location) => {
     const newSession: CheckInSession = {
@@ -124,7 +115,6 @@ export default function MemberCheckInPage() {
     setIsCheckedIn(true)
     setShowQrDialog(false)
   }
-
   // Handle check-out
   const handleCheckOut = () => {
     if (currentSession) {
@@ -141,7 +131,6 @@ export default function MemberCheckInPage() {
       setIsCheckedIn(false)
     }
   }
-
   // Calculate duration between check-in and check-out
   const calculateDuration = (startTime: string, endTime: string): string => {
     const start = new Date(startTime)
@@ -151,7 +140,6 @@ export default function MemberCheckInPage() {
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`
   }
-
   // Format date/time for display
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -162,7 +150,6 @@ export default function MemberCheckInPage() {
       minute: '2-digit'
     })
   }
-
   // Get current time
   const getCurrentTime = () => {
     return new Date().toLocaleTimeString('en-US', {
@@ -171,16 +158,13 @@ export default function MemberCheckInPage() {
       second: '2-digit'
     })
   }
-
   const [currentTime, setCurrentTime] = useState(getCurrentTime())
-
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(getCurrentTime())
     }, 1000)
     return () => clearInterval(timer)
   }, [])
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
@@ -189,7 +173,6 @@ export default function MemberCheckInPage() {
           <h1 className="text-3xl font-bold tracking-tight">Check-In</h1>
           <p className="text-muted-foreground">Check in to the workspace and track your visit.</p>
         </div>
-
         {/* Current Status Card */}
         <Card className={isCheckedIn ? "border-green-500" : "border-blue-500"}>
           <CardHeader>
@@ -235,13 +218,11 @@ export default function MemberCheckInPage() {
             )}
           </CardContent>
         </Card>
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="checkin">Check-In Locations</TabsTrigger>
             <TabsTrigger value="history">Check-In History</TabsTrigger>
           </TabsList>
-
           <TabsContent value="checkin" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {locations.map((location) => (
@@ -278,7 +259,6 @@ export default function MemberCheckInPage() {
               ))}
             </div>
           </TabsContent>
-
           <TabsContent value="history" className="space-y-4">
             {checkInHistory.length === 0 ? (
               <Card>
@@ -334,7 +314,6 @@ export default function MemberCheckInPage() {
             )}
           </TabsContent>
         </Tabs>
-
         {/* QR Code Dialog */}
         <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
           <DialogContent className="sm:max-w-md">

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,10 +18,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
 import DashboardLayout from "@/components/dashboard-layout"
 import { CreditCard, Plus, Search, Users, DollarSign, Calendar, Check, RefreshCw, ArrowRight, History, FileText } from "lucide-react"
-
 export default function MembershipsPage() {
   const [activeTab, setActiveTab] = useState("plans")
-
   // State for plans and editing
   const [membershipPlans, setMembershipPlans] = useState([
     {
@@ -69,11 +66,9 @@ export default function MembershipsPage() {
       members: 12,
     },
   ])
-
   // Edit dialog state
   const [editDialogOpenId, setEditDialogOpenId] = useState<number | null>(null)
   const [editPlan, setEditPlan] = useState<any>(null)
-
   // Handler for Edit Plan
   const handleEditPlan = (id: number) => {
     setMembershipPlans(plans =>
@@ -84,7 +79,6 @@ export default function MembershipsPage() {
     setEditDialogOpenId(null)
     setEditPlan(null)
   }
-
   // Handler for Deactivate/Activate
   const handleTogglePlanActive = (id: number) => {
     setMembershipPlans(plans =>
@@ -93,7 +87,6 @@ export default function MembershipsPage() {
       )
     )
   }
-
   const members = [
     {
       id: 1,
@@ -147,7 +140,6 @@ export default function MembershipsPage() {
       }
     },
   ]
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -160,7 +152,6 @@ export default function MembershipsPage() {
         return "secondary"
     }
   }
-
   const getPlanTypeColor = (type: string) => {
     switch (type) {
       case "daily":
@@ -173,7 +164,6 @@ export default function MembershipsPage() {
         return "secondary"
     }
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -243,7 +233,6 @@ export default function MembershipsPage() {
             </DialogContent>
           </Dialog>
         </div>
-
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -293,7 +282,6 @@ export default function MembershipsPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -302,7 +290,6 @@ export default function MembershipsPage() {
             <TabsTrigger value="billing">Billing</TabsTrigger>
             <TabsTrigger value="history">Membership History</TabsTrigger>
           </TabsList>
-
           <TabsContent value="plans" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               {membershipPlans.map((plan) => (
@@ -467,7 +454,6 @@ export default function MembershipsPage() {
               ))}
             </div>
           </TabsContent>
-
           <TabsContent value="members" className="space-y-4">
             <Card>
               <CardHeader>
@@ -558,7 +544,6 @@ export default function MembershipsPage() {
                           </Button>
                         </div>
                       </div>
-
                       <div className="border-t pt-4">
                         <div className="flex items-center justify-between">
                           <div>
@@ -577,7 +562,6 @@ export default function MembershipsPage() {
                             </Label>
                           </div>
                         </div>
-
                         <div className="mt-4 flex flex-wrap gap-2">
                           {member.status === "active" && (
                             <Button size="sm" variant="outline" className="flex items-center gap-1">
@@ -611,7 +595,6 @@ export default function MembershipsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="billing" className="space-y-4">
             <Card>
               <CardHeader>
@@ -655,7 +638,6 @@ export default function MembershipsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Membership History Tab */}
           <TabsContent value="history" className="space-y-4">
             <Card>
@@ -694,7 +676,6 @@ export default function MembershipsPage() {
                       </div>
                     </div>
                   </div>
-
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium">Plan Changes</h3>
                     <div className="mt-4 space-y-4">
@@ -708,7 +689,6 @@ export default function MembershipsPage() {
                       </div>
                     </div>
                   </div>
-
                   <div className="rounded-lg border p-4">
                     <h3 className="font-medium">Membership Cancellations</h3>
                     <div className="mt-4 space-y-4">

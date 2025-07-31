@@ -2,7 +2,6 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Users, Calendar, CreditCard } from "lucide-react"
-
 export default function Loading() {
   return (
     <DashboardLayout userRole="admin">
@@ -15,7 +14,6 @@ export default function Loading() {
           </div>
           <Skeleton className="h-10 w-32" />
         </div>
-
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -59,7 +57,6 @@ export default function Loading() {
             </CardContent>
           </Card>
         </div>
-
         {/* Tabs */}
         <div>
           <Skeleton className="h-10 w-96 mb-4" />

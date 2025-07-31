@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,6 @@ import {
   Phone
 } from "lucide-react"
 import ProtectedRoute from "../../../components/ProtectedRoute"
-
 interface Booking {
   id: string
   memberName: string
@@ -35,7 +33,6 @@ interface Booking {
   price: number
   notes?: string
 }
-
 interface Member {
   id: string
   name: string
@@ -48,7 +45,6 @@ interface Member {
   totalSpent: number
   credits: number
 }
-
 interface Resource {
   id: string
   name: string
@@ -61,7 +57,6 @@ interface Resource {
   currentBooking?: string
   nextAvailable: string
 }
-
 function StaffDashboardContent() {
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
@@ -71,7 +66,6 @@ function StaffDashboardContent() {
   const [showManageResourcesDialog, setShowManageResourcesDialog] = useState(false)
   const [showEditMemberDialog, setShowEditMemberDialog] = useState(false)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
-
   // Form states
   const [newMember, setNewMember] = useState({
     firstName: '',
@@ -80,7 +74,6 @@ function StaffDashboardContent() {
     phone: '',
     membershipType: 'basic' as 'basic' | 'standard' | 'premium' | 'enterprise'
   })
-
   const [newBooking, setNewBooking] = useState({
     memberId: '',
     resourceId: '',
@@ -89,7 +82,6 @@ function StaffDashboardContent() {
     endTime: '',
     notes: ''
   })
-
   const [newResource, setNewResource] = useState({
     name: '',
     type: 'desk' as 'desk' | 'meeting_room' | 'phone_booth' | 'event_space',
@@ -98,7 +90,6 @@ function StaffDashboardContent() {
     dailyRate: 0,
     amenities: ''
   })
-
   const [editMember, setEditMember] = useState({
     name: '',
     email: '',
@@ -106,7 +97,6 @@ function StaffDashboardContent() {
     status: 'active' as 'active' | 'inactive' | 'suspended',
     credits: 0
   })
-
   // Handlers
   const handleAddMember = () => {
     console.log('Adding new member:', newMember)
@@ -114,21 +104,18 @@ function StaffDashboardContent() {
     setShowAddMemberDialog(false)
     setNewMember({ firstName: '', lastName: '', email: '', phone: '', membershipType: 'basic' as const })
   }
-
   const handleCreateBooking = () => {
     console.log('Creating new booking:', newBooking)
     // Here you would typically make an API call
     setShowCreateBookingDialog(false)
     setNewBooking({ memberId: '', resourceId: '', date: '', startTime: '', endTime: '', notes: '' })
   }
-
   const handleAddResource = () => {
     console.log('Adding new resource:', newResource)
     // Here you would typically make an API call
     setShowManageResourcesDialog(false)
     setNewResource({ name: '', type: 'desk' as const, capacity: 1, hourlyRate: 0, dailyRate: 0, amenities: '' })
   }
-
   const handleEditMember = (member: Member) => {
     setSelectedMember(member)
     setEditMember({
@@ -140,14 +127,12 @@ function StaffDashboardContent() {
     })
     setShowEditMemberDialog(true)
   }
-
   const handleUpdateMember = () => {
     console.log('Updating member:', selectedMember?.id, editMember)
     // Here you would typically make an API call
     setShowEditMemberDialog(false)
     setSelectedMember(null)
   }
-
   // Mock data
   const recentBookings: Booking[] = [
     {
@@ -190,7 +175,6 @@ function StaffDashboardContent() {
       price: 15
     }
   ]
-
   const members: Member[] = [
     {
       id: "mem-001",
@@ -229,7 +213,6 @@ function StaffDashboardContent() {
       credits: 5
     }
   ]
-
   const resources: Resource[] = [
     {
       id: "res-001",
@@ -266,14 +249,12 @@ function StaffDashboardContent() {
       nextAvailable: "Now"
     }
   ]
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount)
   }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -292,7 +273,6 @@ function StaffDashboardContent() {
         return 'text-gray-600 bg-gray-100'
     }
   }
-
   const getResourceIcon = (type: string) => {
     switch (type) {
       case 'desk':
@@ -307,7 +287,6 @@ function StaffDashboardContent() {
         return <Users className="h-4 w-4" />
     }
   }
-
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">
@@ -316,7 +295,6 @@ function StaffDashboardContent() {
           <h1 className="text-3xl font-bold tracking-tight">Staff Dashboard</h1>
           <p className="text-muted-foreground">Manage members, bookings, and resources</p>
         </div>
-
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
@@ -325,7 +303,6 @@ function StaffDashboardContent() {
             <TabsTrigger value="members">Members</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -359,7 +336,6 @@ function StaffDashboardContent() {
                   </div>
                 </CardContent>
               </Card>
-
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -394,7 +370,6 @@ function StaffDashboardContent() {
               </Card>
             </div>
           </TabsContent>
-
           <TabsContent value="bookings" className="space-y-4">
             <Card>
               <CardHeader>
@@ -439,7 +414,6 @@ function StaffDashboardContent() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="members" className="space-y-4">
             <Card>
               <CardHeader>
@@ -481,7 +455,6 @@ function StaffDashboardContent() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="resources" className="space-y-4">
             <Card>
               <CardHeader>
@@ -527,7 +500,6 @@ function StaffDashboardContent() {
             </Card>
           </TabsContent>
         </Tabs>
-
         {/* Dialogs */}
         <Dialog open={showBookingDetails} onOpenChange={setShowBookingDetails}>
           <DialogContent>
@@ -561,7 +533,6 @@ function StaffDashboardContent() {
             )}
           </DialogContent>
         </Dialog>
-
         <Dialog open={showAddMemberDialog} onOpenChange={setShowAddMemberDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -642,7 +613,6 @@ function StaffDashboardContent() {
             </div>
           </DialogContent>
         </Dialog>
-
         <Dialog open={showCreateBookingDialog} onOpenChange={setShowCreateBookingDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -739,7 +709,6 @@ function StaffDashboardContent() {
             </div>
           </DialogContent>
         </Dialog>
-
         <Dialog open={showManageResourcesDialog} onOpenChange={setShowManageResourcesDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -834,7 +803,6 @@ function StaffDashboardContent() {
             </div>
           </DialogContent>
         </Dialog>
-
         <Dialog open={showEditMemberDialog} onOpenChange={setShowEditMemberDialog}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -919,7 +887,6 @@ function StaffDashboardContent() {
     </DashboardLayout>
   )
 }
-
 export default function StaffDashboard() {
   return (
     <ProtectedRoute allowedRoles={["admin", "staff"]}>

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle, Clock3, AlertCircle } from "lucide-react"
-
 interface Booking {
   id: string
   memberName: string
@@ -27,20 +25,17 @@ interface Booking {
   notes?: string
   createdAt: string
 }
-
 interface Member {
   id: string
   name: string
   email: string
 }
-
 interface Resource {
   id: string
   name: string
   type: "desk" | "meeting_room" | "phone_booth" | "event_space"
   hourlyRate: number
 }
-
 // Mock data
 const mockBookings: Booking[] = [
   {
@@ -117,7 +112,6 @@ const mockBookings: Booking[] = [
     createdAt: "2024-07-27T08:00:00Z"
   }
 ]
-
 const mockMembers: Member[] = [
   { id: "1", name: "Alice Johnson", email: "alice@example.com" },
   { id: "2", name: "Bob Smith", email: "bob@example.com" },
@@ -125,7 +119,6 @@ const mockMembers: Member[] = [
   { id: "4", name: "David Wilson", email: "david@example.com" },
   { id: "5", name: "Eva Martinez", email: "eva@example.com" }
 ]
-
 const mockResources: Resource[] = [
   { id: "1", name: "Conference Room A", type: "meeting_room", hourlyRate: 30 },
   { id: "2", name: "Hot Desk 5", type: "desk", hourlyRate: 10 },
@@ -133,7 +126,6 @@ const mockResources: Resource[] = [
   { id: "4", name: "Main Event Hall", type: "event_space", hourlyRate: 50 },
   { id: "5", name: "Dedicated Desk 3", type: "desk", hourlyRate: 10 }
 ]
-
 export default function StaffBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>(mockBookings)
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>(mockBookings)
@@ -143,11 +135,9 @@ export default function StaffBookingsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all")
-
   // Filter bookings based on search and filters
   const filterBookings = () => {
     let filtered = bookings
-
     if (searchTerm) {
       filtered = filtered.filter(booking =>
         booking.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -155,30 +145,24 @@ export default function StaffBookingsPage() {
         booking.resourceName.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
-
     if (statusFilter !== "all") {
       filtered = filtered.filter(booking => booking.status === statusFilter)
     }
-
     if (resourceTypeFilter !== "all") {
       filtered = filtered.filter(booking => booking.resourceType === resourceTypeFilter)
     }
-
     setFilteredBookings(filtered)
   }
-
   // Apply filters when any filter changes
   useState(() => {
     filterBookings()
   })
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
     }).format(amount)
   }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed':
@@ -193,7 +177,6 @@ export default function StaffBookingsPage() {
         return 'bg-gray-100 text-gray-800'
     }
   }
-
   const getResourceIcon = (type: string) => {
     switch (type) {
       case 'desk':
@@ -208,14 +191,12 @@ export default function StaffBookingsPage() {
         return '📍'
     }
   }
-
   const handleDeleteBooking = (id: string) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
       setBookings(bookings.filter(b => b.id !== id))
       setFilteredBookings(filteredBookings.filter(b => b.id !== id))
     }
   }
-
   const handleCreateBooking = (bookingData: Partial<Booking>) => {
     const newBooking: Booking = {
       id: Date.now().toString(),
@@ -232,24 +213,20 @@ export default function StaffBookingsPage() {
       notes: bookingData.notes,
       createdAt: new Date().toISOString()
     }
-    
     setBookings([newBooking, ...bookings])
     setFilteredBookings([newBooking, ...filteredBookings])
     setShowCreateDialog(false)
   }
-
   const handleUpdateBooking = (updatedBooking: Booking) => {
     setBookings(bookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
     setFilteredBookings(filteredBookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
     setEditingBooking(null)
   }
-
   // Stats
   const totalBookings = bookings.length
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length
   const pendingBookings = bookings.filter(b => b.status === 'pending').length
   const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0)
-
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">
@@ -259,7 +236,6 @@ export default function StaffBookingsPage() {
             View, create, edit, and manage all member bookings
           </p>
         </div>
-
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -299,7 +275,6 @@ export default function StaffBookingsPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Filters and Actions */}
         <Card>
           <CardHeader>
@@ -350,7 +325,6 @@ export default function StaffBookingsPage() {
                 </SelectContent>
               </Select>
             </div>
-
             {/* Bookings List */}
             <div className="space-y-4">
               {filteredBookings.length === 0 ? (
@@ -432,7 +406,6 @@ export default function StaffBookingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* View Booking Dialog */}
         <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
           <DialogContent>
@@ -500,7 +473,6 @@ export default function StaffBookingsPage() {
             )}
           </DialogContent>
         </Dialog>
-
         {/* Edit Booking Dialog */}
         <Dialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
           <DialogContent>
@@ -585,7 +557,6 @@ export default function StaffBookingsPage() {
             )}
           </DialogContent>
         </Dialog>
-
         {/* Create Booking Dialog */}
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogContent>

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -10,10 +9,8 @@ import { Calendar, MapPin, Clock, Wifi, Coffee, BarChart, Settings, Users, Check
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { useRouter } from "next/navigation"
-
 export default function MemberDashboard() {
   const router = useRouter()
-
   const stats = [
     {
       title: "Upcoming Bookings",
@@ -44,19 +41,16 @@ export default function MemberDashboard() {
       icon: Clock,
     },
   ]
-
   const upcomingBookings = [
     { id: 1, resource: "Desk A-12", time: "Tomorrow, 9:00 AM - 5:00 PM", status: "confirmed" },
     { id: 2, resource: "Meeting Room B", time: "Friday, 2:00 PM - 4:00 PM", status: "pending" },
   ]
-
   const amenities = [
     { name: "WiFi", status: "Available" },
     { name: "Coffee", status: "Available" },
     { name: "Printer", status: "Out of Paper" },
     { name: "Snacks", status: "Available" },
   ]
-
   // Example activity data for the dialog
   const [activityOpen, setActivityOpen] = useState(false)
   const activityStats = [
@@ -65,12 +59,10 @@ export default function MemberDashboard() {
     { label: "Most used amenity", value: "Coffee Machine" },
     { label: "Last visit", value: "Yesterday" },
   ]
-
   const handleLogout = () => {
     localStorage.removeItem("user")
     router.push("/auth/login")
   }
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
@@ -79,7 +71,6 @@ export default function MemberDashboard() {
           <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
           <p className="text-muted-foreground">Welcome! Here’s your coworking activity and quick access to your tools.</p>
         </div>
-
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
@@ -112,7 +103,6 @@ export default function MemberDashboard() {
             </Card>
           ))}
         </div>
-
         <div className="grid gap-6 md:grid-cols-2">
           {/* Upcoming Bookings */}
           <Card>
@@ -139,7 +129,6 @@ export default function MemberDashboard() {
               </div>
             </CardContent>
           </Card>
-
           {/* Amenities Status */}
           <Card>
             <CardHeader>
@@ -166,7 +155,6 @@ export default function MemberDashboard() {
             </CardContent>
           </Card>
         </div>
-
         {/* Quick Actions */}
         <Card>
           <CardHeader>
@@ -202,7 +190,6 @@ export default function MemberDashboard() {
             </div>
           </CardContent>
         </Card>
-
         {/* Additional Actions */}
         <Card>
           <CardHeader>

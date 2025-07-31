@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +8,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
-
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -17,10 +15,8 @@ export default function LoginPage() {
   const { toast } = useToast()
   const { login } = useAuth()
   const router = useRouter()
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (!email || !password) {
       toast({
         title: "Error",
@@ -29,12 +25,9 @@ export default function LoginPage() {
       })
       return
     }
-
     setIsLoading(true)
-    
     try {
       const result = await login(email, password)
-      
       if (result.error) {
         toast({
           title: "Login failed",
@@ -43,13 +36,11 @@ export default function LoginPage() {
         })
         return
       }
-
       // Redirect based on role (will be handled by AuthContext)
       toast({
         title: "Login successful",
         description: "Welcome back! Redirecting...",
       })
-      
     } catch (error) {
       console.error("Login error:", error)
       toast({
@@ -61,7 +52,6 @@ export default function LoginPage() {
       setIsLoading(false)
     }
   }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">

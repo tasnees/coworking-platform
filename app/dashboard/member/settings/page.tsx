@@ -1,5 +1,4 @@
 "use client";
-
 import { useRef, useState } from "react";
 import DashboardLayout from "@/components/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -8,22 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { LogOut, Trash, Camera } from "lucide-react";
-
 export default function SettingsPage() {
   // Profile photo state
   const [photo, setPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   // Delete account dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
   // Devices state (mock)
   const [devices, setDevices] = useState([
     { id: 1, name: "Chrome on Windows", lastActive: "Just now", current: true },
     { id: 2, name: "Safari on iPhone", lastActive: "2 days ago", current: false },
     { id: 3, name: "Edge on Mac", lastActive: "1 week ago", current: false },
   ]);
-
   // Upload photo handler
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -35,18 +30,15 @@ export default function SettingsPage() {
       reader.readAsDataURL(file);
     }
   };
-
   // Remove photo
   const handleRemovePhoto = () => {
     setPhoto(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
   // Sign out device handler
   const handleSignOutDevice = (id: number) => {
     setDevices(devices.filter((d) => d.id !== id));
   };
-
   return (
     <DashboardLayout userRole="member">
       <div className="max-w-3xl mx-auto space-y-10 pb-10">
@@ -54,7 +46,6 @@ export default function SettingsPage() {
           <h1 className="text-4xl font-bold tracking-tight mb-1">Settings</h1>
           <p className="text-muted-foreground text-lg">Manage your profile and devices</p>
         </div>
-
         {/* Profile Section */}
         <Card className="shadow-lg border-0">
           <CardHeader className="pb-2">
@@ -115,7 +106,6 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Devices Section */}
         <Card className="shadow-lg border-0">
           <CardHeader className="pb-2">

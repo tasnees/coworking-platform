@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -22,10 +21,8 @@ import {
   Clock,
   BarChart
 } from "lucide-react"
-
 export default function AmenitiesPage() {
   const [activeTab, setActiveTab] = useState("overview")
-
   const amenities = [
     {
       id: 1,
@@ -156,7 +153,6 @@ export default function AmenitiesPage() {
       }
     },
   ]
-
   const maintenanceSchedule = [
     {
       id: 1,
@@ -195,7 +191,6 @@ export default function AmenitiesPage() {
       status: "completed"
     },
   ]
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "operational":
@@ -208,7 +203,6 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "operational":
@@ -221,7 +215,6 @@ export default function AmenitiesPage() {
         return AlertTriangle
     }
   }
-
   const getMaintenanceStatusColor = (status: string) => {
     switch (status) {
       case "scheduled":
@@ -234,7 +227,6 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
@@ -244,7 +236,6 @@ export default function AmenitiesPage() {
             Explore all the amenities available to you as a member. Check their status, upcoming maintenance, and usage trends.
           </p>
         </div>
-
         {/* Overview Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -302,7 +293,6 @@ export default function AmenitiesPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -310,7 +300,6 @@ export default function AmenitiesPage() {
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="usage">Usage Statistics</TabsTrigger>
           </TabsList>
-
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -362,7 +351,6 @@ export default function AmenitiesPage() {
               })}
             </div>
           </TabsContent>
-
           {/* Maintenance Tab */}
           <TabsContent value="maintenance" className="space-y-4">
             <Card>
@@ -435,7 +423,6 @@ export default function AmenitiesPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Usage Statistics Tab */}
           <TabsContent value="usage" className="space-y-4">
             <Card>

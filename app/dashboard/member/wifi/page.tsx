@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,6 @@ import { Progress } from "@/components/ui/progress"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff, Loader2 } from "lucide-react"
-
 // Type definitions
 interface SecurityLog {
   id: number
@@ -23,19 +21,16 @@ interface SecurityLog {
   source: string
   details: string
 }
-
 export default function WifiSettingsPage() {
   const [activeTab, setActiveTab] = useState("networks")
   const [showPassword, setShowPassword] = useState(false)
   const [showGuestPassword, setShowGuestPassword] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<string>('')
-
   // Ensure consistent client-side rendering
   useEffect(() => {
     setLastUpdated(new Date().toLocaleTimeString())
   }, [])
-
   // Add state for form inputs
   const [guestPassword, setGuestPassword] = useState("guest2025")
   const [guestNetwork, setGuestNetwork] = useState("OmniSpace-Guest")
@@ -44,7 +39,6 @@ export default function WifiSettingsPage() {
   const [membershipNetwork, setMembershipNetwork] = useState("main")
   const [membershipTimeLimit, setMembershipTimeLimit] = useState("24")
   const [membershipDeviceLimit, setMembershipDeviceLimit] = useState("3")
-
   // Add state for network data
   const [wifiNetworks, setWifiNetworks] = useState([
     {
@@ -78,7 +72,6 @@ export default function WifiSettingsPage() {
       usagePercent: 45,
     },
   ])
-
   // Add state for membership settings
   const [membershipTypes, setMembershipTypes] = useState([
     {
@@ -110,9 +103,6 @@ export default function WifiSettingsPage() {
       deviceLimit: 10,
     },
   ])
-
-
-
   // Add handlers for membership updates
   const handleMembershipChange = (id: number, field: string, value: string | number) => {
     setMembershipTypes(prev =>
@@ -121,88 +111,68 @@ export default function WifiSettingsPage() {
       )
     )
   }
-
   // Add refresh functionality
   const handleRefreshStatus = async () => {
     setIsRefreshing(true)
-
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000))
-
     // Simulate updated network data with random variations
     setWifiNetworks(prev => prev.map(network => ({
       ...network,
       connectedDevices: Math.max(0, Math.floor(network.connectedDevices + (Math.random() - 0.5) * 10)),
       usagePercent: Math.max(0, Math.min(100, Math.floor(network.usagePercent + (Math.random() - 0.5) * 15)))
     })))
-
     setLastUpdated(new Date().toLocaleTimeString())
     setIsRefreshing(false)
   }
-
   // Add handlers for save operations
   const handleSaveAccessControl = async () => {
     setSaveLoading(prev => ({ ...prev, accessControl: true }))
-
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500))
-
     // Show success notification
     setSaveNotifications(prev => ({ ...prev, accessControl: true }))
     setSaveLoading(prev => ({ ...prev, accessControl: false }))
-
     // Hide notification after 3 seconds
     setTimeout(() => {
       setSaveNotifications(prev => ({ ...prev, accessControl: false }))
     }, 3000)
   }
-
   const handleSaveGuestSettings = async () => {
     setSaveLoading(prev => ({ ...prev, guestSettings: true }))
-
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500))
-
     // Show success notification
     setSaveNotifications(prev => ({ ...prev, guestSettings: true }))
     setSaveLoading(prev => ({ ...prev, guestSettings: false }))
-
     // Hide notification after 3 seconds
     setTimeout(() => {
       setSaveNotifications(prev => ({ ...prev, guestSettings: false }))
     }, 3000)
   }
-
   const handleSaveSecuritySettings = async () => {
     setSaveLoading(prev => ({ ...prev, securitySettings: true }))
-
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500))
-
     // Show success notification
     setSaveNotifications(prev => ({ ...prev, securitySettings: true }))
     setSaveLoading(prev => ({ ...prev, securitySettings: false }))
-
     // Hide notification after 3 seconds
     setTimeout(() => {
       setSaveNotifications(prev => ({ ...prev, securitySettings: false }))
     }, 3000)
   }
-
   // Add handlers for Generate Code functionality
   const handleGenerateCode = async () => {
     setGeneratingCode(true)
-
     // Simulate API call to generate code
     await new Promise(resolve => setTimeout(resolve, 1000))
-
     // Generate a random 8-character code
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
     let code = ''
     for (let i = 0; i < 8; i++) {
       code += chars.charAt(Math.floor(Math.random() * chars.length))
     }
-
     // Create new access code
     const newCode = {
       id: accessCodes.length + 1,
@@ -214,12 +184,10 @@ export default function WifiSettingsPage() {
       network: codeForm.network,
       createdAt: new Date().toISOString().split('T')[0]
     }
-
     // Add to access codes
     setAccessCodes(prev => [...prev, newCode])
     setGeneratedCode(code)
     setGeneratingCode(false)
-
     // Reset form and close dialog after 2 seconds
     setTimeout(() => {
       setGenerateCodeDialog(false)
@@ -232,11 +200,9 @@ export default function WifiSettingsPage() {
       setGeneratedCode(null)
     }, 2000)
   }
-
   const handleFormChange = (field: keyof typeof codeForm, value: string | number) => {
     setCodeForm(prev => ({ ...prev, [field]: value }))
   }
-
   // Add handlers for QR code and copy functionality
   const handleCopyCode = async (code: string) => {
     try {
@@ -255,7 +221,6 @@ export default function WifiSettingsPage() {
       setTimeout(() => setCopySuccess(null), 2000)
     }
   }
-
   const handleShowQrCode = (code: typeof accessCodes[0]) => {
     setSelectedCode(code)
     // Generate QR code URL (using a mock API for demonstration)
@@ -263,15 +228,12 @@ export default function WifiSettingsPage() {
     setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`)
     setQrCodeDialog(true)
   }
-
   // Add handler for security logs
   const handleViewSecurityLogs = async () => {
     setLoadingLogs(true)
     setShowSecurityLogs(true)
-    
     // Simulate API call to fetch security logs
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
     // Mock security logs data
     const mockLogs: SecurityLog[] = [
       {
@@ -315,24 +277,20 @@ export default function WifiSettingsPage() {
         details: 'New device successfully connected to guest network'
       }
     ]
-    
     setSecurityLogs(mockLogs)
     setLoadingLogs(false)
   }
-
   // Add state for save notifications and loading
   const [saveNotifications, setSaveNotifications] = useState({
     accessControl: false,
     guestSettings: false,
     securitySettings: false
   })
-
   const [saveLoading, setSaveLoading] = useState({
     accessControl: false,
     guestSettings: false,
     securitySettings: false
   })
-
   // Add state for Generate Code dialog
   const [generateCodeDialog, setGenerateCodeDialog] = useState(false)
   const [codeForm, setCodeForm] = useState({
@@ -343,25 +301,19 @@ export default function WifiSettingsPage() {
   })
   const [generatingCode, setGeneratingCode] = useState(false)
   const [generatedCode, setGeneratedCode] = useState<string | null>(null)
-
   // Add state for QR codes and copy functionality
   const [qrCodeDialog, setQrCodeDialog] = useState(false)
   const [selectedCode, setSelectedCode] = useState<typeof accessCodes[0] | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
-
   // Add state for security logs
   const [showSecurityLogs, setShowSecurityLogs] = useState(false)
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([])
   const [loadingLogs, setLoadingLogs] = useState(false)
-
   // Add state for dialogs
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDevicesDialog, setShowDevicesDialog] = useState(false)
   const [selectedNetwork, setSelectedNetwork] = useState<typeof wifiNetworks[0] | null>(null)
-
-
-
   // Mock connected devices data for dialog
   const mockConnectedDevices = [
     { id: 1, name: "John's MacBook Pro", ip: "192.168.1.101", mac: "A1:B2:C3:D4:E5:F6", type: "Laptop", signal: 85 },
@@ -369,7 +321,6 @@ export default function WifiSettingsPage() {
     { id: 3, name: "Conference Room TV", ip: "192.168.1.103", mac: "C3:D4:E5:F6:A1:B2", type: "Smart TV", signal: 78 },
     { id: 4, name: "Office Printer", ip: "192.168.1.104", mac: "D4:E5:F6:A1:B2:C3", type: "Printer", signal: 65 },
   ]
-
   // Add handlers for network actions
   const handleCopyPassword = async (password: string) => {
     try {
@@ -380,7 +331,6 @@ export default function WifiSettingsPage() {
       console.error('Failed to copy password:', err)
     }
   }
-
   const handleEditNetwork = (networkId: number) => {
     const network = wifiNetworks.find(n => n.id === networkId)
     if (network) {
@@ -388,7 +338,6 @@ export default function WifiSettingsPage() {
       setShowEditDialog(true)
     }
   }
-
   const handleViewDevices = (networkId: number) => {
     const network = wifiNetworks.find(n => n.id === networkId)
     if (network) {
@@ -396,13 +345,11 @@ export default function WifiSettingsPage() {
       setShowDevicesDialog(true)
     }
   }
-
   const [accessCodes, setAccessCodes] = useState([
     { id: 1, code: "GUEST-1234", type: "Day Pass", expiresAt: "2025-07-24", usageLimit: 1, usageCount: 0, network: "guest", createdAt: "2025-07-24" },
     { id: 2, code: "EVENT-5678", type: "Event", expiresAt: "2025-07-30", usageLimit: 50, usageCount: 12, network: "events", createdAt: "2025-07-29" },
     { id: 3, code: "TRIAL-9012", type: "Trial", expiresAt: "2025-08-15", usageLimit: 5, usageCount: 2, network: "guest", createdAt: "2025-07-28" },
   ])
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -415,7 +362,6 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
-
   const getNetworkTypeColor = (type: string) => {
     switch (type) {
       case "main":
@@ -430,7 +376,6 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -445,7 +390,6 @@ export default function WifiSettingsPage() {
             {isRefreshing ? 'Refreshing...' : 'Refresh Status'}
           </Button>
         </div>
-
         {/* Status Overview */}
         <Card>
           <CardHeader className="pb-3">
@@ -487,7 +431,6 @@ export default function WifiSettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -496,7 +439,6 @@ export default function WifiSettingsPage() {
             <TabsTrigger value="codes">Access Codes</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
-
           {/* Networks Tab */}
           <TabsContent value="networks" className="space-y-4">
             <Card>
@@ -651,7 +593,6 @@ export default function WifiSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Access Control Tab */}
           <TabsContent value="access" className="space-y-4">
             <Card>
@@ -734,7 +675,6 @@ export default function WifiSettingsPage() {
                 </Button>
               </CardFooter>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Guest WiFi Settings</CardTitle>
@@ -778,7 +718,6 @@ export default function WifiSettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="auto-password">Auto-rotate guest password</Label>
@@ -788,7 +727,6 @@ export default function WifiSettingsPage() {
                       Automatically change the guest password every week
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="captive-portal">Enable captive portal</Label>
@@ -798,7 +736,6 @@ export default function WifiSettingsPage() {
                       Show a login page when guests connect to the WiFi
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="time-limit">Time limit for guest access</Label>
@@ -828,7 +765,6 @@ export default function WifiSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-
           {/* Access Codes Tab */}
           <TabsContent value="codes" className="space-y-4">
             <Card>
@@ -846,7 +782,6 @@ export default function WifiSettingsPage() {
                       <DialogTitle>Generate Access Code</DialogTitle>
                       <DialogDescription>Create a new temporary WiFi access code.</DialogDescription>
                     </DialogHeader>
-                    
                     {generatedCode ? (
                       <div className="text-center py-4">
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -985,7 +920,6 @@ export default function WifiSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-4">
             <Card>
@@ -1023,7 +957,6 @@ export default function WifiSettingsPage() {
                       </Select>
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="mac-filtering">MAC Address Filtering</Label>
@@ -1033,7 +966,6 @@ export default function WifiSettingsPage() {
                       Only allow specific devices to connect to your networks
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="hide-ssid">Hide Network Names (SSID)</Label>
@@ -1043,7 +975,6 @@ export default function WifiSettingsPage() {
                       Hide your network names from being publicly visible
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="isolation">Client Isolation</Label>
@@ -1053,7 +984,6 @@ export default function WifiSettingsPage() {
                       Prevent connected devices from communicating with each other
                     </p>
                   </div>
-
                   <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="mt-0.5 h-4 w-4 text-yellow-600" />
@@ -1084,7 +1014,6 @@ export default function WifiSettingsPage() {
                 </Button>
               </CardFooter>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Network Monitoring</CardTitle>
@@ -1101,7 +1030,6 @@ export default function WifiSettingsPage() {
                       Automatically detect and block suspicious network activity
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="bandwidth-limiting">Bandwidth Limiting</Label>
@@ -1111,7 +1039,6 @@ export default function WifiSettingsPage() {
                       Limit bandwidth for guest users to ensure fair usage
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="content-filtering">Content Filtering</Label>
@@ -1121,7 +1048,6 @@ export default function WifiSettingsPage() {
                       Block access to inappropriate or malicious websites
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="activity-logs">Activity Logs</Label>
@@ -1131,7 +1057,6 @@ export default function WifiSettingsPage() {
                       Keep logs of network activity for security purposes
                     </p>
                   </div>
-
                   <div className="flex justify-end">
                     <Button 
                       variant="outline"
@@ -1155,7 +1080,6 @@ export default function WifiSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-
       {/* Edit Network Dialog */}
       <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
         <DialogContent>
@@ -1221,7 +1145,6 @@ export default function WifiSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* View Devices Dialog */}
       <Dialog open={showDevicesDialog} onOpenChange={setShowDevicesDialog}>
         <DialogContent className="max-w-2xl">
@@ -1265,14 +1188,12 @@ export default function WifiSettingsPage() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Copy Success Indicator */}
       {copySuccess && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50">
           Password copied to clipboard!
         </div>
       )}
-
       {/* Save Success Indicators */}
       {saveNotifications.accessControl && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50">
@@ -1289,7 +1210,6 @@ export default function WifiSettingsPage() {
           Security settings saved successfully!
         </div>
       )}
-
       {/* QR Code Dialog */}
       <Dialog open={qrCodeDialog} onOpenChange={setQrCodeDialog}>
         <DialogContent>
@@ -1332,7 +1252,6 @@ export default function WifiSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Security Logs Dialog */}
       <Dialog open={showSecurityLogs} onOpenChange={setShowSecurityLogs}>
         <DialogContent className="max-w-4xl max-h-[80vh] p-0">
@@ -1342,7 +1261,6 @@ export default function WifiSettingsPage() {
               Recent security events and network activity logs
             </DialogDescription>
           </DialogHeader>
-          
           <div className="overflow-y-auto max-h-[calc(80vh-120px)]">
             {loadingLogs ? (
               <div className="flex flex-col items-center justify-center py-12">
@@ -1365,7 +1283,6 @@ export default function WifiSettingsPage() {
                     </div>
                   ))}
                 </div>
-
                 {/* Logs Timeline */}
                 <div className="space-y-3">
                   <h3 className="font-semibold text-sm text-gray-700 mb-4">Activity Timeline</h3>
@@ -1378,7 +1295,6 @@ export default function WifiSettingsPage() {
                         log.severity === 'low' ? 'bg-green-500' :
                         'bg-blue-500'
                       }`}></div>
-                      
                       <div className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-3">
@@ -1399,7 +1315,6 @@ export default function WifiSettingsPage() {
                             {new Date(log.timestamp).toLocaleString()}
                           </span>
                         </div>
-                        
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-sm">
                             <span className="text-gray-600">Source:</span>
@@ -1420,7 +1335,6 @@ export default function WifiSettingsPage() {
               </div>
             )}
           </div>
-          
           <DialogFooter className="px-6 py-4 border-t">
             <Button variant="outline" onClick={() => setShowSecurityLogs(false)}>
               Close

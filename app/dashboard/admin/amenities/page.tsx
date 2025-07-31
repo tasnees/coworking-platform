@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -38,7 +37,6 @@ import {
   Clock,
   BarChart
 } from "lucide-react"
-
 export default function AmenitiesPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [amenities, setAmenities] = useState([
@@ -183,17 +181,14 @@ export default function AmenitiesPage() {
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [amenityToDelete, setAmenityToDelete] = useState<any>(null)
-
   const handleEditAmenity = (amenity: any) => {
     setEditingAmenity(amenity)
     setShowEditDialog(true)
   }
-
   const handleDeleteAmenity = (amenity: any) => {
     setAmenityToDelete(amenity)
     setShowDeleteDialog(true)
   }
-
   const confirmDeleteAmenity = () => {
     if (amenityToDelete) {
       setAmenities(amenities.filter(a => a.id !== amenityToDelete.id))
@@ -201,7 +196,6 @@ export default function AmenitiesPage() {
       setAmenityToDelete(null)
     }
   }
-
   const handleSaveEdit = () => {
     if (editingAmenity) {
       setAmenities(amenities.map(a => a.id === editingAmenity.id ? editingAmenity : a))
@@ -209,7 +203,6 @@ export default function AmenitiesPage() {
       setEditingAmenity(null)
     }
   }
-
   const maintenanceSchedule = [
     {
       id: 1,
@@ -248,14 +241,12 @@ export default function AmenitiesPage() {
       status: "completed"
     },
   ]
-
   const membershipTypes = [
     { id: 1, name: "Day Pass" },
     { id: 2, name: "Weekly Flex" },
     { id: 3, name: "Monthly Pro" },
     { id: 4, name: "Enterprise" },
   ]
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "operational":
@@ -268,7 +259,6 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "operational":
@@ -281,7 +271,6 @@ export default function AmenitiesPage() {
         return AlertTriangle
     }
   }
-
   const getMaintenanceStatusColor = (status: string) => {
     switch (status) {
       case "scheduled":
@@ -294,7 +283,6 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -387,7 +375,6 @@ export default function AmenitiesPage() {
             </DialogContent>
           </Dialog>
         </div>
-
         {/* Overview Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -433,7 +420,6 @@ export default function AmenitiesPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -442,7 +428,6 @@ export default function AmenitiesPage() {
             <TabsTrigger value="access">Membership Access</TabsTrigger>
             <TabsTrigger value="usage">Usage Statistics</TabsTrigger>
           </TabsList>
-
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -501,7 +486,6 @@ export default function AmenitiesPage() {
               })}
             </div>
           </TabsContent>
-
           {/* Maintenance Tab */}
           <TabsContent value="maintenance" className="space-y-4">
             <Card>
@@ -609,7 +593,6 @@ export default function AmenitiesPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Maintenance Alerts</CardTitle>
@@ -654,7 +637,6 @@ export default function AmenitiesPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Membership Access Tab */}
           <TabsContent value="access" className="space-y-4">
             <Card>
@@ -690,7 +672,6 @@ export default function AmenitiesPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-
           {/* Usage Statistics Tab */}
           <TabsContent value="usage" className="space-y-4">
             <Card>
@@ -742,7 +723,6 @@ export default function AmenitiesPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Most Popular Amenities</CardTitle>
@@ -777,7 +757,6 @@ export default function AmenitiesPage() {
             </Card>
           </TabsContent>
         </Tabs>
-
         {/* Edit Dialog */}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="sm:max-w-[500px]">
@@ -857,7 +836,6 @@ export default function AmenitiesPage() {
             </div>
           </DialogContent>
         </Dialog>
-
         {/* Delete Confirmation Dialog */}
         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <DialogContent>

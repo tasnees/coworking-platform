@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,11 +18,9 @@ import { Calendar } from "@/components/ui/calendar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DashboardLayout from "@/components/dashboard-layout"
 import { CalendarDays, Clock, MapPin, Plus, Search } from "lucide-react"
-
 export default function BookingsPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [viewMode, setViewMode] = useState("day")
-
   const bookings = [
     {
       id: 1,
@@ -56,14 +53,12 @@ export default function BookingsPage() {
       date: "2024-01-15",
     },
   ]
-
   const resources = [
     { id: "desk-a12", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
     { id: "meeting-b", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
     { id: "office-3", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
     { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
   ]
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -76,7 +71,6 @@ export default function BookingsPage() {
         return "secondary"
     }
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -148,7 +142,6 @@ export default function BookingsPage() {
             </DialogContent>
           </Dialog>
         </div>
-
         {/* Filters and Search */}
         <Card>
           <CardContent className="pt-6">
@@ -180,7 +173,6 @@ export default function BookingsPage() {
             </div>
           </CardContent>
         </Card>
-
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Calendar */}
           <Card>
@@ -199,7 +191,6 @@ export default function BookingsPage() {
               />
             </CardContent>
           </Card>
-
           {/* Bookings List */}
           <Card className="lg:col-span-2">
             <CardHeader>
@@ -240,7 +231,6 @@ export default function BookingsPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Resource Availability */}
         <Card>
           <CardHeader>

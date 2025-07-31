@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,12 +19,10 @@ import {
 } from "@/components/ui/dialog"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff } from "lucide-react"
-
 export default function WifiSettingsPage() {
   const [activeTab, setActiveTab] = useState("networks")
   const [showPassword, setShowPassword] = useState(false)
   const [showGuestPassword, setShowGuestPassword] = useState(false)
-
   const wifiNetworks = [
     {
       id: 1,
@@ -68,20 +65,17 @@ export default function WifiSettingsPage() {
       usagePercent: 0,
     },
   ]
-
   const accessCodes = [
     { id: 1, code: "GUEST-1234", type: "Day Pass", expiresAt: "2025-07-24", usageLimit: 1, usageCount: 0 },
     { id: 2, code: "EVENT-5678", type: "Event", expiresAt: "2025-07-30", usageLimit: 50, usageCount: 12 },
     { id: 3, code: "TRIAL-9012", type: "Trial", expiresAt: "2025-08-15", usageLimit: 5, usageCount: 2 },
   ]
-
   const membershipTypes = [
     { id: 1, name: "Day Pass", accessType: "Guest Network", timeLimit: "12 hours", deviceLimit: 1 },
     { id: 2, name: "Weekly Flex", accessType: "Main Network", timeLimit: "During operating hours", deviceLimit: 2 },
     { id: 3, name: "Monthly Pro", accessType: "Main Network", timeLimit: "24/7", deviceLimit: 3 },
     { id: 4, name: "Enterprise", accessType: "Main Network", timeLimit: "24/7", deviceLimit: 10 },
   ]
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -94,7 +88,6 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
-
   const getNetworkTypeColor = (type: string) => {
     switch (type) {
       case "main":
@@ -109,7 +102,6 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -124,7 +116,6 @@ export default function WifiSettingsPage() {
             Refresh Status
           </Button>
         </div>
-
         {/* Status Overview */}
         <Card>
           <CardHeader className="pb-3">
@@ -163,7 +154,6 @@ export default function WifiSettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -172,7 +162,6 @@ export default function WifiSettingsPage() {
             <TabsTrigger value="codes">Access Codes</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
-
           {/* Networks Tab */}
           <TabsContent value="networks" className="space-y-4">
             <Card>
@@ -313,7 +302,6 @@ export default function WifiSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Access Control Tab */}
           <TabsContent value="access" className="space-y-4">
             <Card>
@@ -370,7 +358,6 @@ export default function WifiSettingsPage() {
                 <Button>Save Changes</Button>
               </CardFooter>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Guest WiFi Settings</CardTitle>
@@ -410,7 +397,6 @@ export default function WifiSettingsPage() {
                       </div>
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="auto-password">Auto-rotate guest password</Label>
@@ -420,7 +406,6 @@ export default function WifiSettingsPage() {
                       Automatically change the guest password every week
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="captive-portal">Enable captive portal</Label>
@@ -430,7 +415,6 @@ export default function WifiSettingsPage() {
                       Show a login page when guests connect to the WiFi
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="time-limit">Time limit for guest access</Label>
@@ -448,7 +432,6 @@ export default function WifiSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-
           {/* Access Codes Tab */}
           <TabsContent value="codes" className="space-y-4">
             <Card>
@@ -546,7 +529,6 @@ export default function WifiSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-4">
             <Card>
@@ -584,7 +566,6 @@ export default function WifiSettingsPage() {
                       </Select>
                     </div>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="mac-filtering">MAC Address Filtering</Label>
@@ -594,7 +575,6 @@ export default function WifiSettingsPage() {
                       Only allow specific devices to connect to your networks
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="hide-ssid">Hide Network Names (SSID)</Label>
@@ -604,7 +584,6 @@ export default function WifiSettingsPage() {
                       Hide your network names from being publicly visible
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="isolation">Client Isolation</Label>
@@ -614,7 +593,6 @@ export default function WifiSettingsPage() {
                       Prevent connected devices from communicating with each other
                     </p>
                   </div>
-
                   <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="mt-0.5 h-4 w-4 text-yellow-600" />
@@ -633,7 +611,6 @@ export default function WifiSettingsPage() {
                 <Button>Save Security Settings</Button>
               </CardFooter>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Network Monitoring</CardTitle>
@@ -650,7 +627,6 @@ export default function WifiSettingsPage() {
                       Automatically detect and block suspicious network activity
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="bandwidth-limiting">Bandwidth Limiting</Label>
@@ -660,7 +636,6 @@ export default function WifiSettingsPage() {
                       Limit bandwidth for guest users to ensure fair usage
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="content-filtering">Content Filtering</Label>
@@ -670,7 +645,6 @@ export default function WifiSettingsPage() {
                       Block access to inappropriate or malicious websites
                     </p>
                   </div>
-
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="activity-logs">Activity Logs</Label>
@@ -680,7 +654,6 @@ export default function WifiSettingsPage() {
                       Keep logs of network activity for security purposes
                     </p>
                   </div>
-
                   <div className="flex justify-end">
                     <Button variant="outline">
                       <Shield className="mr-2 h-4 w-4" />

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -17,20 +16,16 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-
 export default function CheckInPage() {
   const [activeTab, setActiveTab] = useState("overview");
-
   // Add search state for logs
   const [searchTerm, setSearchTerm] = useState("");
-
   const todayStats = {
     totalCheckIns: 89,
     currentlyInside: 67,
     peakTime: "2:30 PM",
     averageStay: "4.2 hours",
   }
-
   const recentCheckIns = [
     {
       id: 1,
@@ -65,14 +60,12 @@ export default function CheckInPage() {
       duration: "1h 00m",
     },
   ]
-
   const currentlyInside = [
     { id: 1, member: "John Doe", checkInTime: "09:15 AM", location: "Hot Desk Area", duration: "3h 45m" },
     { id: 2, member: "Jane Smith", checkInTime: "10:30 AM", location: "Meeting Room B", duration: "2h 30m" },
     { id: 3, member: "Sarah Wilson", checkInTime: "11:00 AM", location: "Private Office 3", duration: "1h 00m" },
     { id: 4, member: "Alex Brown", checkInTime: "08:30 AM", location: "Hot Desk Area", duration: "4h 30m" },
   ]
-
   const [qrLocations, setQrLocations] = useState([
     {
       id: 1,
@@ -87,18 +80,14 @@ export default function CheckInPage() {
       description: "Secondary entry point",
     },
   ])
-
   // For editing QR location
   const [editQrDialogId, setEditQrDialogId] = useState<number | null>(null)
   const [editQrLocation, setEditQrLocation] = useState<any>(null)
-
   // For adding new QR location
   const [addQrDialogOpen, setAddQrDialogOpen] = useState(false)
   const [newQrLocation, setNewQrLocation] = useState({ name: "", description: "" })
-
   // For viewing log details (Dialog)
   const [viewLog, setViewLog] = useState<any | null>(null);
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "checked-in":
@@ -109,24 +98,19 @@ export default function CheckInPage() {
         return "secondary"
     }
   }
-
   // Generate QR code data (in a real app, this would be a proper QR code)
   const qrCodeData = `https://omnispace.app/checkin?location=main&timestamp=${Date.now()}`
-
   // --- Button Handlers ---
-
   // Download PNG (simulate)
   const handleDownloadPng = () => {
     const blob = new Blob([`QR PNG for: ${qrCodeData}`], { type: "image/png" })
     saveAs(blob, "main-entrance-qr.png")
   }
-
   // Download PDF (simulate)
   const handleDownloadPdf = () => {
     const blob = new Blob([`QR PDF for: ${qrCodeData}`], { type: "application/pdf" })
     saveAs(blob, "main-entrance-qr.pdf")
   }
-
   // Edit QR Location
   const handleEditQrLocation = (id: number) => {
     setQrLocations(locs =>
@@ -137,7 +121,6 @@ export default function CheckInPage() {
     setEditQrDialogId(null)
     setEditQrLocation(null)
   }
-
   // Activate/Deactivate QR Location
   const handleToggleQrLocation = (id: number) => {
     setQrLocations(locs =>
@@ -148,12 +131,10 @@ export default function CheckInPage() {
       )
     )
   }
-
   // Generate New QR for location (simulate)
   const handleGenerateNewQr = (id: number) => {
     alert(`New QR code generated for location ID ${id}`)
   }
-
   // Add new QR location
   const handleAddQrLocation = () => {
     setQrLocations([
@@ -168,7 +149,6 @@ export default function CheckInPage() {
     setNewQrLocation({ name: "", description: "" })
     setAddQrDialogOpen(false)
   }
-
   // Export logs as CSV
   const handleExportLogs = () => {
     const csv = "Member,Time,Location,Status,Duration\n" +
@@ -178,12 +158,10 @@ export default function CheckInPage() {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" })
     saveAs(blob, "checkin-logs.csv")
   }
-
   // View log details (open dialog instead of alert)
   const handleViewLogDetails = (log: any) => {
     setViewLog(log);
   };
-
   // Filtered logs based on search
   const filteredLogs = recentCheckIns
     .concat(recentCheckIns)
@@ -193,7 +171,6 @@ export default function CheckInPage() {
         log.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
         log.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -202,7 +179,6 @@ export default function CheckInPage() {
           <h1 className="text-3xl font-bold tracking-tight">Check-In Management</h1>
           <p className="text-muted-foreground">Monitor member check-ins and manage access control</p>
         </div>
-
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -248,7 +224,6 @@ export default function CheckInPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -256,7 +231,6 @@ export default function CheckInPage() {
             <TabsTrigger value="qr-codes">QR Codes</TabsTrigger>
             <TabsTrigger value="logs">Check-in Logs</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Recent Check-ins */}
@@ -291,7 +265,6 @@ export default function CheckInPage() {
                   </div>
                 </CardContent>
               </Card>
-
               {/* Currently Inside */}
               <Card>
                 <CardHeader>
@@ -323,7 +296,6 @@ export default function CheckInPage() {
               </Card>
             </div>
           </TabsContent>
-
           <TabsContent value="qr-codes" className="space-y-4">
             <div className="grid gap-6 lg:grid-cols-2">
               {/* QR Code Generator */}
@@ -356,7 +328,6 @@ export default function CheckInPage() {
                   </div>
                 </CardContent>
               </Card>
-
               {/* QR Code Settings */}
               <Card>
                 <CardHeader>
@@ -492,7 +463,6 @@ export default function CheckInPage() {
               </Card>
             </div>
           </TabsContent>
-
           <TabsContent value="logs" className="space-y-4">
             <Card>
               <CardHeader>

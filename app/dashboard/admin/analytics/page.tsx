@@ -1,10 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import DashboardLayout from "@/components/dashboard-layout";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
-
 // Simple chart using chart.js and react-chartjs-2
 import { Line } from "react-chartjs-2";
 import {
@@ -17,9 +15,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-
 export default function AnalyticsPage() {
   // State for statistics
   const [stats, setStats] = useState({
@@ -33,7 +29,6 @@ export default function AnalyticsPage() {
     peakHour: "",
     churnRate: 0,
   });
-
   // Mock trend data for the graph
   const [trendData, setTrendData] = useState({
     labels: [
@@ -42,7 +37,6 @@ export default function AnalyticsPage() {
     checkins: [62, 70, 89, 74, 80, 65, 55],
     revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
   });
-
   // Simulate fetching real data (replace with your API call)
   useEffect(() => {
     // Example: Replace this with your real API call
@@ -70,7 +64,6 @@ export default function AnalyticsPage() {
     };
     fetchStats();
   }, []);
-
   // Chart.js data and options
   const lineData = {
     labels: trendData.labels,
@@ -93,7 +86,6 @@ export default function AnalyticsPage() {
       },
     ],
   };
-
   const lineOptions = {
     responsive: true,
     plugins: {
@@ -122,7 +114,6 @@ export default function AnalyticsPage() {
       },
     },
   };
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-8">

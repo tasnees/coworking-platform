@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -19,10 +18,8 @@ import {
 import { Badge } from "@/components/ui/badge"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Clock, Calendar, Plus, Save, AlertTriangle } from "lucide-react"
-
 export default function HoursPage() {
   const [activeTab, setActiveTab] = useState("regular")
-
   const [weekdays, setWeekdays] = useState([
     { id: 1, name: "Monday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
     { id: 2, name: "Tuesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
@@ -32,42 +29,35 @@ export default function HoursPage() {
     { id: 6, name: "Saturday", open: "10:00", close: "18:00", is24Hours: false, isClosed: false },
     { id: 7, name: "Sunday", open: "12:00", close: "16:00", is24Hours: false, isClosed: true },
   ])
-
   const [specialDays, setSpecialDays] = useState([
     { id: 1, date: "2025-01-01", name: "New Year's Day", open: "", close: "", is24Hours: false, isClosed: true },
     { id: 2, date: "2025-12-25", name: "Christmas Day", open: "", close: "", is24Hours: false, isClosed: true },
     { id: 3, date: "2025-12-31", name: "New Year's Eve", open: "08:00", close: "15:00", is24Hours: false, isClosed: false },
   ])
-
   const [membershipAccess, setMembershipAccess] = useState([
     { id: 1, name: "Day Pass", accessHours: "Regular hours", has24HourAccess: false },
     { id: 2, name: "Weekly Flex", accessHours: "Regular hours", has24HourAccess: false },
     { id: 3, name: "Monthly Pro", accessHours: "Regular hours + Weekends", has24HourAccess: false },
     { id: 4, name: "Enterprise", accessHours: "24/7 Access", has24HourAccess: true },
   ])
-
   const handleWeekdayChange = (id: number, field: string, value: string | boolean) => {
     setWeekdays(prev => prev.map(day => 
       day.id === id ? { ...day, [field]: value } : day
     ))
   }
-
   const handleSpecialDayChange = (id: number, field: string, value: string | boolean) => {
     setSpecialDays(prev => prev.map(day => 
       day.id === id ? { ...day, [field]: value } : day
     ))
   }
-
   const handleMembershipChange = (id: number, field: string, value: boolean) => {
     setMembershipAccess(prev => prev.map(membership => 
       membership.id === id ? { ...membership, [field]: value } : membership
     ))
   }
-
   const handleNewSpecialDayChange = (field: string, value: string | boolean) => {
     setSpecialDays(prev => ({ ...prev, [field]: value }))
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -82,7 +72,6 @@ export default function HoursPage() {
             Save Changes
           </Button>
         </div>
-
         {/* Current Status */}
         <Card>
           <CardHeader className="pb-3">
@@ -117,7 +106,6 @@ export default function HoursPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -125,7 +113,6 @@ export default function HoursPage() {
             <TabsTrigger value="special">Special Days</TabsTrigger>
             <TabsTrigger value="access">Membership Access</TabsTrigger>
           </TabsList>
-
           {/* Regular Hours Tab */}
           <TabsContent value="regular" className="space-y-4">
             <Card>
@@ -184,7 +171,6 @@ export default function HoursPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Special Days Tab */}
           <TabsContent value="special" className="space-y-4">
             <Card>
@@ -305,7 +291,6 @@ export default function HoursPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Membership Access Tab */}
           <TabsContent value="access" className="space-y-4">
             <Card>
@@ -342,7 +327,6 @@ export default function HoursPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle>Access Control Settings</CardTitle>
@@ -400,22 +384,18 @@ export default function HoursPage() {
                             </div>
                             <div class="whitespace-pre-line text-sm text-gray-700 mb-6">
                               <h4 class="font-semibold mb-2">AFTER-HOURS ACCESS AGREEMENT</h4>
-                              
                               This agreement governs access to coworking facilities outside regular business hours.
-                              
                               <strong>TERMS AND CONDITIONS:</strong>
                               1. 24/7 access is granted to Enterprise and Premium members only
                               2. Members must maintain valid membership status
                               3. Security protocols must be followed at all times
                               4. Facility damage or misuse will result in access revocation
                               5. Emergency contact procedures must be maintained
-                              
                               <strong>SECURITY REQUIREMENTS:</strong>
                               - Personal access codes must not be shared
                               - All areas must be secured when leaving
                               - Report any suspicious activity immediately
                               - Emergency contact: Facility Manager
-                              
                               By accessing the facility after hours, members agree to these terms.
                             </div>
                             <div class="flex justify-end gap-2">
@@ -429,7 +409,6 @@ export default function HoursPage() {
                           </div>
                         `;
                         document.body.appendChild(modal);
-                        
                         // Close on outside click
                         modal.addEventListener('click', (e) => {
                           if (e.target === modal) modal.remove();

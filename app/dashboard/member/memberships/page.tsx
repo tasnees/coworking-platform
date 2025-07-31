@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Calendar, Clock, CreditCard, Users, Star, CheckCircle, AlertCircle, TrendingUp, Package, Zap, Shield } from "lucide-react"
-
 interface MembershipPlan {
   id: string
   name: string
@@ -25,7 +23,6 @@ interface MembershipPlan {
   endDate?: string
   autoRenew: boolean
 }
-
 interface UsageStats {
   monthly: {
     creditsUsed: number
@@ -40,7 +37,6 @@ interface UsageStats {
     amenitiesUsed: string[]
   }
 }
-
 interface BillingHistory {
   id: string
   date: string
@@ -49,7 +45,6 @@ interface BillingHistory {
   description: string
   invoiceUrl?: string
 }
-
 export default function MembershipsPage() {
   const [activeTab, setActiveTab] = useState("overview")
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
@@ -78,7 +73,6 @@ export default function MembershipsPage() {
     startDate: "2024-01-01",
     autoRenew: true
   })
-
   // Mock usage statistics
   const usageStats: UsageStats = {
     monthly: {
@@ -94,7 +88,6 @@ export default function MembershipsPage() {
       amenitiesUsed: ["WiFi", "Coffee", "Meeting Room A", "Printer"]
     }
   }
-
   // Mock billing history
   const billingHistory: BillingHistory[] = [
     {
@@ -122,7 +115,6 @@ export default function MembershipsPage() {
       invoiceUrl: "/invoices/inv-003.pdf"
     }
   ]
-
   // Available plans for upgrade
   const availablePlans: MembershipPlan[] = [
     {
@@ -189,7 +181,6 @@ export default function MembershipsPage() {
       autoRenew: true
     }
   ]
-
   const getPlanIcon = (type: string) => {
     switch (type) {
       case "basic":
@@ -204,7 +195,6 @@ export default function MembershipsPage() {
         return <Package className="h-5 w-5" />
     }
   }
-
   const getPlanColor = (type: string) => {
     switch (type) {
       case "basic":
@@ -219,18 +209,15 @@ export default function MembershipsPage() {
         return "text-gray-600"
     }
   }
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount)
   }
-
   const calculateProgress = (used: number, total: number) => {
     return Math.min((used / total) * 100, 100)
   }
-
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
     // In a real app, this would generate/download a PDF invoice
     // For now, we'll create a mock invoice and trigger download
@@ -242,7 +229,6 @@ export default function MembershipsPage() {
       member: "Current User",
       plan: currentMembership.name
     }
-    
     // Create a simple text file for demo purposes
     const invoiceText = `
 INVOICE
@@ -253,10 +239,8 @@ Date: ${new Date(invoiceData.date).toLocaleDateString()}
 Amount: ${formatCurrency(invoiceData.amount)}
 Plan: ${invoiceData.plan}
 Member: ${invoiceData.member}
-
 Thank you for your business!
     `.trim()
-    
     const blob = new Blob([invoiceText], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -267,11 +251,9 @@ Thank you for your business!
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
-
   const handleToggleAutoRenew = () => {
     setShowAutoRenewDialog(true)
   }
-
   const confirmToggleAutoRenew = () => {
     // In a real app, this would make an API call to update auto-renewal
     setCurrentMembership((prev: MembershipPlan) => ({
@@ -280,7 +262,6 @@ Thank you for your business!
     }))
     setShowAutoRenewDialog(false)
   }
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
@@ -289,7 +270,6 @@ Thank you for your business!
           <h1 className="text-3xl font-bold tracking-tight">My Membership</h1>
           <p className="text-muted-foreground">Manage your membership plan and billing information.</p>
         </div>
-
         {/* Current Membership Card */}
         <Card className="border-purple-500">
           <CardHeader>
@@ -331,14 +311,12 @@ Thank you for your business!
             </div>
           </CardContent>
         </Card>
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
             <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
-
           <TabsContent value="overview" className="space-y-4">
             {/* Usage Stats */}
             <Card>
@@ -365,7 +343,6 @@ Thank you for your business!
                 </div>
               </CardContent>
             </Card>
-
             {/* Quick Actions */}
             <Card>
               <CardHeader>
@@ -395,7 +372,6 @@ Thank you for your business!
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="features" className="space-y-4">
             <Card>
               <CardHeader>
@@ -415,7 +391,6 @@ Thank you for your business!
                 </ul>
               </CardContent>
             </Card>
-
             {/* Available Plans */}
             <Card>
               <CardHeader>
@@ -471,7 +446,6 @@ Thank you for your business!
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="billing" className="space-y-4">
             {/* Billing Summary */}
             <Card>
@@ -510,7 +484,6 @@ Thank you for your business!
                 </div>
               </CardContent>
             </Card>
-
             {/* Billing History */}
             <Card>
               <CardHeader>
@@ -558,7 +531,6 @@ Thank you for your business!
             </Card>
           </TabsContent>
         </Tabs>
-
         {/* Upgrade Dialog */}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
           <DialogContent className="sm:max-w-md">
@@ -590,7 +562,6 @@ Thank you for your business!
             </div>
           </DialogContent>
         </Dialog>
-
         {/* Auto-Renewal Confirmation Dialog */}
         <Dialog open={showAutoRenewDialog} onOpenChange={setShowAutoRenewDialog}>
           <DialogContent>

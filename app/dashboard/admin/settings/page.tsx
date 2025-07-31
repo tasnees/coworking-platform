@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import DashboardLayout from "@/components/dashboard-layout";
 import { User, Mail, Phone, MapPin, Shield, Bell, Key, Save, X, Edit3, Settings, Users, Database, ShieldCheck } from "lucide-react";
-
 interface AdminProfile {
   id: string;
   name: string;
@@ -28,7 +26,6 @@ interface AdminProfile {
   permissions: string[];
   lastLogin: string;
 }
-
 interface AdminPreferences {
   emailNotifications: boolean;
   securityAlerts: boolean;
@@ -36,13 +33,11 @@ interface AdminPreferences {
   twoFactorEnabled: boolean;
   adminDashboardTips: boolean;
 }
-
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-
   const [profile, setProfile] = useState<AdminProfile>({
     id: "admin-001",
     name: "Alexandra Thompson",
@@ -58,7 +53,6 @@ export default function AdminSettingsPage() {
     permissions: ["Full System Access", "User Management", "Analytics", "Billing"],
     lastLogin: "2024-07-28T10:30:00Z",
   });
-
   const [preferences, setPreferences] = useState<AdminPreferences>({
     emailNotifications: true,
     securityAlerts: true,
@@ -66,17 +60,14 @@ export default function AdminSettingsPage() {
     twoFactorEnabled: true,
     adminDashboardTips: true,
   });
-
   const [editedProfile, setEditedProfile] = useState(profile);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [showSystemConfigDialog, setShowSystemConfigDialog] = useState(false);
   const [showDatabaseSettingsDialog, setShowDatabaseSettingsDialog] = useState(false);
   const [showSecurityPoliciesDialog, setShowSecurityPoliciesDialog] = useState(false);
   const [showUserManagementDialog, setShowUserManagementDialog] = useState(false);
-
   const [systemConfig, setSystemConfig] = useState({
     siteName: 'CoworkSpace Platform',
     maintenanceMode: false,
@@ -84,14 +75,12 @@ export default function AdminSettingsPage() {
     sessionTimeout: 30,
     defaultLanguage: 'en'
   });
-
   const [databaseSettings, setDatabaseSettings] = useState({
     backupFrequency: 'daily',
     retentionDays: 30,
     compressionEnabled: true,
     encryptionEnabled: true
   });
-
   const [securityPolicies, setSecurityPolicies] = useState({
     passwordMinLength: 8,
     requireSpecialChars: true,
@@ -100,24 +89,20 @@ export default function AdminSettingsPage() {
     maxLoginAttempts: 5,
     lockoutDuration: 30
   });
-
   const [userManagement, setUserManagement] = useState({
     registrationOpen: true,
     requireApproval: false,
     defaultRole: 'member',
     emailVerification: true
   });
-
   const handleSaveProfile = () => {
     setProfile(editedProfile);
     setIsEditing(false);
   };
-
   const handleCancelEdit = () => {
     setEditedProfile(profile);
     setIsEditing(false);
   };
-
   const handlePasswordChange = () => {
     if (newPassword === confirmPassword && newPassword.length >= 8) {
       setShowPasswordDialog(false);
@@ -126,11 +111,9 @@ export default function AdminSettingsPage() {
       setConfirmPassword("");
     }
   };
-
   const handlePreferenceChange = (key: keyof AdminPreferences, value: boolean) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -138,7 +121,6 @@ export default function AdminSettingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Admin Profile</h1>
           <p className="text-muted-foreground">Manage your administrator account and system preferences</p>
         </div>
-
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center space-x-4">
@@ -170,7 +152,6 @@ export default function AdminSettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -178,7 +159,6 @@ export default function AdminSettingsPage() {
             <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="system">System</TabsTrigger>
           </TabsList>
-
           <TabsContent value="profile" className="space-y-4">
             <Card>
               <CardHeader>
@@ -278,7 +258,6 @@ export default function AdminSettingsPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Administrator Details</CardTitle>
@@ -314,7 +293,6 @@ export default function AdminSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="preferences" className="space-y-4">
             <Card>
               <CardHeader>
@@ -365,7 +343,6 @@ export default function AdminSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="security" className="space-y-4">
             <Card>
               <CardHeader>
@@ -433,7 +410,6 @@ export default function AdminSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="system" className="space-y-4">
             <Card>
               <CardHeader>
@@ -461,7 +437,6 @@ export default function AdminSettingsPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>System Status</CardTitle>
@@ -486,7 +461,6 @@ export default function AdminSettingsPage() {
             </Card>
           </TabsContent>
         </Tabs>
-
         {/* System Configuration Dialog */}
         <Dialog open={showSystemConfigDialog} onOpenChange={setShowSystemConfigDialog}>
           <DialogContent className="max-w-2xl">
@@ -544,7 +518,6 @@ export default function AdminSettingsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         {/* Database Settings Dialog */}
         <Dialog open={showDatabaseSettingsDialog} onOpenChange={setShowDatabaseSettingsDialog}>
           <DialogContent className="max-w-2xl">
@@ -609,7 +582,6 @@ export default function AdminSettingsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         {/* Security Policies Dialog */}
         <Dialog open={showSecurityPoliciesDialog} onOpenChange={setShowSecurityPoliciesDialog}>
           <DialogContent className="max-w-2xl">
@@ -688,7 +660,6 @@ export default function AdminSettingsPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         {/* User Management Dialog */}
         <Dialog open={showUserManagementDialog} onOpenChange={setShowUserManagementDialog}>
           <DialogContent className="max-w-2xl">

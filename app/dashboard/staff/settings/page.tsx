@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,6 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import DashboardLayout from "@/components/dashboard-layout"
 import { User, Mail, Phone, MapPin, Shield, Bell, Moon, Key, Save, X, Edit3, Sun } from "lucide-react"
-
 interface StaffProfile {
   id: string
   name: string
@@ -27,7 +25,6 @@ interface StaffProfile {
   avatar: string
   bio: string
 }
-
 interface StaffPreferences {
   emailNotifications: boolean
   bookingReminders: boolean
@@ -35,13 +32,11 @@ interface StaffPreferences {
   twoFactorEnabled: boolean
   language: string
 }
-
 export default function StaffSettingsPage() {
   const [activeTab, setActiveTab] = useState("profile")
   const [isEditing, setIsEditing] = useState(false)
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  
   // Mock staff profile data
   const [profile, setProfile] = useState<StaffProfile>({
     id: "staff-001",
@@ -56,7 +51,6 @@ export default function StaffSettingsPage() {
     avatar: "",
     bio: "Dedicated staff member focused on providing excellent member support and maintaining smooth daily operations."
   })
-
   const [preferences, setPreferences] = useState<StaffPreferences>({
     emailNotifications: true,
     bookingReminders: true,
@@ -64,23 +58,19 @@ export default function StaffSettingsPage() {
     twoFactorEnabled: true,
     language: "English"
   })
-
   const [editedProfile, setEditedProfile] = useState(profile)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-
   const handleSaveProfile = () => {
     setProfile(editedProfile)
     setIsEditing(false)
     // In real app, this would make API call
   }
-
   const handleCancelEdit = () => {
     setEditedProfile(profile)
     setIsEditing(false)
   }
-
   const handlePasswordChange = () => {
     if (newPassword === confirmPassword && newPassword.length >= 8) {
       // In real app, this would make API call
@@ -90,12 +80,10 @@ export default function StaffSettingsPage() {
       setConfirmPassword("")
     }
   }
-
   const handlePreferenceChange = (key: keyof StaffPreferences, value: boolean | string) => {
     setPreferences(prev => ({ ...prev, [key]: value }))
     // In real app, this would make API call
   }
-
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">
@@ -104,7 +92,6 @@ export default function StaffSettingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Staff Profile</h1>
           <p className="text-muted-foreground">Manage your personal information and preferences</p>
         </div>
-
         {/* Profile Summary Card */}
         <Card>
           <CardContent className="p-6">
@@ -126,7 +113,6 @@ export default function StaffSettingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
@@ -134,7 +120,6 @@ export default function StaffSettingsPage() {
             <TabsTrigger value="preferences">Preferences</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
-
           {/* Profile Tab */}
           <TabsContent value="profile" className="space-y-4">
             <Card>
@@ -234,7 +219,6 @@ export default function StaffSettingsPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Employment Details</CardTitle>
@@ -260,7 +244,6 @@ export default function StaffSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Preferences Tab */}
           <TabsContent value="preferences" className="space-y-4">
             <Card>
@@ -302,7 +285,6 @@ export default function StaffSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           {/* Security Tab */}
           <TabsContent value="security" className="space-y-4">
             <Card>
@@ -378,7 +360,6 @@ export default function StaffSettingsPage() {
                 </div>
               </CardContent>
             </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Account Information</CardTitle>

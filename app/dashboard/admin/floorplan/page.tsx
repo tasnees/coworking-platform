@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,12 +40,10 @@ import {
   Printer,
   Share2
 } from "lucide-react"
-
 export default function FloorPlanPage() {
   const [activeTab, setActiveTab] = useState("main")
   const [zoomLevel, setZoomLevel] = useState(100)
   const [editMode, setEditMode] = useState(false)
-
   const floorStats = [
     {
       title: "Total Capacity",
@@ -70,13 +67,11 @@ export default function FloorPlanPage() {
       icon: Grid,
     },
   ]
-
   const floors = [
     { id: "main", name: "Main Floor", capacity: 80, occupancy: 52 },
     { id: "second", name: "Second Floor", capacity: 40, occupancy: 26 },
     { id: "basement", name: "Basement", capacity: 0, occupancy: 0 },
   ]
-
   const areas = [
     { id: 1, name: "Open Workspace", type: "workspace", capacity: 40, occupancy: 28, floor: "main" },
     { id: 2, name: "Meeting Room A", type: "meeting", capacity: 8, occupancy: 6, floor: "main" },
@@ -91,7 +86,6 @@ export default function FloorPlanPage() {
     { id: 11, name: "Conference Room", type: "meeting", capacity: 12, occupancy: 8, floor: "second" },
     { id: 12, name: "Quiet Zone", type: "workspace", capacity: 16, occupancy: 9, floor: "second" },
   ]
-
   const desks = [
     { id: "A1", type: "hot-desk", status: "occupied", member: "John Doe", area: 1, floor: "main" },
     { id: "A2", type: "hot-desk", status: "occupied", member: "Jane Smith", area: 1, floor: "main" },
@@ -110,7 +104,6 @@ export default function FloorPlanPage() {
     { id: "D4", type: "dedicated", status: "occupied", member: "Karen White", area: 12, floor: "second" },
     { id: "D5", type: "dedicated", status: "occupied", member: "James Taylor", area: 12, floor: "second" },
   ]
-
   const getAreaTypeLabel = (type: string) => {
     switch (type) {
       case "workspace":
@@ -127,7 +120,6 @@ export default function FloorPlanPage() {
         return type
     }
   }
-
   const getAreaTypeColor = (type: string) => {
     switch (type) {
       case "workspace":
@@ -144,7 +136,6 @@ export default function FloorPlanPage() {
         return "bg-gray-100 text-gray-800"
     }
   }
-
   const getDeskStatusColor = (status: string) => {
     switch (status) {
       case "occupied":
@@ -159,7 +150,6 @@ export default function FloorPlanPage() {
         return "bg-gray-100 text-gray-800"
     }
   }
-
   const getDeskTypeLabel = (type: string) => {
     switch (type) {
       case "hot-desk":
@@ -172,11 +162,9 @@ export default function FloorPlanPage() {
         return type
     }
   }
-
   const filteredAreas = areas.filter(area => area.floor === activeTab)
   const filteredDesks = desks.filter(desk => desk.floor === activeTab)
   const currentFloor = floors.find(floor => floor.id === activeTab)
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -210,7 +198,6 @@ export default function FloorPlanPage() {
             </Button>
           </div>
         </div>
-
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           {floorStats.map((stat, index) => (
@@ -233,7 +220,6 @@ export default function FloorPlanPage() {
             </Card>
           ))}
         </div>
-
         {/* Floor Plan Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between">
@@ -267,7 +253,6 @@ export default function FloorPlanPage() {
               </Button>
             </div>
           </div>
-
           {floors.map((floor) => (
             <TabsContent key={floor.id} value={floor.id} className="space-y-4">
               {/* Floor Plan Visualization */}
@@ -322,7 +307,6 @@ export default function FloorPlanPage() {
                         )}
                       </p>
                     </div>
-
                     {/* Sample visualization elements - these would be positioned correctly in a real implementation */}
                     {floor.id !== "basement" && (
                       <>
@@ -377,7 +361,6 @@ export default function FloorPlanPage() {
                   </div>
                 </CardFooter>
               </Card>
-
               {/* Areas List */}
               <Card>
                 <CardHeader>
@@ -492,7 +475,6 @@ export default function FloorPlanPage() {
                   </div>
                 </CardContent>
               </Card>
-
               {/* Desks List */}
               <Card>
                 <CardHeader>

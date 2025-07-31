@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Calendar, Clock, MapPin, Users, Edit, Trash2, Plus, Filter, Search, CheckCircle, XCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
-
 interface Booking {
   id: number
   resource: string
@@ -26,14 +24,12 @@ interface Booking {
   notes?: string
   cost: number
 }
-
 export default function BookingsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterType, setFilterType] = useState("all")
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
-
   // Mock data for bookings
   const currentBookings: Booking[] = [
     {
@@ -71,7 +67,6 @@ export default function BookingsPage() {
       cost: 15
     }
   ]
-
   const bookingHistory: Booking[] = [
     {
       id: 4,
@@ -106,7 +101,6 @@ export default function BookingsPage() {
       cost: 200
     }
   ]
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -121,7 +115,6 @@ export default function BookingsPage() {
         return null
     }
   }
-
   const getStatusBadge = (status: string) => {
     const variants = {
       confirmed: "default",
@@ -135,7 +128,6 @@ export default function BookingsPage() {
       </Badge>
     )
   }
-
   const getTypeIcon = (type: string) => {
     switch (type) {
       case "desk":
@@ -150,7 +142,6 @@ export default function BookingsPage() {
         return <MapPin className="h-4 w-4" />
     }
   }
-
   const filterBookings = (bookings: Booking[]) => {
     return bookings.filter(booking => {
       const matchesSearch = booking.resource.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,16 +151,13 @@ export default function BookingsPage() {
       return matchesSearch && matchesStatus && matchesType
     })
   }
-
   const handleCancelBooking = (bookingId: number) => {
     // In a real app, this would make an API call
     console.log(`Cancelling booking ${bookingId}`)
   }
-
   const handleEditBooking = (booking: Booking) => {
     setEditingBooking(booking)
   }
-
   const BookingCard = ({ booking, showActions = true }: { booking: Booking, showActions?: boolean }) => (
     <Card key={booking.id} className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -241,7 +229,6 @@ export default function BookingsPage() {
       </CardContent>
     </Card>
   )
-
   const stats = [
     {
       title: "Active Bookings",
@@ -264,7 +251,6 @@ export default function BookingsPage() {
       icon: CheckCircle
     }
   ]
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
@@ -357,7 +343,6 @@ export default function BookingsPage() {
             </DialogContent>
           </Dialog>
         </div>
-
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
@@ -372,7 +357,6 @@ export default function BookingsPage() {
             </Card>
           ))}
         </div>
-
         {/* Search and Filters */}
         <Card>
           <CardHeader>
@@ -421,14 +405,12 @@ export default function BookingsPage() {
             </div>
           </CardContent>
         </Card>
-
         {/* Bookings Tabs */}
         <Tabs defaultValue="current" className="space-y-4">
           <TabsList>
             <TabsTrigger value="current">Current Bookings</TabsTrigger>
             <TabsTrigger value="history">Booking History</TabsTrigger>
           </TabsList>
-          
           <TabsContent value="current" className="space-y-4">
             {filterBookings(currentBookings).length === 0 ? (
               <Card>
@@ -452,7 +434,6 @@ export default function BookingsPage() {
               </div>
             )}
           </TabsContent>
-          
           <TabsContent value="history" className="space-y-4">
             {filterBookings(bookingHistory).length === 0 ? (
               <Card>
@@ -474,7 +455,6 @@ export default function BookingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-
       {/* Edit Booking Dialog */}
       <Dialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
         <DialogContent className="sm:max-w-[425px]">

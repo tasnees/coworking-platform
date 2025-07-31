@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +10,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Eye, Edit, Trash2, User, Calendar, DollarSign, Clock, CheckCircle, XCircle } from "lucide-react"
-
 interface Membership {
   id: string
   memberName: string
@@ -25,7 +23,6 @@ interface Membership {
   paymentMethod: string
   notes?: string
 }
-
 const mockMemberships: Membership[] = [
   {
     id: "1",
@@ -92,7 +89,6 @@ const mockMemberships: Membership[] = [
     paymentMethod: "Debit Card"
   }
 ]
-
 export default function StaffMembershipsPage() {
   const [memberships, setMemberships] = useState<Membership[]>(mockMemberships)
   const [searchQuery, setSearchQuery] = useState("")
@@ -103,7 +99,6 @@ export default function StaffMembershipsPage() {
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [selectedMembership, setSelectedMembership] = useState<Membership | null>(null)
   const [editingMembership, setEditingMembership] = useState<Membership | null>(null)
-
   // Form states for create/edit
   const [formData, setFormData] = useState({
     memberName: "",
@@ -117,7 +112,6 @@ export default function StaffMembershipsPage() {
     paymentMethod: "Credit Card",
     notes: ""
   })
-
   const filteredMemberships = memberships.filter(membership => {
     const matchesSearch = membership.memberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          membership.memberEmail.toLowerCase().includes(searchQuery.toLowerCase())
@@ -125,20 +119,17 @@ export default function StaffMembershipsPage() {
     const matchesType = typeFilter === "all" || membership.type === typeFilter
     return matchesSearch && matchesStatus && matchesType
   })
-
   const totalMemberships = memberships.length
   const activeMemberships = memberships.filter(m => m.status === "active").length
   const expiredMemberships = memberships.filter(m => m.status === "expired").length
   const pendingMemberships = memberships.filter(m => m.status === "pending").length
   const totalRevenue = memberships.filter(m => m.status === "active").reduce((sum, m) => sum + m.price, 0)
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount)
   }
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -146,7 +137,6 @@ export default function StaffMembershipsPage() {
       day: 'numeric'
     })
   }
-
   const getStatusBadgeVariant = (status: Membership["status"]) => {
     switch (status) {
       case "active": return "default"
@@ -156,7 +146,6 @@ export default function StaffMembershipsPage() {
       default: return "default"
     }
   }
-
   const getTypeBadgeVariant = (type: Membership["type"]) => {
     switch (type) {
       case "basic": return "outline"
@@ -165,7 +154,6 @@ export default function StaffMembershipsPage() {
       default: return "default"
     }
   }
-
   const handleCreateMembership = () => {
     const newMembership: Membership = {
       id: Date.now().toString(),
@@ -186,7 +174,6 @@ export default function StaffMembershipsPage() {
       notes: ""
     })
   }
-
   const handleEditMembership = () => {
     if (editingMembership) {
       setMemberships(memberships.map(m => 
@@ -196,13 +183,11 @@ export default function StaffMembershipsPage() {
       setEditingMembership(null)
     }
   }
-
   const handleDeleteMembership = (id: string) => {
     if (confirm("Are you sure you want to delete this membership?")) {
       setMemberships(memberships.filter(m => m.id !== id))
     }
   }
-
   const openEditDialog = (membership: Membership) => {
     setEditingMembership(membership)
     setFormData({
@@ -219,12 +204,10 @@ export default function StaffMembershipsPage() {
     })
     setShowEditDialog(true)
   }
-
   const openViewDialog = (membership: Membership) => {
     setSelectedMembership(membership)
     setShowViewDialog(true)
   }
-
   return (
     <DashboardLayout userRole="staff">
       <div className="p-6">
@@ -232,7 +215,6 @@ export default function StaffMembershipsPage() {
           <h1 className="text-3xl font-bold">Membership Management</h1>
           <p className="text-muted-foreground">Manage member subscriptions and memberships</p>
         </div>
-
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <Card>
@@ -272,7 +254,6 @@ export default function StaffMembershipsPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Filters and Actions */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
@@ -314,7 +295,6 @@ export default function StaffMembershipsPage() {
             Add Membership
           </Button>
         </div>
-
         {/* Memberships List */}
         <div className="border rounded-lg">
           <div className="divide-y">
@@ -374,7 +354,6 @@ export default function StaffMembershipsPage() {
             ))}
           </div>
         </div>
-
         {/* Create/Edit Dialog */}
         <Dialog open={showCreateDialog || showEditDialog} onOpenChange={showCreateDialog ? setShowCreateDialog : setShowEditDialog}>
           <DialogContent className="max-w-2xl">
@@ -520,7 +499,6 @@ export default function StaffMembershipsPage() {
             </div>
           </DialogContent>
         </Dialog>
-
         {/* View Dialog */}
         <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
           <DialogContent>

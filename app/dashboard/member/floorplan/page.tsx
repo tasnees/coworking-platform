@@ -1,22 +1,18 @@
 "use client"
-
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import DashboardLayout from "@/components/dashboard-layout"
 import { ZoomIn, ZoomOut, Maximize, Users, Square, Grid } from "lucide-react"
-
 export default function FloorPlanPage() {
   const [activeTab, setActiveTab] = useState("main")
   const [zoomLevel, setZoomLevel] = useState(100)
-
   const floors = [
     { id: "main", name: "Main Floor", capacity: 80, occupancy: 52 },
     { id: "second", name: "Second Floor", capacity: 40, occupancy: 26 },
     { id: "basement", name: "Basement", capacity: 0, occupancy: 0 },
   ]
-
   const areas = [
     { id: 1, name: "Open Workspace", type: "workspace", capacity: 40, occupancy: 28, floor: "main" },
     { id: 2, name: "Meeting Room A", type: "meeting", capacity: 8, occupancy: 6, floor: "main" },
@@ -31,7 +27,6 @@ export default function FloorPlanPage() {
     { id: 11, name: "Conference Room", type: "meeting", capacity: 12, occupancy: 8, floor: "second" },
     { id: 12, name: "Quiet Zone", type: "workspace", capacity: 16, occupancy: 9, floor: "second" },
   ]
-
   const desks = [
     { id: "A1", type: "hot-desk", status: "occupied", member: "John Doe", area: 1, floor: "main" },
     { id: "A2", type: "hot-desk", status: "occupied", member: "Jane Smith", area: 1, floor: "main" },
@@ -50,11 +45,9 @@ export default function FloorPlanPage() {
     { id: "D4", type: "dedicated", status: "occupied", member: "Karen White", area: 12, floor: "second" },
     { id: "D5", type: "dedicated", status: "occupied", member: "James Taylor", area: 12, floor: "second" },
   ]
-
   const filteredAreas = areas.filter(area => area.floor === activeTab)
   const filteredDesks = desks.filter(desk => desk.floor === activeTab)
   const currentFloor = floors.find(floor => floor.id === activeTab)
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">

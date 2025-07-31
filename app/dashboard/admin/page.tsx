@@ -1,5 +1,4 @@
 "use client"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -8,10 +7,8 @@ import DashboardLayout from "@/components/dashboard-layout"
 import { Users, Calendar, DollarSign, TrendingUp, MapPin, Clock, Wifi, Coffee, BarChart, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-
 export default function AdminDashboard() {
   const router = useRouter()
-
   const stats = [
     {
       title: "Total Members",
@@ -42,26 +39,22 @@ export default function AdminDashboard() {
       icon: TrendingUp,
     },
   ]
-
   const recentBookings = [
     { id: 1, member: "John Doe", resource: "Desk A-12", time: "9:00 AM - 5:00 PM", status: "active" },
     { id: 2, member: "Jane Smith", resource: "Meeting Room B", time: "2:00 PM - 4:00 PM", status: "upcoming" },
     { id: 3, member: "Mike Johnson", resource: "Private Office 3", time: "10:00 AM - 6:00 PM", status: "active" },
     { id: 4, member: "Sarah Wilson", resource: "Desk C-05", time: "1:00 PM - 7:00 PM", status: "upcoming" },
   ]
-
   const spaceStatus = [
     { name: "Hot Desks", total: 50, occupied: 38, available: 12 },
     { name: "Meeting Rooms", total: 8, occupied: 3, available: 5 },
     { name: "Private Offices", total: 12, occupied: 9, available: 3 },
     { name: "Phone Booths", total: 6, occupied: 2, available: 4 },
   ]
-
   const handleLogout = () => {
     localStorage.removeItem("user")
     router.push("/auth/login")
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -70,7 +63,6 @@ export default function AdminDashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground">Welcome back! Here's what's happening at your coworking space today.</p>
         </div>
-
         {/* Stats Grid */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
@@ -91,7 +83,6 @@ export default function AdminDashboard() {
             </Card>
           ))}
         </div>
-
         <div className="grid gap-6 md:grid-cols-2">
           {/* Recent Bookings */}
           <Card>
@@ -115,7 +106,6 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-
           {/* Space Utilization */}
           <Card>
             <CardHeader>
@@ -139,7 +129,6 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
-
         {/* Quick Actions */}
         <Card>
           <CardHeader>
@@ -175,7 +164,6 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-
         {/* Additional Actions */}
         <Card>
           <CardHeader>
@@ -199,7 +187,6 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-
         {/* Logout Button */}
         <div className="flex justify-end">
           <Button variant="outline" onClick={handleLogout}>

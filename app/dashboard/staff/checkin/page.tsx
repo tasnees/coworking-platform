@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from 'react'
 import DashboardLayout from '@/components/dashboard-layout'
 import { Button } from '@/components/ui/button'
@@ -10,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Search, User, Clock, CheckCircle, LogOut, LogIn, AlertCircle, Calendar, Users, TrendingUp, Clock3 } from 'lucide-react'
-
 interface CheckInRecord {
   id: string
   memberId: string
@@ -24,7 +22,6 @@ interface CheckInRecord {
   location: string
   notes?: string
 }
-
 interface Member {
   id: string
   name: string
@@ -34,7 +31,6 @@ interface Member {
   lastVisit?: Date
   totalVisits: number
 }
-
 export default function StaffCheckInPage() {
   const [checkIns, setCheckIns] = useState<CheckInRecord[]>([])
   const [members, setMembers] = useState<Member[]>([])
@@ -43,7 +39,6 @@ export default function StaffCheckInPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [showCheckInDialog, setShowCheckInDialog] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-
   // Mock data
   useEffect(() => {
     const mockMembers: Member[] = [
@@ -53,22 +48,18 @@ export default function StaffCheckInPage() {
       { id: '4', name: 'David Brown', email: 'david@design.com', membershipType: 'premium', status: 'active', totalVisits: 34, lastVisit: new Date('2024-07-26') },
       { id: '5', name: 'Emma Davis', email: 'emma@freelance.net', membershipType: 'basic', status: 'active', totalVisits: 8, lastVisit: new Date('2024-07-28') },
     ]
-
     const mockCheckIns: CheckInRecord[] = [
       { id: 'ci1', memberId: '1', memberName: 'Alice Johnson', memberEmail: 'alice@company.com', membershipType: 'premium', checkInTime: new Date('2024-07-28T08:30:00'), status: 'checked-in', location: 'Main Space' },
       { id: 'ci2', memberId: '3', memberName: 'Carol Williams', memberEmail: 'carol@tech.co', membershipType: 'enterprise', checkInTime: new Date('2024-07-28T09:15:00'), checkOutTime: new Date('2024-07-28T12:30:00'), duration: '3h 15m', status: 'checked-out', location: 'Meeting Room A' },
       { id: 'ci3', memberId: '5', memberName: 'Emma Davis', memberEmail: 'emma@freelance.net', membershipType: 'basic', checkInTime: new Date('2024-07-28T10:00:00'), status: 'checked-in', location: 'Quiet Zone' },
     ]
-
     setMembers(mockMembers)
     setCheckIns(mockCheckIns)
   }, [])
-
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
-
   const handleCheckIn = (member: Member, location: string) => {
     const newCheckIn: CheckInRecord = {
       id: `ci${Date.now()}`,
@@ -83,7 +74,6 @@ export default function StaffCheckInPage() {
     setCheckIns(prev => [newCheckIn, ...prev])
     setShowCheckInDialog(false)
   }
-
   const handleCheckOut = (checkIn: CheckInRecord) => {
     const checkOutTime = new Date()
     const duration = calculateDuration(checkIn.checkInTime, checkOutTime)
@@ -93,25 +83,21 @@ export default function StaffCheckInPage() {
         : ci
     ))
   }
-
   const calculateDuration = (start: Date, end: Date): string => {
     const diff = end.getTime() - start.getTime()
     const hours = Math.floor(diff / (1000 * 60 * 60))
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`
   }
-
   const filteredMembers = members.filter(member =>
     member.status === 'active' &&
     (member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
      member.email.toLowerCase().includes(searchTerm.toLowerCase()))
   )
-
   const filteredCheckIns = checkIns.filter(checkIn => {
     if (filterStatus === 'all') return true
     return checkIn.status === filterStatus
   })
-
   const currentCheckIns = checkIns.filter(ci => ci.status === 'checked-in')
   const todayCheckIns = checkIns.filter(ci => 
     ci.checkInTime.toDateString() === new Date().toDateString()
@@ -122,13 +108,11 @@ export default function StaffCheckInPage() {
     }
     return total + (new Date().getTime() - ci.checkInTime.getTime())
   }, 0)
-
   const formatDuration = (ms: number): string => {
     const hours = Math.floor(ms / (1000 * 60 * 60))
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`
   }
-
   const getMembershipBadgeColor = (type: string) => {
     switch (type) {
       case 'basic': return 'bg-blue-100 text-blue-800'
@@ -137,7 +121,6 @@ export default function StaffCheckInPage() {
       default: return 'bg-gray-100 text-gray-800'
     }
   }
-
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'checked-in': return 'bg-green-100 text-green-800'
@@ -145,7 +128,6 @@ export default function StaffCheckInPage() {
       default: return 'bg-gray-100 text-gray-800'
     }
   }
-
   return (
     <DashboardLayout userRole="staff">
       <div className="p-6 space-y-6">
@@ -159,7 +141,6 @@ export default function StaffCheckInPage() {
             {currentTime.toLocaleTimeString()}
           </div>
         </div>
-
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -172,7 +153,6 @@ export default function StaffCheckInPage() {
               <p className="text-xs text-muted-foreground">Active members in space</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Check-ins</CardTitle>
@@ -183,7 +163,6 @@ export default function StaffCheckInPage() {
               <p className="text-xs text-muted-foreground">Total visits today</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Time Today</CardTitle>
@@ -194,7 +173,6 @@ export default function StaffCheckInPage() {
               <p className="text-xs text-muted-foreground">Combined member hours</p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Members</CardTitle>
@@ -206,7 +184,6 @@ export default function StaffCheckInPage() {
             </CardContent>
           </Card>
         </div>
-
         <div className="grid gap-6 md:grid-cols-2">
           {/* Quick Check-in */}
           <Card>
@@ -224,7 +201,6 @@ export default function StaffCheckInPage() {
                   className="pl-8"
                 />
               </div>
-              
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {filteredMembers.map(member => (
                   <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
@@ -250,7 +226,6 @@ export default function StaffCheckInPage() {
               </div>
             </CardContent>
           </Card>
-
           {/* Current Check-ins */}
           <Card>
             <CardHeader>
@@ -290,7 +265,6 @@ export default function StaffCheckInPage() {
             </CardContent>
           </Card>
         </div>
-
         {/* Check-in History */}
         <Card>
           <CardHeader>
@@ -310,7 +284,6 @@ export default function StaffCheckInPage() {
                 </SelectContent>
               </Select>
             </div>
-
             <Table>
               <TableHeader>
                 <TableRow>
@@ -354,7 +327,6 @@ export default function StaffCheckInPage() {
             </Table>
           </CardContent>
         </Card>
-
         {/* Check-in Dialog */}
         <Dialog open={showCheckInDialog} onOpenChange={setShowCheckInDialog}>
           <DialogContent>

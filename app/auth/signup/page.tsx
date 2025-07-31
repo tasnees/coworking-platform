@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -8,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-
 export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -17,10 +15,8 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (!email || !password || !name || !confirmPassword) {
       toast({
         title: "Error",
@@ -29,7 +25,6 @@ export default function SignupPage() {
       })
       return
     }
-
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -38,7 +33,6 @@ export default function SignupPage() {
       })
       return
     }
-
     if (password.length < 6) {
       toast({
         title: "Error",
@@ -47,21 +41,16 @@ export default function SignupPage() {
       })
       return
     }
-
     setIsLoading(true)
-    
     try {
       // TODO: Implement actual signup API endpoint
       // For now, we'll simulate the signup
       await new Promise(resolve => setTimeout(resolve, 1000))
-      
       toast({
         title: "Account created",
         description: "Your account has been created successfully. Please sign in.",
       })
-      
       router.push('/auth/login')
-      
     } catch (error) {
       console.error("Signup error:", error)
       toast({
@@ -73,7 +62,6 @@ export default function SignupPage() {
       setIsLoading(false)
     }
   }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">

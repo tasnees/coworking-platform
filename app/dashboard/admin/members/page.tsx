@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -47,7 +46,6 @@ import {
   UserPlus,
 } from "lucide-react";
 import { saveAs } from "file-saver";
-
 export default function MembersPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("active");
@@ -149,7 +147,6 @@ export default function MembersPage() {
       },
     },
   ]);
-
   // Add Member form state
   const [newMember, setNewMember] = useState({
     name: "",
@@ -160,16 +157,13 @@ export default function MembersPage() {
     autoRenew: false,
   });
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-
   // Edit Member state
   const [editingMember, setEditingMember] = useState<any>(null);
   const [editDialogOpenId, setEditDialogOpenId] = useState<number | null>(null);
-
   // Dialog state for Change Plan, History, Invoice
   const [changePlanOpenId, setChangePlanOpenId] = useState<number | null>(null);
   const [historyOpenId, setHistoryOpenId] = useState<number | null>(null);
   const [invoiceOpenId, setInvoiceOpenId] = useState<number | null>(null);
-
   // Change Plan handler
   const [selectedPlan, setSelectedPlan] = useState("");
   const [selectedEffective, setSelectedEffective] = useState("next-billing");
@@ -199,7 +193,6 @@ export default function MembersPage() {
     setSelectedEffective("next-billing");
     router.back();
   };
-
   // Add Member handler
   const handleAddMember = () => {
     setMembers([
@@ -224,7 +217,6 @@ export default function MembersPage() {
     });
     setAddDialogOpen(false);
   };
-
   // Edit Member handler
   const handleEditMember = (id: number) => {
     setMembers(members.map(m => (m.id === id ? { ...m, ...editingMember } : m)));
@@ -232,12 +224,10 @@ export default function MembersPage() {
     setEditDialogOpenId(null);
     router.back();
   };
-
   // Reactivate Member handler
   const handleReactivateMember = (id: number) => {
     setMembers(members.map(m => m.id === id ? { ...m, status: "active" } : m));
   };
-
   // Export History handler (dummy CSV)
   const handleExportHistory = (member: any) => {
     const csv = `Type,Details,Date
@@ -248,7 +238,6 @@ Payment,${member.amount},${member.nextBilling || ""}
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     saveAs(blob, `${member.name}-history.csv`);
   };
-
   // Invoice handlers (dummy)
   const handleViewInvoice = (invoiceId: string) => {
     // You can implement a modal or PDF viewer here
@@ -259,7 +248,6 @@ Payment,${member.amount},${member.nextBilling || ""}
     const blob = new Blob([`Invoice: ${invoiceId}`], { type: "text/plain;charset=utf-8" });
     saveAs(blob, `${invoiceId}.txt`);
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -272,12 +260,10 @@ Payment,${member.amount},${member.nextBilling || ""}
         return "secondary";
     }
   };
-
   const filteredMembers = (tab: string) => {
     if (tab === "all") return members;
     return members.filter((member) => member.status === tab);
   };
-
   // Renew Membership handler (updated: no alert, go back after renewal)
   const handleRenewMembership = (id: number) => {
     setMembers(members =>
@@ -292,7 +278,6 @@ Payment,${member.amount},${member.nextBilling || ""}
     );
     router.back(); // Go back to the members page after renewal
   };
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -428,7 +413,6 @@ Payment,${member.amount},${member.nextBilling || ""}
             </DialogContent>
           </Dialog>
         </div>
-
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
@@ -490,7 +474,6 @@ Payment,${member.amount},${member.nextBilling || ""}
             </CardContent>
           </Card>
         </div>
-
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
@@ -499,7 +482,6 @@ Payment,${member.amount},${member.nextBilling || ""}
             <TabsTrigger value="expired">Expired</TabsTrigger>
             <TabsTrigger value="inactive">Inactive</TabsTrigger>
           </TabsList>
-
           <TabsContent value={activeTab} className="space-y-4">
             <Card>
               <CardContent>
@@ -811,7 +793,6 @@ Payment,${member.amount},${member.nextBilling || ""}
                           </Dialog>
                         </div>
                       </div>
-
                       <div className="border-t pt-4">
                         <div className="flex items-center justify-between">
                           <div>
@@ -837,7 +818,6 @@ Payment,${member.amount},${member.nextBilling || ""}
                             </Label>
                           </div>
                         </div>
-
                         <div className="mt-4 flex flex-wrap gap-2">
                           {/* Renew Membership */}
                           {member.status === "active" && (
