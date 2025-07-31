@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import DashboardLayout from "@/components/dashboard-layout"
-import { Calendar, Clock, MapPin, Users, Edit, Trash2, Plus, Filter, Search, CheckCircle, XCircle, AlertCircle } from "lucide-react"
+import { Calendar, Clock, MapPin, Users, AlertCircle, Loader, CheckCircle, XCircle, Edit, Trash2, Plus, Search, Filter } from "lucide-react"
 import Link from "next/link"
 interface Booking {
   id: number

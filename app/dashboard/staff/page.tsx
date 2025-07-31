@@ -10,13 +10,21 @@ import {
   Users, 
   Calendar, 
   Clock, 
+  CheckCircle, 
+  XCircle, 
+  AlertCircle, 
+  Loader2 as Loader,
   CreditCard, 
   Eye, 
   Edit, 
   UserPlus,
-  Settings,
-  Activity,
-  Phone
+  Trash2,
+  Search,
+  Filter,
+  Plus,
+  PhoneCall,
+  ActivitySquare,
+  Settings2
 } from "lucide-react"
 import ProtectedRoute from "../../../components/ProtectedRoute"
 interface Booking {
@@ -280,7 +288,7 @@ function StaffDashboardContent() {
       case 'meeting_room':
         return <Users className="h-4 w-4" />
       case 'phone_booth':
-        return <Phone className="h-4 w-4" />
+        return <PhoneCall className="h-4 w-4" />
       case 'event_space':
         return <Users className="h-4 w-4" />
       default:
@@ -308,7 +316,7 @@ function StaffDashboardContent() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
+                    <ActivitySquare className="h-5 w-5" />
                     Recent Activity
                   </CardTitle>
                 </CardHeader>
@@ -363,7 +371,7 @@ function StaffDashboardContent() {
                     className="w-full"
                     onClick={() => setShowManageResourcesDialog(true)}
                   >
-                    <Settings className="h-4 w-4 mr-2" />
+                    <Settings2 className="h-4 w-4 mr-2" />
                     Manage Resources
                   </Button>
                 </CardContent>

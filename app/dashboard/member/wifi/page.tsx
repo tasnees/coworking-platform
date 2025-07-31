@@ -773,7 +773,7 @@ export default function WifiSettingsPage() {
                   <CardTitle>WiFi Access Codes</CardTitle>
                   <CardDescription>Generate and manage temporary WiFi access codes</CardDescription>
                 </div>
-                <Dialog open={generateCodeDialog} onOpenChange={setGenerateCodeDialog}>
+                <Dialog>
                   <DialogTrigger asChild>
                     <Button>Generate Code</Button>
                   </DialogTrigger>
