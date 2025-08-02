@@ -5,7 +5,6 @@ const nextConfig = {
   // Image configuration
   images: {
     domains: ['localhost'],
-    // No need for unoptimized: true since we're not doing static exports
   },
   
   // Webpack configuration
@@ -14,20 +13,17 @@ const nextConfig = {
     return config;
   },
   
-  // Disable server components external packages (if needed)
-  transpilePackages: [],
-  
-  // Enable server actions and other experimental features
+  // Enable server actions
   experimental: {
     serverActions: true,
   },
   
-  // Skip type checking during build (can help with build speed)
+  // TypeScript configuration
   typescript: {
     ignoreBuildErrors: false,
   },
   
-  // Skip ESLint during build (can help with build speed)
+  // ESLint configuration
   eslint: {
     ignoreDuringBuilds: true,
   },

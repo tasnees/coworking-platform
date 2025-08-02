@@ -1,19 +1,30 @@
+# Render Configuration File
+# Docs: https://render.com/docs/deploy-next-js#deploy-nextjs-with-render
+
 services:
   - type: web
     name: coworking-platform
     env: node
-    buildCommand: pnpm install && pnpm run build
+    buildCommand: pnpm install --no-frozen-lockfile && pnpm build
     startCommand: pnpm start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NODE_VERSION
-        value: 18.17.1
-      - key: NPM_CONFIG_PRODUCTION
-        value: false
-      - key: MONGODB_URI
-        required: true
-      - key: JWT_SECRET
-        required: true
-      - key: NEXTAUTH_SECRET
-        required: true
-      - key: NEXTAUTH_URL
-        required: true
+        value: 18.x
+      - key: PNPM_VERSION
+        value: 8.10.0
+    # Uncomment and add your environment variables below
+    # - key: DATABASE_URL
+    #   sync: false
+    # - key: NEXTAUTH_SECRET
+    #   sync: false
+    # - key: NEXTAUTH_URL
+    #   sync: false
+
+# Uncomment to create a MongoDB database
+# databases:
+#   - name: coworking-db
+#     databaseName: coworking
+#     user: coworking-user
+#     plan: free
