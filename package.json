@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "pnpm install --no-frozen-lockfile && next build"
   },
   "dependencies": {
     "@builder.io/sdk": "^6.1.2",
@@ -96,7 +97,8 @@
     "typescript": "5.9.2"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "pnpm": "8.10.0"
   },
   "packageManager": "pnpm@8.10.0"
 }
