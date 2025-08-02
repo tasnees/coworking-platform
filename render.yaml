@@ -6,14 +6,15 @@ services:
     name: coworking-platform
     env: node
     buildCommand: |
-      pnpm install --no-frozen-lockfile
+      corepack enable
+      pnpm install --no-frozen-lockfile --shamefully-hoist
       pnpm build
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
-        value: 18.x
+        value: 22.x
       - key: PNPM_VERSION
         value: 8.10.0
       - key: NPM_CONFIG_PRODUCTION
