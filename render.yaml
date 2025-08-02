@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: coworking-platform
+    env: node
+    buildCommand: pnpm install && pnpm run build
+    startCommand: pnpm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.1
+      - key: NPM_CONFIG_PRODUCTION
+        value: false
+      - key: MONGODB_URI
+        required: true
+      - key: JWT_SECRET
+        required: true
+      - key: NEXTAUTH_SECRET
+        required: true
+      - key: NEXTAUTH_URL
+        required: true

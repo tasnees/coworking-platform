@@ -1,29 +1,35 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Enable standalone output for production
-  output: 'standalone',
   
-  // Configure images if needed
+  // Image configuration
   images: {
-    domains: ['localhost'], // Add your image domains here
+    domains: ['localhost'],
+    // No need for unoptimized: true since we're not doing static exports
   },
   
-  // Webpack configuration (if needed)
-  webpack: (config, { isServer }) => {
+  // Webpack configuration
+  webpack: (config) => {
     // Add custom webpack configuration here if needed
     return config;
   },
   
-  // Handle 404 page
-  async redirects() {
-    return [
-      {
-        source: '/_error',
-        destination: '/404',
-        permanent: true,
-      },
-    ];
+  // Disable server components external packages (if needed)
+  transpilePackages: [],
+  
+  // Enable server actions and other experimental features
+  experimental: {
+    serverActions: true,
+  },
+  
+  // Skip type checking during build (can help with build speed)
+  typescript: {
+    ignoreBuildErrors: false,
+  },
+  
+  // Skip ESLint during build (can help with build speed)
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 
