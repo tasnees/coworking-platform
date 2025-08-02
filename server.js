@@ -1,216 +1,310 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const path = require('path');
-require('dotenv').config();
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
+const compression = require('compression');
+const morgan = require('morgan');
+const fs = require('fs');
+const rfs = require('rotating-file-stream');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Force Atlas connection - use your actual Atlas URL
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority';
-
-// MongoDB connection
-mongoose.connect(MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
-
-// User Schema
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'staff', 'member'], default: 'member' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
-}));
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Authentication endpoints
-app.post('/api/auth/login', async (req, res) => {
+// Database connection
+const connectDB = async () => {
   try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-
-    const user = await User.findOne({ email });
-    
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    
-    if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      token,
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
     });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { email, password, name, role = 'member' } = req.body;
-
-    if (!email || !password || !name) {
-      return res.status(400).json({ error: 'All fields required' });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ error: 'User already exists' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
-      email,
-      name,
-      password: hashedPassword,
-      role,
-    });
-
-    await newUser.save();
-
-    const token = jwt.sign(
-      { id: newUser._id, email: newUser.email, role: newUser.role },
-      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
-      { expiresIn: '24h' }
-    );
-
-    res.json({
-      user: {
-        id: newUser._id,
-        email: newUser.email,
-        name: newUser.name,
-        role: newUser.role,
-      },
-      token,
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-app.get('/api/auth/me', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader) {
-      return res.status(401).json({ error: 'No token provided' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-this-in-production');
-    const user = await User.findById(decoded.id).select('-password');
-    
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    res.json({ user });
-  } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-});
-
-// Get all users (admin only)
-app.get('/api/users', async (req, res) => {
-  try {
-    const users = await User.find().select('-password');
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    message: 'Server is running',
-    database: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// MongoDB connection
-mongoose.connection.on('connected', () => {
-  console.log('Connected to MongoDB');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('MongoDB connection error:', err);
-});
-
-// Seed initial users (run once)
-const seedUsers = async () => {
-  try {
-    const existingUsers = await User.find();
-    if (existingUsers.length === 0) {
-      const hashedPassword1 = await bcrypt.hash('admin123', 10);
-      const hashedPassword2 = await bcrypt.hash('staff123', 10);
-      const hashedPassword3 = await bcrypt.hash('member123', 10);
-
-      await User.create([
-        { email: 'admin@example.com', name: 'Admin User', password: hashedPassword1, role: 'admin' },
-        { email: 'staff@example.com', name: 'Staff User', password: hashedPassword2, role: 'staff' },
-        { email: 'member@example.com', name: 'Member User', password: hashedPassword3, role: 'member' }
-      ]);
-      console.log('Seed users created successfully');
-    }
-  } catch (error) {
-    console.error('Error seeding users:', error);
+    console.log('MongoDB connected successfully');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
   }
 };
 
-// Serve static files (your React frontend)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+// Security middleware
+app.use(helmet()); // Set security HTTP headers
+app.use(mongoSanitize()); // Sanitize data against NoSQL injection
+app.use(xss()); // Prevent XSS attacks
+app.use(hpp()); // Prevent parameter pollution
+app.use(compression()); // Compress responses
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later',
+});
+app.use('/api', limiter);
+
+// Logging
+const logDirectory = path.join(__dirname, 'logs');
+fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory);
+const accessLogStream = rfs.createStream('access.log', {
+  interval: '1d',
+  path: logDirectory,
+});
+app.use(isProduction ? morgan('combined', { stream: accessLogStream }) : morgan('dev'));
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  optionsSuccessStatus: 200, // For legacy browser support
+};
+app.use(cors(corsOptions));
+
+// Body parser, reading data from body into req.body
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// User Schema and Model
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true, trim: true, lowercase: true },
+  name: { type: String, required: true, trim: true },
+  password: { type: String, required: true, select: false },
+  role: { type: String, enum: ['admin', 'staff', 'member'], default: 'member' },
+  passwordChangedAt: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now, select: false },
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+});
+
+// Indexes for better query performance
+userSchema.index({ email: 1 });
+
+// Document middleware to hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined;
+  next();
+});
+
+// Instance method to check password
+userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+const User = mongoose.model('User', userSchema);
+
+// Routes
+app.post('/api/auth/register', async (req, res, next) => {
+  try {
+    const { email, password, name } = req.body;
+    
+    // Input validation
+    if (!email || !password || !name) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide email, password, and name',
+      });
+    }
+    
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'User already exists',
+      });
+    }
+    
+    const user = await User.create({
+      email,
+      password,
+      name,
+    });
+    
+    // Remove password from output
+    user.password = undefined;
+    
+    // Create token
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+    
+    res.status(201).json({
+      status: 'success',
+      token,
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/auth/login', async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1) Check if email and password exist
+    if (!email || !password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide email and password',
+      });
+    }
+    
+    // 2) Check if user exists && password is correct
+    const user = await User.findOne({ email }).select('+password');
+    
+    if (!user || !(await user.correctPassword(password, user.password))) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Incorrect email or password',
+      });
+    }
+    
+    // 3) If everything ok, send token to client
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+    
+    // Remove password from output
+    user.password = undefined;
+    
+    res.status(200).json({
+      status: 'success',
+      token,
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Protect routes middleware
+const protect = async (req, res, next) => {
+  try {
+    // 1) Getting token and check if it's there
+    let token;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'You are not logged in! Please log in to get access.',
+      });
+    }
+
+    // 2) Verification token
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+
+    // 3) Check if user still exists
+    const currentUser = await User.findById(decoded.id);
+    if (!currentUser) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'The user belonging to this token no longer exists.',
+      });
+    }
+
+    // GRANT ACCESS TO PROTECTED ROUTE
+    req.user = currentUser;
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Example protected route
+app.get('/api/users/me', protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.status(200).json({
+      status: 'success',
+      data: {
+        user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  // Set static folder
+  app.use(express.static(path.join(__dirname, '.next', 'static')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '.next', 'server', 'pages', 'index.html'));
+  });
+} else {
+  app.get('/', (req, res) => {
+    res.send('API is running...');
+  });
+}
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  
+  err.statusCode = err.statusCode || 500;
+  err.status = err.status || 'error';
+  
+  res.status(err.statusCode).json({
+    status: err.status,
+    message: err.message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! Shutting down...');
+  console.error(err.name, err.message);
+  server.close(() => {
+    process.exit(1);
+  });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! Shutting down...');
+  console.error(err.name, err.message);
+  process.exit(1);
 });
 
 // Start server
-app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-  await seedUsers();
-  console.log('Authentication endpoints:');
-  console.log('- POST /api/auth/login');
-  console.log('- POST /api/auth/register');
-  console.log('- GET /api/auth/me');
-  console.log('- GET /api/users');
+const server = app.listen(PORT, async () => {
+  await connectDB();
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+});
+
+// Handle SIGTERM for graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM RECEIVED. Shutting down gracefully');
+  server.close(() => {
+    console.log('Process terminated!');
+  });
 });

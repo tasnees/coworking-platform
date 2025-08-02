@@ -5,7 +5,9 @@ function React({
   text = defaultProps.text,
 }: Props) {
   return (
-
+    <div className={styles.reactComponent}>
+      {text}
+    </div>
   );
 }
 

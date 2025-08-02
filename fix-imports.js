@@ -5,7 +5,8 @@ const path = require('path');
 const SKIP_FILES = [
   'app/500.tsx',
   'app/not-found.tsx',
-  'app/layout.tsx'
+  'app/layout.tsx',
+  'app/error.tsx'
 ];
 
 function cleanFile(filePath) {
@@ -40,14 +41,16 @@ function processDirectory(directory) {
   
   for (const file of files) {
     const fullPath = path.join(directory, file.name);
-    const relativePath = path.relative(process.cwd(), fullPath).replace(/\\/g, '/');
+    const relativePath = path.relative(process.cwd(), fullPath);
+    
+    if (SKIP_FILES.includes(relativePath.replace(/\\/g, '/'))) {
+      console.log(`⏩ Skipping: ${relativePath}`);
+      continue;
+    }
     
     if (file.isDirectory()) {
       count += processDirectory(fullPath);
-    } else if (
-      file.name.match(/\.(js|jsx|ts|tsx)$/) && 
-      !SKIP_FILES.includes(relativePath)
-    ) {
+    } else if (file.isFile() && (file.name.endsWith('.tsx') || file.name.endsWith('.jsx') || file.name.endsWith('.ts') || file.name.endsWith('.js'))) {
       if (cleanFile(fullPath)) {
         count++;
       }
@@ -61,5 +64,12 @@ function processDirectory(directory) {
 console.log('🔍 Searching for files with next/document imports...');
 const filesCleaned = processDirectory('app');
 
-console.log(`\n✅ Cleaned ${filesCleaned} files.`);
-console.log('Please review the changes and commit them to your repository.');
+if (filesCleaned > 0) {
+  console.log(`\n✨ Successfully cleaned ${filesCleaned} files.`);
+  console.log('✅ You can now try building the project again.');
+} else {
+  console.log('\n✅ No files needed cleaning.');
+  console.log('The issue might be in the build cache. Try running:');
+  console.log('  1. rmdir /s /q .next');
+  console.log('  2. npm run build');
+}
