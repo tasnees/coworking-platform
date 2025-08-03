@@ -1,6 +1,6 @@
-import NextAuth from "next-auth";
+import NextAuth, { type DefaultSession, type DefaultUser } from "next-auth";
+import type { JWT } from "next-auth/jwt";
 import Auth0Provider from "next-auth/providers/auth0";
-import { AuthOptions } from "next-auth";
 import { isUserRole, UserRole } from "@/lib/auth-types";
 
 // Extend the Profile type to include our custom claim
@@ -10,7 +10,8 @@ declare module "next-auth/providers/auth0" {
   }
 }
 
-export const authOptions: AuthOptions = {
+// Create the auth options object with proper types
+const authOptions = {
   providers: [
     Auth0Provider({
       clientId: process.env.AUTH0_CLIENT_ID!,
@@ -21,7 +22,7 @@ export const authOptions: AuthOptions = {
           scope: 'openid profile email',
         },
       },
-      profile(profile) {
+      profile(profile: any) {
         return {
           id: profile.sub,
           name: profile.name || profile.nickname || '',
@@ -34,20 +35,20 @@ export const authOptions: AuthOptions = {
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: any }) {
       if (user && user.role) {
         token.role = isUserRole(user.role) ? user.role : 'member';
-      } else {
+      } else if (!token.role) {
         token.role = 'member';
       }
       return token;
     },
-    async session({ session, token }) {
-      if (session?.user && token.role) {
-        session.user.role = token.role as UserRole;
+    async session({ session, token }: { session: any; token: JWT & { role: UserRole } }) {
+      if (session?.user) {
+        session.user.role = token.role;
       }
       return session;
     },
@@ -58,6 +59,8 @@ export const authOptions: AuthOptions = {
   },
 };
 
+// Create the handler with proper typing
 const handler = NextAuth(authOptions);
 
+// Export the handler with only the allowed HTTP methods
 export { handler as GET, handler as POST };

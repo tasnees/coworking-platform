@@ -3,12 +3,14 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { UserRole } from '@/lib/auth-types'
 
 interface User {
-  id: string
-  email: string
-  name: string
-  role: 'admin' | 'staff' | 'member'
+  id?: string
+  email?: string | null
+  name?: string | null
+  image?: string | null
+  role: UserRole
 }
 
 interface AuthContextType {
@@ -52,12 +54,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/auth/login')
   }
 
-  const user = session?.user ? ({
-    id: session.user.id ?? '',
+  const user = session?.user ? {
+    id: session.user.id,
     email: session.user.email ?? '',
     name: session.user.name ?? '',
-    role: session.user.role as 'admin' | 'staff' | 'member',
-  }) : null
+    image: session.user.image ?? null,
+    role: session.user.role
+  } : null
 
   const value = {
     user,
