@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = "force-dynamic";
+
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
@@ -14,8 +16,10 @@ function LoginForm() {
 
   useEffect(() => {
     setIsMounted(true);
-    setCallbackUrl(searchParams?.get('callbackUrl') || '/dashboard');
-    setError(searchParams?.get('error'));
+    const urlCallback = searchParams?.get('callbackUrl');
+    const urlError = searchParams?.get('error');
+    setCallbackUrl(urlCallback || '/dashboard');
+    setError(urlError || null);
   }, [searchParams]);
 
   const handleAuth0Login = () => {

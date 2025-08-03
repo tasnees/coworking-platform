@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,7 +26,8 @@ function SignupForm() {
 
   useEffect(() => {
     setIsMounted(true)
-    setError(searchParams?.get('error'))
+    const urlError = searchParams?.get('error')
+    setError(urlError || null)
   }, [searchParams])
 
   const handleSignup = async (e: React.FormEvent) => {
