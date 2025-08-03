@@ -1,123 +1,62 @@
-"use client"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { useAuth } from "@/contexts/AuthContext"
+'use client';
+
+import { signIn } from 'next-auth/react';
+import { Button } from '@/components/ui/button';
+import { useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
+
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
-  const { login } = useAuth()
-  const router = useRouter()
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      })
-      return
-    }
-    setIsLoading(true)
-    try {
-      const result = await login(email, password)
-      if (result.error) {
-        toast({
-          title: "Login failed",
-          description: result.error,
-          variant: "destructive",
-        })
-        return
-      }
-      // Redirect based on role (will be handled by AuthContext)
-      toast({
-        title: "Login successful",
-        description: "Welcome back! Redirecting...",
-      })
-    } catch (error) {
-      console.error("Login error:", error)
-      toast({
-        title: "Login failed",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const error = searchParams.get('error');
+
+  const handleAuth0Login = () => {
+    signIn('auth0', { callbackUrl });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{" "}
-            <Link href="/auth/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
-              create a new account
-            </Link>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Sign in to your account to continue
           </p>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome back</CardTitle>
-            <CardDescription>
-              Enter your email and password to access your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <div className="flex">
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">
+                  Authentication Error
+                </h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>Failed to sign in. Please try again.</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button 
-                type="submit" 
-                className="w-full" 
-                disabled={isLoading}
-              >
-                {isLoading ? "Signing in..." : "Sign in"}
-              </Button>
-            </form>
-            <div className="mt-4 text-center text-sm">
-              <p className="text-muted-foreground">
-                Demo credentials:
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                admin@example.com / admin123 (Admin)<br/>
-                staff@example.com / staff123 (Staff)<br/>
-                member@example.com / member123 (Member)
-              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
+
+        <div className="mt-8 space-y-6">
+          <Button
+            onClick={handleAuth0Login}
+            className="w-full justify-center bg-[#eb5424] hover:bg-[#d04a1f]"
+          >
+            <svg
+              className="mr-2 h-4 w-4"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M11.984 0A10 10 0 0 0 2 10a9.8 9.8 0 0 0 1.4 5.1l-1.4 1.4 1.4 1.4 1.4-1.4a9.8 9.8 0 0 0 5.1 1.4 10 10 0 1 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z" />
+            </svg>
+            Continue with Auth0
+          </Button>
+        </div>
       </div>
     </div>
-  )
+  );
 }

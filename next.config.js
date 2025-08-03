@@ -4,18 +4,13 @@ const nextConfig = {
   
   // Image configuration
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'c2634db15524.ngrok-free.app'],
   },
   
   // Webpack configuration
   webpack: (config) => {
     // Add custom webpack configuration here if needed
     return config;
-  },
-  
-  // Enable server actions
-  experimental: {
-    serverActions: true,
   },
   
   // TypeScript configuration

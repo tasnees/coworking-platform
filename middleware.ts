@@ -1,66 +1,62 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-import { getToken } from 'next-auth/jwt'
+import { withAuth } from 'next-auth/middleware';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { JWT } from 'next-auth/jwt';
+import { DefaultSession } from 'next-auth';
 
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request })
-  const { pathname } = request.nextUrl
-
-  // Define protected routes
-  const protectedRoutes = ['/dashboard']
-  const authRoutes = ['/auth/login', '/auth/signup']
-
-  // Check if the route is protected
-  const isProtectedRoute = protectedRoutes.some(route => 
-    pathname.startsWith(route)
-  )
-
-  // Check if it's an auth route
-  const isAuthRoute = authRoutes.some(route => 
-    pathname.startsWith(route)
-  )
-
-  // Redirect to login if accessing protected route without token
-  if (isProtectedRoute && !token) {
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+// Extend NextAuth types to include our custom role
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      role?: string;
+    } & DefaultSession['user'];
   }
-
-  // Redirect authenticated users away from auth routes
-  if (isAuthRoute && token) {
-    // Redirect based on user role
-    const role = token.role as string
-    let redirectPath = '/dashboard'
-    
-    switch (role) {
-      case 'admin':
-        redirectPath = '/dashboard/admin'
-        break
-      case 'staff':
-        redirectPath = '/dashboard/staff'
-        break
-      case 'member':
-        redirectPath = '/dashboard/member'
-        break
-    }
-    
-    return NextResponse.redirect(new URL(redirectPath, request.url))
+  
+  interface User {
+    role?: string;
   }
-
-  // Role-based access control
-  if (pathname.startsWith('/dashboard/admin') && token?.role !== 'admin') {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(token?.role as string)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  return NextResponse.next()
 }
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role: string;
+  }
+}
+
+export default withAuth(
+  function middleware(request) {
+    const { pathname } = request.nextUrl;
+    const token = request.nextauth?.token;
+    const role = token?.role || '';
+
+    // Admin routes
+    if (pathname.startsWith('/dashboard/admin') && role !== 'admin') {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+
+    // Staff routes (admin can also access)
+    if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role)) {
+      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    }
+
+    // Member routes (all authenticated users can access)
+    if (pathname.startsWith('/dashboard/member') && !token) {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+  }
+);
 
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/auth/:path*',
-  ]
-}
+    '/api/admin/:path*',
+    '/api/staff/:path*',
+  ],
+};
