@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { Suspense, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -46,7 +47,10 @@ import {
   UserPlus,
 } from "lucide-react";
 import { saveAs } from "file-saver";
-export default function MembersPage() {
+import { useAuth } from "@/contexts/AuthContext";
+
+function MembersPageContent() {
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("active");
   const [members, setMembers] = useState([
@@ -278,6 +282,21 @@ Payment,${member.amount},${member.nextBilling || ""}
     );
     router.back(); // Go back to the members page after renewal
   };
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -1448,5 +1467,17 @@ Payment,${member.amount},${member.nextBilling || ""}
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function MembersPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <MembersPageContent />
+    </Suspense>
   );
 }
