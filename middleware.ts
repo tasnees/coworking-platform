@@ -2,31 +2,12 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { JWT } from 'next-auth/jwt';
-import { DefaultSession } from 'next-auth';
-
-// Extend NextAuth types to include our custom role
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      role?: string;
-    } & DefaultSession['user'];
-  }
-  
-  interface User {
-    role?: string;
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    role: string;
-  }
-}
+import { UserRole } from '@/lib/auth-types';
 
 export default withAuth(
   function middleware(request) {
     const { pathname } = request.nextUrl;
-    const token = request.nextauth?.token;
+    const token = request.nextauth?.token as (JWT & { role: UserRole }) | undefined;
     const role = token?.role || '';
 
     // Admin routes

@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Auth0Provider from "next-auth/providers/auth0";
 import { AuthOptions } from "next-auth";
-import { isUserRole, UserRole } from "@/types/next-auth";
+import { isUserRole, UserRole } from "@/lib/auth-types";
 
 // Extend the Profile type to include our custom claim
 declare module "next-auth/providers/auth0" {

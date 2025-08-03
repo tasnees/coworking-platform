@@ -7,12 +7,12 @@ services:
     env: node
     buildCommand: |
       corepack enable
-      pnpm install --no-frozen-lockfile --shamefully-hoist
+      pnpm install --no-frozen-lockfile
       pnpm build
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV
-        value: production
+        value: development
       - key: NODE_VERSION
         value: 22.x
       - key: PNPM_VERSION
@@ -20,14 +20,18 @@ services:
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
     # Uncomment and add your environment variables below
-    # - key: DATABASE_URL
-    #   sync: false
-    # - key: NEXTAUTH_SECRET
-    #   sync: false
-    # - key: NEXTAUTH_URL
-    #   sync: false
-    # - key: MONGODB_URI
-    #   sync: false
+      - key: DATABASE_URL
+      - value: "mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority"
+      - sync: false
+      - key: NEXTAUTH_SECRET
+      - value: "s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo="
+      - sync: false
+      - key: NEXTAUTH_URL
+      - value: "https://coworking-platform.onrender.com"
+      - sync: false
+      - key: MONGODB_URI
+      - value: "mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority"
+      - sync: false
 
 # Uncomment to create a MongoDB database
 # databases:
