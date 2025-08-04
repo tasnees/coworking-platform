@@ -1,5 +1,21 @@
 "use client"
+
 import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
+
+// Dynamically import the dashboard layout with SSR disabled
+const DynamicDashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+)
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +26,20 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import DashboardLayout from "@/components/dashboard-layout"
-import { User, Mail, Phone, MapPin, Shield, Bell, Moon, Key, Save, X, Edit3, Sun } from "lucide-react"
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Shield, 
+  Bell, 
+  Moon, 
+  Key, 
+  Save, 
+  X, 
+  Edit3, 
+  Sun 
+} from "lucide-react"
 interface StaffProfile {
   id: string
   name: string
@@ -32,7 +60,8 @@ interface StaffPreferences {
   twoFactorEnabled: boolean
   language: string
 }
-export default function StaffSettingsPage() {
+function StaffSettingsContent() {
+  const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const [isEditing, setIsEditing] = useState(false)
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
@@ -84,8 +113,21 @@ export default function StaffSettingsPage() {
     setPreferences(prev => ({ ...prev, [key]: value }))
     // In real app, this would make API call
   }
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Show loading state until component is mounted
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
-    <DashboardLayout userRole="staff">
+    <DynamicDashboardLayout userRole="staff">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -406,6 +448,8 @@ export default function StaffSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </DynamicDashboardLayout>
   )
 }
+
+export default StaffSettingsContent

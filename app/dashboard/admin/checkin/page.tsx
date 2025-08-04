@@ -1,13 +1,34 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
+
+// Dynamically import the dashboard layout with SSR disabled
+const DynamicDashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+)
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import DashboardLayout from "@/components/dashboard-layout"
 import { QrCode, Scan, Users, Clock, MapPin, Search, Download } from "lucide-react"
-import { saveAs } from "file-saver"
+// Import file-saver using a type-safe dynamic import
+let saveAs: (data: Blob | string, filename?: string) => void;
+if (typeof window !== 'undefined') {
+  import('file-saver').then(module => {
+    saveAs = module.saveAs;
+  });
+}
 import {
   Dialog,
   DialogContent,
@@ -16,7 +37,21 @@ import {
   DialogDescription,
   DialogTrigger,
 } from "@/components/ui/dialog";
-export default function CheckInPage() {
+function CheckInContent() {
+  const [isMounted, setIsMounted] = useState(false)
+  
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Show loading state until component is mounted
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
   const [activeTab, setActiveTab] = useState("overview");
   // Add search state for logs
   const [searchTerm, setSearchTerm] = useState("");
@@ -172,7 +207,7 @@ export default function CheckInPage() {
         log.status.toLowerCase().includes(searchTerm.toLowerCase())
     );
   return (
-    <DashboardLayout userRole="admin">
+    <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -572,6 +607,11 @@ export default function CheckInPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </DynamicDashboardLayout>
   )
+}
+
+// Main page component with client-side only rendering
+export default function CheckInPage() {
+  return <CheckInContent />
 }

@@ -44,10 +44,16 @@ export default function DashboardLayout({
   children, 
   userRole = 'member' 
 }: DashboardLayoutProps) {
+  const [isMounted, setIsMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const { user, isLoading, logout } = useAuth()
+
+  // Ensure this only runs on the client
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
   const [mounted, setMounted] = useState(false)
 
   // Navigation items
@@ -107,10 +113,11 @@ export default function DashboardLayout({
   }, [])
 
   // Show loading state while user data is being fetched
-  if (isLoading || !mounted) {
+  // Show loading state on server or during auth check
+  if (!isMounted || isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
       </div>
     )
   }

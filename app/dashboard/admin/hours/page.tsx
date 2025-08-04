@@ -1,5 +1,21 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
+
+// Dynamically import the dashboard layout with SSR disabled
+const DynamicDashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+)
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,10 +32,30 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
-import DashboardLayout from "@/components/dashboard-layout"
-import { Clock, Calendar, Plus, Save, AlertTriangle } from "lucide-react"
-export default function HoursPage() {
+import { 
+  Clock, 
+  Calendar, 
+  Plus, 
+  Save, 
+  AlertTriangle 
+} from "lucide-react"
+
+function HoursContent() {
+  const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("regular")
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Show loading state until component is mounted
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   const [weekdays, setWeekdays] = useState([
     { id: 1, name: "Monday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
     { id: 2, name: "Tuesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
@@ -59,7 +95,7 @@ export default function HoursPage() {
     setSpecialDays(prev => ({ ...prev, [field]: value }))
   }
   return (
-    <DashboardLayout userRole="admin">
+    <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -424,6 +460,11 @@ export default function HoursPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </DynamicDashboardLayout>
   )
+}
+
+// Main page component with client-side only rendering
+export default function HoursPage() {
+  return <HoursContent />
 }

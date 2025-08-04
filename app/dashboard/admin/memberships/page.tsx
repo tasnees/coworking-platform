@@ -1,5 +1,21 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
+
+// Dynamically import the dashboard layout with SSR disabled
+const DynamicDashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+)
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -16,10 +32,35 @@ import {
 } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Switch } from "@/components/ui/switch"
-import DashboardLayout from "@/components/dashboard-layout"
-import { CreditCard, Plus, Search, Users, DollarSign, Calendar, Check, RefreshCw, ArrowRight, History, FileText } from "lucide-react"
-export default function MembershipsPage() {
+import { 
+  CreditCard, 
+  Plus, 
+  Search, 
+  Users, 
+  DollarSign, 
+  Calendar, 
+  Check, 
+  RefreshCw, 
+  ArrowRight, 
+  History, 
+  FileText 
+} from "lucide-react"
+function MembershipsContent() {
+  const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("plans")
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  // Show loading state until component is mounted
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   // State for plans and editing
   const [membershipPlans, setMembershipPlans] = useState([
     {
@@ -165,7 +206,7 @@ export default function MembershipsPage() {
     }
   }
   return (
-    <DashboardLayout userRole="admin">
+    <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -708,6 +749,11 @@ export default function MembershipsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </DashboardLayout>
+    </DynamicDashboardLayout>
   )
+}
+
+// Main page component with client-side only rendering
+export default function MembershipsPage() {
+  return <MembershipsContent />
 }

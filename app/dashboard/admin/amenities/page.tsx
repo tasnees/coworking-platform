@@ -1,6 +1,22 @@
 "use client"
-import { useState } from "react"
 
+import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
+
+// Dynamically import the dashboard layout with SSR disabled
+const DynamicDashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+)
+
+// UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,7 +34,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import DashboardLayout from "@/components/dashboard-layout"
 import { 
   Coffee, 
   Printer, 
@@ -36,9 +51,28 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  BarChart
+  BarChart,
+  Loader2
 } from "lucide-react"
+
+// Main component with proper loading state
 export default function AmenitiesPage() {
+  const [isMounted, setIsMounted] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+    setIsClient(true)
+  }, [])
+
+  // Show loading state until component is mounted
+  if (!isMounted || !isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
   const [activeTab, setActiveTab] = useState("overview")
   const [amenities, setAmenities] = useState([
     {
@@ -284,8 +318,17 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
+  // Show loading state until component is mounted on client
+  if (!isMounted) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
-    <DashboardLayout userRole="admin">
+    <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -853,6 +896,6 @@ export default function AmenitiesPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
+    </DynamicDashboardLayout>
   )
 }

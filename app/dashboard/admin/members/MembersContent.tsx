@@ -50,16 +50,28 @@ import { saveAs } from "file-saver";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function MembersContent() {
+  const [isClient, setIsClient] = useState(false);
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("active");
   
-  // Redirect to login if not authenticated
+  // Set client-side flag and handle auth redirect
   useEffect(() => {
+    setIsClient(true);
+    
     if (!isLoading && !isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, isLoading, router]);
+
+  // Show loading state on server or during auth check
+  if (!isClient || isLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const [members, setMembers] = useState([
     {
@@ -83,16 +95,7 @@ export default function MembersContent() {
     // ... rest of your members data
   ]);
 
-  // Show loading state while checking auth
-  if (isLoading || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Rest of your component JSX
+  // Component JSX - only renders on client side after auth check
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
