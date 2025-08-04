@@ -32,6 +32,7 @@ interface Member {
   totalVisits: number
 }
 export default function StaffCheckInPage() {
+  const [isClient, setIsClient] = useState(false)
   const [checkIns, setCheckIns] = useState<CheckInRecord[]>([])
   const [members, setMembers] = useState<Member[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -39,8 +40,11 @@ export default function StaffCheckInPage() {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [showCheckInDialog, setShowCheckInDialog] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
-  // Mock data
+  // Initialize client-side data and timer
   useEffect(() => {
+    setIsClient(true)
+    
+    // Only run on client
     const mockMembers: Member[] = [
       { id: '1', name: 'Alice Johnson', email: 'alice@company.com', membershipType: 'premium', status: 'active', totalVisits: 45, lastVisit: new Date('2024-07-27') },
       { id: '2', name: 'Bob Smith', email: 'bob@startup.io', membershipType: 'basic', status: 'active', totalVisits: 12, lastVisit: new Date('2024-07-25') },
@@ -48,18 +52,21 @@ export default function StaffCheckInPage() {
       { id: '4', name: 'David Brown', email: 'david@design.com', membershipType: 'premium', status: 'active', totalVisits: 34, lastVisit: new Date('2024-07-26') },
       { id: '5', name: 'Emma Davis', email: 'emma@freelance.net', membershipType: 'basic', status: 'active', totalVisits: 8, lastVisit: new Date('2024-07-28') },
     ]
+    
     const mockCheckIns: CheckInRecord[] = [
       { id: 'ci1', memberId: '1', memberName: 'Alice Johnson', memberEmail: 'alice@company.com', membershipType: 'premium', checkInTime: new Date('2024-07-28T08:30:00'), status: 'checked-in', location: 'Main Space' },
       { id: 'ci2', memberId: '3', memberName: 'Carol Williams', memberEmail: 'carol@tech.co', membershipType: 'enterprise', checkInTime: new Date('2024-07-28T09:15:00'), checkOutTime: new Date('2024-07-28T12:30:00'), duration: '3h 15m', status: 'checked-out', location: 'Meeting Room A' },
       { id: 'ci3', memberId: '5', memberName: 'Emma Davis', memberEmail: 'emma@freelance.net', membershipType: 'basic', checkInTime: new Date('2024-07-28T10:00:00'), status: 'checked-in', location: 'Quiet Zone' },
     ]
+    
     setMembers(mockMembers)
     setCheckIns(mockCheckIns)
-  }, [])
-  useEffect(() => {
+    
+    // Set up timer only on client
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
   }, [])
+  // Moved timer to the initialization effect
   const handleCheckIn = (member: Member, location: string) => {
     const newCheckIn: CheckInRecord = {
       id: `ci${Date.now()}`,
@@ -99,9 +106,15 @@ export default function StaffCheckInPage() {
     return checkIn.status === filterStatus
   })
   const currentCheckIns = checkIns.filter(ci => ci.status === 'checked-in')
-  const todayCheckIns = checkIns.filter(ci => 
-    ci.checkInTime.toDateString() === new Date().toDateString()
-  )
+  const todayCheckIns = checkIns.filter(ci => {
+    if (!isClient) return false;
+    try {
+      return ci.checkInTime.toDateString() === new Date().toDateString()
+    } catch (e) {
+      console.error('Error filtering today\'s check-ins:', e)
+      return false
+    }
+  })
   const totalDurationToday = todayCheckIns.reduce((total, ci) => {
     if (ci.checkOutTime) {
       return total + (ci.checkOutTime.getTime() - ci.checkInTime.getTime())
@@ -109,9 +122,15 @@ export default function StaffCheckInPage() {
     return total + (new Date().getTime() - ci.checkInTime.getTime())
   }, 0)
   const formatDuration = (ms: number): string => {
-    const hours = Math.floor(ms / (1000 * 60 * 60))
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
-    return `${hours}h ${minutes}m`
+    if (!isClient) return '0h 0m';
+    try {
+      const hours = Math.floor(ms / (1000 * 60 * 60))
+      const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60))
+      return `${hours}h ${minutes}m`
+    } catch (e) {
+      console.error('Error formatting duration:', e)
+      return '0h 0m'
+    }
   }
   const getMembershipBadgeColor = (type: string) => {
     switch (type) {
@@ -310,9 +329,9 @@ export default function StaffCheckInPage() {
                         {checkIn.membershipType}
                       </Badge>
                     </TableCell>
-                    <TableCell>{checkIn.checkInTime.toLocaleTimeString()}</TableCell>
+                    <TableCell>{isClient ? checkIn.checkInTime.toLocaleTimeString() : '--:--:--'}</TableCell>
                     <TableCell>
-                      {checkIn.checkOutTime ? checkIn.checkOutTime.toLocaleTimeString() : '-'}
+                      {checkIn.checkOutTime ? (isClient ? checkIn.checkOutTime.toLocaleTimeString() : '--:--:--') : '-'}
                     </TableCell>
                     <TableCell>{checkIn.duration || '-'}</TableCell>
                     <TableCell>{checkIn.location}</TableCell>

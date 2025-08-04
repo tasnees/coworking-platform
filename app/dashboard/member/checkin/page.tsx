@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -165,6 +166,21 @@ export default function MemberCheckInPage() {
     }, 1000)
     return () => clearInterval(timer)
   }, [])
+  // Wait for client-side rendering to avoid hydration issues
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">

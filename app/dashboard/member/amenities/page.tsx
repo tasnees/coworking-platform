@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
@@ -22,6 +22,7 @@ import {
   BarChart
 } from "lucide-react"
 export default function AmenitiesPage() {
+  const [isClient, setIsClient] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const amenities = [
     {
@@ -191,6 +192,11 @@ export default function AmenitiesPage() {
       status: "completed"
     },
   ]
+  // Initialize client-side flag
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "operational":
@@ -204,6 +210,8 @@ export default function AmenitiesPage() {
     }
   }
   const getStatusIcon = (status: string) => {
+    if (!isClient) return AlertTriangle; // Fallback icon during SSR
+    
     switch (status) {
       case "operational":
         return CheckCircle2
@@ -288,7 +296,9 @@ export default function AmenitiesPage() {
                 {maintenanceSchedule.filter(m => m.status === "scheduled").length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Next: {maintenanceSchedule.find(m => m.status === "scheduled")?.date || "N/A"}
+                {isClient ? (
+                  `Next: ${maintenanceSchedule.find(m => m.status === "scheduled")?.date || "N/A"}`
+                ) : 'Loading...'}
               </p>
             </CardContent>
           </Card>

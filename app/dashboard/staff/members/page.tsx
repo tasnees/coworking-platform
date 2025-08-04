@@ -147,12 +147,20 @@ export default function StaffMembersPage() {
     const now = new Date()
     return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear()
   }).length
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return 'Never'
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid date'
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    } catch (error) {
+      console.error('Error formatting date:', error)
+      return 'Invalid date'
+    }
   }
   const getStatusBadgeVariant = (status: Member["status"]) => {
     switch (status) {

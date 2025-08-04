@@ -205,28 +205,36 @@ export default function WifiSettingsPage() {
   }
   // Add handlers for QR code and copy functionality
   const handleCopyCode = async (code: string) => {
+    if (typeof window === 'undefined') return;
+    
     try {
-      await navigator.clipboard.writeText(code)
-      setCopySuccess(code)
-      setTimeout(() => setCopySuccess(null), 2000)
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(code);
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        textArea.style.position = 'fixed';  // Prevent scrolling to bottom
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopySuccess(code);
+      setTimeout(() => setCopySuccess(null), 2000);
     } catch (err) {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea')
-      textArea.value = code
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      setCopySuccess(code)
-      setTimeout(() => setCopySuccess(null), 2000)
+      console.error('Failed to copy text:', err);
     }
   }
   const handleShowQrCode = (code: typeof accessCodes[0]) => {
-    setSelectedCode(code)
+    if (typeof window === 'undefined') return;
+    
+    setSelectedCode(code);
     // Generate QR code URL (using a mock API for demonstration)
-    const qrData = `WIFI:T:WPA;S:${code.network};P:${code.code};;`
-    setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`)
-    setQrCodeDialog(true)
+    const qrData = `WIFI:T:WPA;S:${code.network};P:${code.code};;`;
+    setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`);
+    setQrCodeDialog(true);
   }
   // Add handler for security logs
   const handleViewSecurityLogs = async () => {
@@ -306,6 +314,12 @@ export default function WifiSettingsPage() {
   const [selectedCode, setSelectedCode] = useState<typeof accessCodes[0] | null>(null)
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
+  
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   // Add state for security logs
   const [showSecurityLogs, setShowSecurityLogs] = useState(false)
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([])
@@ -345,11 +359,26 @@ export default function WifiSettingsPage() {
       setShowDevicesDialog(true)
     }
   }
-  const [accessCodes, setAccessCodes] = useState([
-    { id: 1, code: "GUEST-1234", type: "Day Pass", expiresAt: "2025-07-24", usageLimit: 1, usageCount: 0, network: "guest", createdAt: "2025-07-24" },
-    { id: 2, code: "EVENT-5678", type: "Event", expiresAt: "2025-07-30", usageLimit: 50, usageCount: 12, network: "events", createdAt: "2025-07-29" },
-    { id: 3, code: "TRIAL-9012", type: "Trial", expiresAt: "2025-08-15", usageLimit: 5, usageCount: 2, network: "guest", createdAt: "2025-07-28" },
-  ])
+  // Initialize state with empty array, will be populated in useEffect
+  const [accessCodes, setAccessCodes] = useState<Array<{
+    id: number
+    code: string
+    type: string
+    expiresAt: string
+    usageLimit: number
+    usageCount: number
+    network: string
+    createdAt: string
+  }>>([])
+
+  // Initialize access codes on client side only
+  useEffect(() => {
+    setAccessCodes([
+      { id: 1, code: "GUEST-1234", type: "Day Pass", expiresAt: "2025-07-24", usageLimit: 1, usageCount: 0, network: "guest", createdAt: "2025-07-24" },
+      { id: 2, code: "EVENT-5678", type: "Event", expiresAt: "2025-07-30", usageLimit: 50, usageCount: 12, network: "events", createdAt: "2025-07-29" },
+      { id: 3, code: "TRIAL-9012", type: "Trial", expiresAt: "2025-08-15", usageLimit: 5, usageCount: 2, network: "guest", createdAt: "2025-07-28" },
+    ])
+  }, [])
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":

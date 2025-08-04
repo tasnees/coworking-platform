@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from "react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -154,9 +155,12 @@ export default function StaffBookingsPage() {
     setFilteredBookings(filtered)
   }
   // Apply filters when any filter changes
-  useState(() => {
+  const [isClient, setIsClient] = useState(false)
+  
+  useEffect(() => {
+    setIsClient(true)
     filterBookings()
-  })
+  }, [searchTerm, statusFilter, resourceTypeFilter])
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -227,6 +231,15 @@ export default function StaffBookingsPage() {
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length
   const pendingBookings = bookings.filter(b => b.status === 'pending').length
   const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0)
+  // Show loading state during SSR/hydration
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">

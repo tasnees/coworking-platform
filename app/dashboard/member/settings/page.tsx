@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard-layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { LogOut, Trash, Camera } from "lucide-react";
+
 export default function SettingsPage() {
+  const [isClient, setIsClient] = useState(false);
   // Profile photo state
   const [photo, setPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -19,22 +21,41 @@ export default function SettingsPage() {
     { id: 2, name: "Safari on iPhone", lastActive: "2 days ago", current: false },
     { id: 3, name: "Edge on Mac", lastActive: "1 week ago", current: false },
   ]);
+
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Upload photo handler
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isClient) return;
+
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        setPhoto(ev.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          if (ev.target?.result) {
+            setPhoto(ev.target.result as string);
+          }
+        };
+        reader.onerror = () => {
+          console.error('Error reading file');
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error handling file upload:', error);
+      }
     }
   };
+
   // Remove photo
   const handleRemovePhoto = () => {
     setPhoto(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
+
   // Sign out device handler
   const handleSignOutDevice = (id: number) => {
     setDevices(devices.filter((d) => d.id !== id));

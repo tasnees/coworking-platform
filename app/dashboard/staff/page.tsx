@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -66,6 +66,7 @@ interface Resource {
   nextAvailable: string
 }
 function StaffDashboardContent() {
+  const [isClient, setIsClient] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [showBookingDetails, setShowBookingDetails] = useState(false)
@@ -105,6 +106,11 @@ function StaffDashboardContent() {
     status: 'active' as 'active' | 'inactive' | 'suspended',
     credits: 0
   })
+
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   // Handlers
   const handleAddMember = () => {
     console.log('Adding new member:', newMember)
@@ -258,10 +264,17 @@ function StaffDashboardContent() {
     }
   ]
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
+    if (!isClient) return `$${amount.toFixed(2)}`; // Fallback for SSR
+    
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount);
+    } catch (error) {
+      console.error('Error formatting currency:', error);
+      return `$${amount.toFixed(2)}`; // Fallback if Intl is not available
+    }
   }
   const getStatusColor = (status: string) => {
     switch (status) {

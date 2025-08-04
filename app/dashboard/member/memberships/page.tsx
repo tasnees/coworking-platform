@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -218,19 +218,28 @@ export default function MembershipsPage() {
   const calculateProgress = (used: number, total: number) => {
     return Math.min((used / total) * 100, 100)
   }
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
-    // In a real app, this would generate/download a PDF invoice
-    // For now, we'll create a mock invoice and trigger download
-    const invoiceData = {
-      id: invoiceId,
-      description: description,
-      date: new Date().toISOString(),
-      amount: currentMembership.price,
-      member: "Current User",
-      plan: currentMembership.name
-    }
-    // Create a simple text file for demo purposes
-    const invoiceText = `
+    if (!isClient) return // Don't run on server
+    
+    try {
+      // In a real app, this would generate/download a PDF invoice
+      // For now, we'll create a mock invoice and trigger download
+      const invoiceData = {
+        id: invoiceId,
+        description: description,
+        date: new Date().toISOString(),
+        amount: currentMembership.price,
+        member: "Current User",
+        plan: currentMembership.name
+      }
+      // Create a simple text file for demo purposes
+      const invoiceText = `
 INVOICE
 =======
 Invoice ID: ${invoiceData.id}
@@ -240,16 +249,20 @@ Amount: ${formatCurrency(invoiceData.amount)}
 Plan: ${invoiceData.plan}
 Member: ${invoiceData.member}
 Thank you for your business!
-    `.trim()
-    const blob = new Blob([invoiceText], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `invoice-${invoiceId}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+      `.trim()
+      
+      const blob = new Blob([invoiceText], { type: 'text/plain' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `invoice-${invoiceId}.txt`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error generating invoice:', error)
+    }
   }
   const handleToggleAutoRenew = () => {
     setShowAutoRenewDialog(true)
@@ -262,6 +275,15 @@ Thank you for your business!
     }))
     setShowAutoRenewDialog(false)
   }
+  // Show loading state until client-side rendering is ready
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">

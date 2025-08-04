@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -25,11 +25,17 @@ interface Booking {
   cost: number
 }
 export default function BookingsPage() {
+  const [isClient, setIsClient] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterType, setFilterType] = useState("all")
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
+  
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   // Mock data for bookings
   const currentBookings: Booking[] = [
     {
@@ -158,6 +164,22 @@ export default function BookingsPage() {
   const handleEditBooking = (booking: Booking) => {
     setEditingBooking(booking)
   }
+  const formatBookingDate = (dateString: string) => {
+    if (!isClient) return ''; // Return empty string during SSR
+    
+    try {
+      return new Date(dateString).toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return dateString; // Fallback to original string if date parsing fails
+    }
+  };
+
   const BookingCard = ({ booking, showActions = true }: { booking: Booking, showActions?: boolean }) => (
     <Card key={booking.id} className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
@@ -179,12 +201,7 @@ export default function BookingsPage() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Calendar className="h-4 w-4" />
-            {new Date(booking.date).toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
+            {formatBookingDate(booking.date)}
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="h-4 w-4" />

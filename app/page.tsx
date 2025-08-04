@@ -16,20 +16,41 @@ export default function HomePage() {
   const [lastLogin, setLastLogin] = useState<string | null>(null)
   const [lastLoginTime, setLastLoginTime] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   useEffect(() => {
-    setIsClient(true)
-    if (status === 'authenticated') {
-      const lastLoginValue = localStorage.getItem("lastLogin") || session.user?.email || ""
-      const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
-      setLastLogin(lastLoginValue)
-      setLastLoginTime(lastLoginTimeValue)
+    // Only run on client side
+    if (typeof window !== 'undefined') {
+      setIsClient(true)
+      
+      if (status === 'authenticated') {
+        try {
+          const lastLoginValue = localStorage.getItem("lastLogin") || session?.user?.email || ""
+          const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
+          setLastLogin(lastLoginValue)
+          setLastLoginTime(lastLoginTimeValue)
+          
+          // Set a flag to prevent multiple redirects
+          if (!isRedirecting) {
+            setIsRedirecting(true)
+            router.push('/dashboard')
+          }
+        } catch (error) {
+          console.error('Error accessing localStorage:', error)
+        }
+      }
     }
-  }, [status, session])
+  }, [status, session, isRedirecting, router])
 
   const handleLogout = () => {
-    localStorage.removeItem("lastLogin");
-    localStorage.removeItem("lastLoginTime");
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem("lastLogin");
+        localStorage.removeItem("lastLoginTime");
+      } catch (error) {
+        console.error('Error clearing localStorage:', error)
+      }
+    }
     router.push("/auth/login");
   };
 
@@ -107,7 +128,7 @@ export default function HomePage() {
     },
   ]
 
-  // Show loading state while session is being checked
+  // Show loading state while session is being checked or during SSR
   if (status === 'loading' || !isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -116,10 +137,16 @@ export default function HomePage() {
     )
   }
 
-  // Redirect to dashboard if user is already authenticated
-  if (status === 'authenticated') {
-    router.push('/dashboard')
-    return null
+  // Show loading state while redirecting
+  if (status === 'authenticated' && isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
   // Show landing page for unauthenticated users

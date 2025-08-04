@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -90,7 +90,8 @@ const mockMemberships: Membership[] = [
   }
 ]
 export default function StaffMembershipsPage() {
-  const [memberships, setMemberships] = useState<Membership[]>(mockMemberships)
+  const [isClient, setIsClient] = useState(false)
+  const [memberships, setMemberships] = useState<Membership[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -124,18 +125,42 @@ export default function StaffMembershipsPage() {
   const expiredMemberships = memberships.filter(m => m.status === "expired").length
   const pendingMemberships = memberships.filter(m => m.status === "pending").length
   const totalRevenue = memberships.filter(m => m.status === "active").reduce((sum, m) => sum + m.price, 0)
+  // Set client-side flag and initialize data
+  useEffect(() => {
+    setIsClient(true)
+    setMemberships(mockMemberships)
+  }, [])
+
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount)
+    if (typeof window === 'undefined') return `$${amount.toFixed(2)}`
+    
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+      }).format(amount)
+    } catch (error) {
+      console.error('Error formatting currency:', error)
+      return `$${amount.toFixed(2)}`
+    }
   }
+
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+    if (!dateString) return 'N/A'
+    
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) return 'Invalid Date'
+      
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    } catch (error) {
+      console.error('Error formatting date:', error)
+      return dateString
+    }
   }
   const getStatusBadgeVariant = (status: Membership["status"]) => {
     switch (status) {
@@ -184,8 +209,8 @@ export default function StaffMembershipsPage() {
     }
   }
   const handleDeleteMembership = (id: string) => {
-    if (confirm("Are you sure you want to delete this membership?")) {
-      setMemberships(memberships.filter(m => m.id !== id))
+    if (typeof window !== 'undefined' && window.confirm("Are you sure you want to delete this membership?")) {
+      setMemberships(prev => prev.filter(m => m.id !== id))
     }
   }
   const openEditDialog = (membership: Membership) => {
