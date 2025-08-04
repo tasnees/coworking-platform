@@ -1,4 +1,5 @@
-import NextAuth, { type DefaultSession, type DefaultUser } from "next-auth";
+import NextAuth from "next-auth";
+import type { DefaultSession, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Auth0Provider from "next-auth/providers/auth0";
 import { isUserRole, UserRole } from "@/lib/auth-types";
@@ -28,7 +29,7 @@ const authOptions = {
           name: profile.name || profile.nickname || '',
           email: profile.email || '',
           image: profile.picture,
-          role: profile['https://coworking-platform/roles']?.[0] || 'member',
+          role: (profile['https://coworking-platform/roles']?.[0] || 'member') as UserRole,
         };
       },
     }),
@@ -38,17 +39,17 @@ const authOptions = {
     strategy: 'jwt' as const,
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
-      if (user && user.role) {
-        token.role = isUserRole(user.role) ? user.role : 'member';
-      } else if (!token.role) {
-        token.role = 'member';
+    async jwt({ token, user }: { token: JWT; user?: User }) {
+      if (user?.role && isUserRole(user.role)) {
+        token.role = user.role;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: JWT & { role: UserRole } }) {
-      if (session?.user) {
-        session.user.role = token.role;
+    async session({ session, token }: { session: any; token: JWT }) {
+      if (session.user) {
+        if (token.role && isUserRole(token.role)) {
+          session.user.role = token.role;
+        }
       }
       return session;
     },

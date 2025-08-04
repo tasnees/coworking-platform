@@ -1,75 +1,74 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { ReactNode, useEffect } from "react"
-import { useAuth } from "@/contexts/AuthContext"
+import { ReactNode, useEffect, useState } from "react"
+import { useSession } from "next-auth/react"
 import { Loader2 } from "lucide-react"
+import { UserRole } from "@/lib/auth-types"
 
 interface ProtectedRouteProps {
   children: ReactNode
-  allowedRoles?: ("admin" | "staff" | "member")[]
+  allowedRoles?: UserRole[]
   redirectTo?: string
+  loadingComponent?: ReactNode
 }
 
 export default function ProtectedRoute({ 
   children, 
   allowedRoles = ["admin", "staff", "member"],
-  redirectTo = "/auth/login"
+  redirectTo = "/auth/login",
+  loadingComponent = (
+    <div className="flex items-center justify-center min-h-screen">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>
+  )
 }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth()
+  const { data: session, status } = useSession()
   const router = useRouter()
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
 
   useEffect(() => {
-    if (!isLoading) {
-      // If not logged in, redirect to login
-      if (!user) {
-        router.push(redirectTo)
-        return
-      }
+    if (status === 'loading') return
 
-      // If user role is not in allowed roles, redirect to dashboard
-      if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-        router.push(`/dashboard/${user.role}`)
-      }
+    const user = session?.user
+    const isAuthenticated = status === 'authenticated'
+    
+    if (!isAuthenticated) {
+      // Not authenticated, redirect to login
+      router.push(redirectTo)
+      return
     }
-  }, [user, isLoading, allowedRoles, router, redirectTo])
 
-  // Show loading state while checking auth
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    )
+    if (user?.role && !allowedRoles.includes(user.role as UserRole)) {
+      // Not authorized for this route, redirect to dashboard
+      router.push('/dashboard')
+      return
+    }
+
+    // User is authenticated and authorized
+    setIsAuthorized(true)
+  }, [status, session, allowedRoles, router, redirectTo])
+
+  if (status === 'loading' || isAuthorized === null) {
+    return <>{loadingComponent}</>
   }
 
-  // If user role is not allowed, show unauthorized message
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Unauthorized</h1>
-          <p className="text-muted-foreground">
-            You don't have permission to access this page.
-          </p>
-        </div>
-      </div>
-    )
+  if (!isAuthorized) {
+    return null
   }
 
-  // If user is authenticated and has the right role, render children
   return <>{children}</>
 }
 
 // Higher-order component for protected routes with specific roles
-export function withRole(
-  WrappedComponent: React.ComponentType,
-  allowedRoles: ("admin" | "staff" | "member")[] = ["admin", "staff", "member"]
+export function withRole<T extends object>(
+  WrappedComponent: React.ComponentType<T>,
+  allowedRoles: UserRole[] = ["admin", "staff", "member"]
 ) {
-  return function WithRoleWrapper() {
+  return function WithRoleWrapper(props: T) {
     return (
       <ProtectedRoute allowedRoles={allowedRoles}>
-        <WrappedComponent />
+        <WrappedComponent {...props as T} />
       </ProtectedRoute>
     )
   }

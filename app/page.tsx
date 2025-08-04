@@ -1,4 +1,5 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -7,20 +8,31 @@ import { Users, Calendar, QrCode, BarChart3, Smartphone, Zap, Shield, ArrowRight
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
+import { useSession } from "next-auth/react"
+
 export default function HomePage() {
+  const { data: session, status } = useSession()
   const router = useRouter();
   const [lastLogin, setLastLogin] = useState<string | null>(null)
   const [lastLoginTime, setLastLoginTime] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
+
   useEffect(() => {
-    const lastLoginValue = localStorage.getItem("lastLogin") || "member@omnispace.app"
-    const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
-    setLastLogin(lastLoginValue)
-    setLastLoginTime(lastLoginTimeValue)
-  }, [])
+    setIsClient(true)
+    if (status === 'authenticated') {
+      const lastLoginValue = localStorage.getItem("lastLogin") || session.user?.email || ""
+      const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
+      setLastLogin(lastLoginValue)
+      setLastLoginTime(lastLoginTimeValue)
+    }
+  }, [status, session])
+
   const handleLogout = () => {
-    localStorage.removeItem("user");
+    localStorage.removeItem("lastLogin");
+    localStorage.removeItem("lastLoginTime");
     router.push("/auth/login");
   };
+
   const features = [
     {
       icon: Users,
@@ -53,6 +65,7 @@ export default function HomePage() {
       description: "Live booking status, instant notifications, and dynamic pricing",
     },
   ]
+
   const plans = [
     {
       name: "Starter",
@@ -93,6 +106,23 @@ export default function HomePage() {
       popular: false,
     },
   ]
+
+  // Show loading state while session is being checked
+  if (status === 'loading' || !isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Redirect to dashboard if user is already authenticated
+  if (status === 'authenticated') {
+    router.push('/dashboard')
+    return null
+  }
+
+  // Show landing page for unauthenticated users
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       {/* Navigation */}
