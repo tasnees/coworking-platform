@@ -106,19 +106,27 @@ export default function DashboardLayout({
     setMounted(true)
   }, [])
 
-  const handleLogout = async () => {
-    await logout()
-    router.push("/auth/login")
-  }
-
-  // Don't render anything until mounted on client
-  if (!mounted) {
+  // Show loading state while user data is being fetched
+  if (isLoading || !mounted) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
       </div>
     )
   }
+
+  // Redirect to login if user is not authenticated
+  if (!user) {
+    router.push('/auth/login')
+    return null
+  }
+
+  const handleLogout = async () => {
+    await logout()
+    router.push("/auth/login")
+  }
+
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -228,11 +236,11 @@ export default function DashboardLayout({
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage 
-                        src={user?.image || "/placeholder-user.jpg"} 
-                        alt={user?.name || "User"} 
+                        src={user.image || "/placeholder-user.jpg"} 
+                        alt={user.name || "User"} 
                       />
                       <AvatarFallback>
-                        {user?.email?.charAt(0).toUpperCase() || "U"}
+                        {user.email?.charAt(0).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -241,10 +249,10 @@ export default function DashboardLayout({
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user?.name || 'User'}
+                        {user.name || 'User'}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email || ''}
+                        {user.email || ''}
                       </p>
                     </div>
                   </DropdownMenuLabel>
@@ -269,7 +277,6 @@ export default function DashboardLayout({
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             {children}
           </div>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
     </div>
