@@ -1,11 +1,11 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { useRouter, usePathname } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect, type ReactNode } from 'react'
+import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from '@/components/ui/dropdown-menu'
 import {
   LayoutDashboard,
   Calendar,
@@ -25,11 +25,12 @@ import {
   LogOut,
   Menu,
   Bell,
-} from "lucide-react"
+} from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
-  userRole?: "admin" | "staff" | "member"
+  children: ReactNode
+  userRole?: 'admin' | 'staff' | 'member'
 }
 
 type NavigationItem = {
@@ -39,21 +40,15 @@ type NavigationItem = {
   roles: string[]
 }
 
-type UserData = {
-  name?: string
-  email?: string
-  image?: string
-}
-
 export default function DashboardLayout({ 
   children, 
-  userRole = "member" 
+  userRole = 'member' 
 }: DashboardLayoutProps) {
-  const [mounted, setMounted] = useState(false)
-  const [user, setUser] = useState<UserData | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
+  const { user, isLoading, logout } = useAuth()
+  const [mounted, setMounted] = useState(false)
 
   // Navigation items
   const navigation: NavigationItem[] = [
@@ -106,27 +101,13 @@ export default function DashboardLayout({
     item.roles.includes(userRole)
   )
 
-  // Initialize component
+  // Set mounted state after client-side hydration
   useEffect(() => {
     setMounted(true)
-    
-    // Only access localStorage in the browser
-    if (typeof window !== 'undefined') {
-      try {
-        const userData = localStorage.getItem("user")
-        if (userData) {
-          setUser(JSON.parse(userData))
-        }
-      } catch (error) {
-        console.error("Error parsing user data:", error)
-      }
-    }
   }, [])
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("user")
-    }
+  const handleLogout = async () => {
+    await logout()
     router.push("/auth/login")
   }
 
