@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -35,20 +34,28 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children, userRole = "member" }: DashboardLayoutProps) {
+  const [mounted, setMounted] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
+    setMounted(true)
+    const userData = typeof window !== 'undefined' ? localStorage.getItem("user") : null
     if (userData) {
-      setUser(JSON.parse(userData))
+      try {
+        setUser(JSON.parse(userData))
+      } catch (e) {
+        console.error("Failed to parse user data:", e)
+      }
     }
   }, [])
 
   const handleLogout = () => {
-    localStorage.removeItem("user")
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("user")
+    }
     router.push("/auth/login")
   }
 
@@ -68,6 +75,11 @@ export default function DashboardLayout({ children, userRole = "member" }: Dashb
   ]
 
   const filteredNavigation = navigation.filter((item) => item.roles.includes(userRole))
+
+  // Don't render anything until the component has mounted client-side
+  if (!mounted) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
