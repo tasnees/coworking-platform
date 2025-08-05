@@ -1,5 +1,9 @@
 "use client"
-import { useState } from "react"
+
+import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+
+// Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,8 +21,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import DashboardLayout from "@/components/dashboard-layout"
 import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff } from "lucide-react"
+
+// Dynamically import the dashboard layout with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+);
+
+// Main page component
 export default function WifiSettingsPage() {
   const [activeTab, setActiveTab] = useState("networks")
   const [showPassword, setShowPassword] = useState(false)
@@ -102,6 +120,21 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
+  // Client-side only rendering
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">

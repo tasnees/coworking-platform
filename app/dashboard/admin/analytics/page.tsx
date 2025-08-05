@@ -1,22 +1,51 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import components with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { ssr: false, loading: () => <div>Loading dashboard...</div> }
+);
+
+const Line = dynamic(
+  () => import('react-chartjs-2').then((mod) => mod.Line),
+  { ssr: false }
+);
+
+// Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import DashboardLayout from "@/components/dashboard-layout";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
-// Simple chart using chart.js and react-chartjs-2
-import { Line } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
-export default function AnalyticsPage() {
+
+// Client-side only component wrapper
+function ClientOnlyAnalytics() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This will only run on the client side
+    setIsClient(true);
+    
+    // Initialize ChartJS on client side only
+    if (typeof window !== 'undefined') {
+      import('chart.js').then(({ Chart, registerables }) => {
+        Chart.register(...registerables);
+      });
+    }
+  }, []);
+
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  return <AnalyticsPage />;
+}
+
+function AnalyticsPage() {
   // State for statistics
   const [stats, setStats] = useState({
     totalMembers: 0,
@@ -204,3 +233,5 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   );
 }
+
+export default ClientOnlyAnalytics;

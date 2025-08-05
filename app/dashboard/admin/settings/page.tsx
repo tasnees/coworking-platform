@@ -1,5 +1,22 @@
 "use client";
+
 import { useState } from "react";
+import dynamic from 'next/dynamic';
+
+// Dynamically import the dashboard layout with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    ) 
+  }
+);
+
+// Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,8 +26,8 @@ import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import DashboardLayout from "@/components/dashboard-layout";
 import { User, Mail, Phone, MapPin, Shield, Bell, Key, Save, X, Edit3, Settings, Users, Database, ShieldCheck } from "lucide-react";
+
 interface AdminProfile {
   id: string;
   name: string;
