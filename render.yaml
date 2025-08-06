@@ -5,6 +5,7 @@ services:
   - type: web
     name: coworking-platform
     env: node
+    region: singapore  # Choose the region closest to your users
     buildCommand: |
       corepack enable
       pnpm install --no-frozen-lockfile
@@ -12,30 +13,28 @@ services:
     startCommand: pnpm start
     envVars:
       - key: NODE_ENV
-        value: development
+        value: production
       - key: NODE_VERSION
-        value: 22.x
+        value: 20.x  # Using LTS version for better stability
       - key: PNPM_VERSION
         value: 8.10.0
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
-    # Uncomment and add your environment variables below
-      - key: DATABASE_URL
-      - value: "mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority"
-      - sync: false
-      - key: NEXTAUTH_SECRET
-      - value: "s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo="
-      - sync: false
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
       - key: NEXTAUTH_URL
-      - value: "https://coworking-platform.onrender.com"
-      - sync: false
+        value: https://coworking-platform.onrender.com
+        sync: false
+      - key: NEXTAUTH_SECRET
+        value: s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=
+        sync: false
       - key: MONGODB_URI
-      - value: "mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority"
-      - sync: false
-
-# Uncomment to create a MongoDB database
-# databases:
-#   - name: coworking-db
-#     databaseName: coworking
-#     user: coworking-user
-#     plan: free
+        value: mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://coworking-platform.onrender.com
+        sync: false
+    build:
+      useCache: true
+    healthCheckPath: /api/health
+    plan: free
