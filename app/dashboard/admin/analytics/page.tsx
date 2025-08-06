@@ -6,46 +6,26 @@ import dynamic from 'next/dynamic';
 // Dynamically import components with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
-  { ssr: false, loading: () => <div>Loading dashboard...</div> }
-);
-
-const Line = dynamic(
-  () => import('react-chartjs-2').then((mod) => mod.Line),
-  { ssr: false }
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 );
 
 // Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
 
-// Client-side only component wrapper
-function ClientOnlyAnalytics() {
-  const [isClient, setIsClient] = useState(false);
+// AnalyticsPage component with client-side only rendering
+export default function AnalyticsPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // This will only run on the client side
-    setIsClient(true);
-    
-    // Initialize ChartJS on client side only
-    if (typeof window !== 'undefined') {
-      import('chart.js').then(({ Chart, registerables }) => {
-        Chart.register(...registerables);
-      });
-    }
-  }, []);
-
-  if (!isClient) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  return <AnalyticsPage />;
-}
-
-function AnalyticsPage() {
   // State for statistics
   const [stats, setStats] = useState({
     totalMembers: 0,
@@ -58,41 +38,120 @@ function AnalyticsPage() {
     peakHour: "",
     churnRate: 0,
   });
+  
   // Mock trend data for the graph
   const [trendData, setTrendData] = useState({
-    labels: [
-      "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-    ],
+    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     checkins: [62, 70, 89, 74, 80, 65, 55],
     revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
   });
-  // Simulate fetching real data (replace with your API call)
+
+  // Dynamically import Chart.js and Line component on client side only
+  const [Line, setLine] = useState<any>(null);
+
   useEffect(() => {
-    // Example: Replace this with your real API call
-    const fetchStats = async () => {
-      // Simulate API delay
-      await new Promise((res) => setTimeout(res, 500));
-      setStats({
-        totalMembers: 236,
-        newMembersThisMonth: 18,
-        totalRevenue: 21500,
-        revenueChange: 7.2,
-        occupancyRate: 82,
-        avgDailyCheckins: 74,
-        peakDay: "Wednesday",
-        peakHour: "2:00 PM",
-        churnRate: 2.1,
-      });
-      setTrendData({
-        labels: [
-          "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"
-        ],
-        checkins: [62, 70, 89, 74, 80, 65, 55],
-        revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
-      });
+    // This effect only runs on the client side
+    setIsMounted(true);
+
+    // Dynamically import Chart.js and Line component
+    const loadCharts = async () => {
+      try {
+        // Import Chart.js and registerables
+        const { Chart, registerables } = await import('chart.js');
+        Chart.register(...registerables);
+        
+        // Import Line component from react-chartjs-2
+        const { Line: LineChart } = await import('react-chartjs-2');
+        setLine(() => LineChart);
+        
+        // Fetch data after charts are loaded
+        await fetchAnalyticsData();
+      } catch (err) {
+        console.error('Failed to load charts:', err);
+        setError('Failed to load analytics. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
     };
-    fetchStats();
+
+    // Simulate fetching real data
+    const fetchAnalyticsData = async () => {
+      try {
+        setIsLoading(true);
+        // Simulate API delay
+        await new Promise((res) => setTimeout(res, 500));
+        
+        setStats({
+          totalMembers: 236,
+          newMembersThisMonth: 18,
+          totalRevenue: 21500,
+          revenueChange: 7.2,
+          occupancyRate: 82,
+          avgDailyCheckins: 74,
+          peakDay: "Wednesday",
+          peakHour: "2:00 PM",
+          churnRate: 2.1,
+        });
+        
+        setTrendData({
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          checkins: [62, 70, 89, 74, 80, 65, 55],
+          revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
+        });
+        
+      } catch (err) {
+        console.error('Error fetching analytics data:', err);
+        setError('Failed to load analytics data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadCharts();
+
+    // Cleanup function
+    return () => {
+      // Any cleanup if needed
+    };
   }, []);
+
+  // Don't render anything until the component is mounted on the client
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+    // Show loading state
+  if (isLoading || !Line) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-6 max-w-md">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // Chart.js data and options
   const lineData = {
     labels: trendData.labels,
@@ -233,5 +292,3 @@ function AnalyticsPage() {
     </DashboardLayout>
   );
 }
-
-export default ClientOnlyAnalytics;

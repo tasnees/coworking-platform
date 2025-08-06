@@ -38,69 +38,171 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 function CheckInContent() {
-  const [isMounted, setIsMounted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
+  // Mock data state - in a real app, this would come from an API
+  const [activeCheckIns, setActiveCheckIns] = useState<Array<{
+    id: string;
+    name: string;
+    type: 'member' | 'guest';
+    checkInTime: string;
+    duration: string;
+    status: 'active' | 'expired' | 'extended';
+  }>>([]);
+  
+  const [checkInLogs, setCheckInLogs] = useState<Array<{
+    id: string;
+    name: string;
+    type: 'member' | 'guest';
+    checkInTime: string;
+    checkOutTime: string;
+    duration: string;
+  }>>([]);
+  
+  // Search query for active check-ins
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Load data on component mount
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    const initializeComponent = async () => {
+      try {
+        setIsLoading(true);
+        
+        // Simulate API calls
+        await Promise.all([
+          // Simulate loading active check-ins
+          new Promise(resolve => setTimeout(resolve, 500)).then(() => {
+            setActiveCheckIns([
+              {
+                id: '1',
+                name: 'John Doe',
+                type: 'member',
+                checkInTime: new Date().toISOString(),
+                duration: '4h 30m',
+                status: 'active',
+              },
+              {
+                id: '2',
+                name: 'Jane Smith',
+                type: 'guest',
+                checkInTime: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                duration: '2h 15m',
+                status: 'active',
+              },
+            ]);
+          }),
+          
+          // Simulate loading check-in logs
+          new Promise(resolve => setTimeout(resolve, 700)).then(() => {
+            setCheckInLogs([
+              {
+                id: '101',
+                name: 'Mike Johnson',
+                type: 'member',
+                checkInTime: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+                checkOutTime: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
+                duration: '1h 0m',
+              },
+              {
+                id: '102',
+                name: 'Sarah Williams',
+                type: 'guest',
+                checkInTime: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
+                checkOutTime: new Date(Date.now() - 47 * 60 * 60 * 1000).toISOString(),
+                duration: '1h 30m',
+              },
+            ]);
+          }),
+        ]);
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error initializing check-in data:', err);
+        setError('Failed to load check-in data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+        setIsMounted(true);
+      }
+    };
+    
+    initializeComponent();
+    
+    // Cleanup function
+    return () => {
+      // Any cleanup if needed
+    };
+  }, []);
 
-  // Show loading state until component is mounted
-  if (!isMounted) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-  const [activeTab, setActiveTab] = useState("overview");
-  // Add search state for logs
-  const [searchTerm, setSearchTerm] = useState("");
+  // Define types for our data
+  type CheckInLog = {
+    id: number;
+    member: string;
+    time: string;
+    location: string;
+    status: 'checked-in' | 'checked-out';
+    duration: string;
+  };
+
+  type CurrentlyInsideMember = {
+    id: number;
+    member: string;
+    checkInTime: string;
+    location: string;
+    duration: string;
+  };
+
+  // Today's statistics
   const todayStats = {
     totalCheckIns: 89,
     currentlyInside: 67,
     peakTime: "2:30 PM",
     averageStay: "4.2 hours",
+  };
+
+  // Mock data for recent check-ins
+  const [recentCheckIns, setRecentCheckIns] = useState<CheckInLog[]>([]);
+  
+  // Mock data for currently inside members
+  const [currentlyInside, setCurrentlyInside] = useState<CurrentlyInsideMember[]>([]);
+  
+  // Search term state
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Active tab state
+  const [activeTab, setActiveTab] = useState("overview");
+  
+  // View log state
+  const [viewLog, setViewLog] = useState<CheckInLog | null>(null);
+
+  // Show loading state until component is mounted and data is loaded
+  if (!isMounted || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
-  const recentCheckIns = [
-    {
-      id: 1,
-      member: "John Doe",
-      time: "09:15 AM",
-      location: "Main Entrance",
-      status: "checked-in",
-      duration: "3h 45m",
-    },
-    {
-      id: 2,
-      member: "Jane Smith",
-      time: "10:30 AM",
-      location: "Side Entrance",
-      status: "checked-in",
-      duration: "2h 30m",
-    },
-    {
-      id: 3,
-      member: "Mike Johnson",
-      time: "08:45 AM",
-      location: "Main Entrance",
-      status: "checked-out",
-      duration: "4h 15m",
-    },
-    {
-      id: 4,
-      member: "Sarah Wilson",
-      time: "11:00 AM",
-      location: "Main Entrance",
-      status: "checked-in",
-      duration: "1h 00m",
-    },
-  ]
-  const currentlyInside = [
-    { id: 1, member: "John Doe", checkInTime: "09:15 AM", location: "Hot Desk Area", duration: "3h 45m" },
-    { id: 2, member: "Jane Smith", checkInTime: "10:30 AM", location: "Meeting Room B", duration: "2h 30m" },
-    { id: 3, member: "Sarah Wilson", checkInTime: "11:00 AM", location: "Private Office 3", duration: "1h 00m" },
-    { id: 4, member: "Alex Brown", checkInTime: "08:30 AM", location: "Hot Desk Area", duration: "4h 30m" },
-  ]
+  
+  // Show error state if data loading failed
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-6 max-w-md">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   const [qrLocations, setQrLocations] = useState([
     {
       id: 1,
@@ -122,7 +224,6 @@ function CheckInContent() {
   const [addQrDialogOpen, setAddQrDialogOpen] = useState(false)
   const [newQrLocation, setNewQrLocation] = useState({ name: "", description: "" })
   // For viewing log details (Dialog)
-  const [viewLog, setViewLog] = useState<any | null>(null);
   const getStatusColor = (status: string) => {
     switch (status) {
       case "checked-in":

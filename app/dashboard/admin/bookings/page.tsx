@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
 
 // Dynamically import the dashboard layout with SSR disabled
@@ -34,47 +34,133 @@ import {
 import { Calendar } from "@/components/ui/calendar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CalendarDays, Clock, MapPin, Plus, Search } from "lucide-react"
+// Main bookings page component with client-side rendering
 export default function BookingsPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [viewMode, setViewMode] = useState("day")
-  const bookings = [
-    {
-      id: 1,
-      member: "John Doe",
-      resource: "Desk A-12",
-      type: "Hot Desk",
-      startTime: "09:00",
-      endTime: "17:00",
-      status: "confirmed",
-      date: "2024-01-15",
-    },
-    {
-      id: 2,
-      member: "Jane Smith",
-      resource: "Meeting Room B",
-      type: "Meeting Room",
-      startTime: "14:00",
-      endTime: "16:00",
-      status: "pending",
-      date: "2024-01-15",
-    },
-    {
-      id: 3,
-      member: "Mike Johnson",
-      resource: "Private Office 3",
-      type: "Private Office",
-      startTime: "10:00",
-      endTime: "18:00",
-      status: "confirmed",
-      date: "2024-01-15",
-    },
-  ]
-  const resources = [
+  
+  // Mock data - in a real app, this would come from an API
+  const [bookings, setBookings] = useState<Array<{
+    id: number;
+    member: string;
+    resource: string;
+    type: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    date: string;
+  }>>([]);
+  
+  const [resources] = useState([
     { id: "desk-a12", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
     { id: "meeting-b", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
     { id: "office-3", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
     { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
-  ]
+  ]);
+  
+  // Load data on component mount
+  useEffect(() => {
+    // This effect only runs on the client side
+    setIsMounted(true);
+    
+    const fetchBookings = async () => {
+      try {
+        setIsLoading(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Mock data - replace with actual API call
+        const mockBookings = [
+          {
+            id: 1,
+            member: "John Doe",
+            resource: "Desk A-12",
+            type: "Hot Desk",
+            startTime: "09:00",
+            endTime: "17:00",
+            status: "confirmed",
+            date: new Date().toISOString().split('T')[0],
+          },
+          {
+            id: 2,
+            member: "Jane Smith",
+            resource: "Meeting Room B",
+            type: "Meeting Room",
+            startTime: "14:00",
+            endTime: "16:00",
+            status: "pending",
+            date: new Date().toISOString().split('T')[0],
+          },
+          {
+            id: 3,
+            member: "Mike Johnson",
+            resource: "Private Office 3",
+            type: "Private Office",
+            startTime: "10:00",
+            endTime: "18:00",
+            status: "confirmed",
+            date: new Date().toISOString().split('T')[0],
+          },
+        ];
+        
+        setBookings(mockBookings);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        setError('Failed to load bookings. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchBookings();
+    
+    // Cleanup function
+    return () => {
+      // Any cleanup if needed
+    };
+  }, []);
+  
+  // Don't render anything until the component is mounted on the client
+  if (!isMounted) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center p-6 max-w-md">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmed":
