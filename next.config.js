@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable App Router
+  experimental: {
+    appDir: true,
+  },
   typescript: {
-    // !! WARN !!
     // Enable type checking during build process
-    // Set this to false if you want to skip type checking during build
-    // !! WARN !!
     ignoreBuildErrors: false,
   },
   eslint: {
@@ -12,17 +13,22 @@ const nextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
-  // Ensure the build includes necessary files
+  // Webpack configuration
   webpack: (config, { isServer }) => {
-    // Important: return the modified config
     return config;
   },
-  // Add any custom domains for images
+  // Image optimization
   images: {
     domains: ['localhost'],
   },
   // Enable React Strict Mode
   reactStrictMode: true,
+  // Disable static pages generation for App Router
+  output: 'standalone',
+  // Enable server components external packages
+  experimental: {
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+  },
 };
 
 module.exports = nextConfig;
