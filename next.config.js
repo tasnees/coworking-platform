@@ -3,6 +3,7 @@ const nextConfig = {
   // Enable App Router
   experimental: {
     appDir: true,
+    serverActions: true,
   },
   typescript: {
     // Enable type checking during build process
@@ -15,6 +16,7 @@ const nextConfig = {
   },
   // Webpack configuration
   webpack: (config, { isServer }) => {
+    // Important: return the modified config
     return config;
   },
   // Image optimization
@@ -23,12 +25,18 @@ const nextConfig = {
   },
   // Enable React Strict Mode
   reactStrictMode: true,
-  // Disable static pages generation for App Router
+  // Output configuration
   output: 'standalone',
   // Enable server components external packages
-  experimental: {
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
-  },
+  serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+  // Disable static pages generation for App Router
+  generateEtags: false,
+  // Disable static optimization for the entire app
+  trailingSlash: false,
+  // Disable powered by header
+  poweredByHeader: false,
+  // Enable production browser source maps
+  productionBrowserSourceMaps: false,
 };
 
 module.exports = nextConfig;
