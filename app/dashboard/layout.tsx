@@ -4,7 +4,7 @@ import React, { ReactNode, Suspense, ErrorInfo } from 'react'
 import { SessionProvider } from 'next-auth/react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/dashboard-layout'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation.js'
 
 // Loading component for the dashboard
 function DashboardLoading() {

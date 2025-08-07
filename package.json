@@ -4,28 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "pnpm install --no-frozen-lockfile && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "pnpm install --no-frozen-lockfile --ignore-scripts && pnpm install --no-frozen-lockfile --shamefully-hoist"
+    "prepare": "husky install"
   },
   "resolutions": {
     "unrs-resolver": "1.11.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "unrs-resolver@1.11.1": "1.11.0"
-    },
-    "packageExtensions": {
-      "unrs-resolver@1.11.0": {
-        "optionalDependencies": {
-          "napi-postinstall": "*"
-        },
-        "dependencies": {
-          "napi-postinstall": "*"
-        }
-      }
-    }
   },
   "dependencies": {
     "@builder.io/sdk": "^6.1.2",

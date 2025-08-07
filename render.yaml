@@ -6,35 +6,75 @@ services:
     name: coworking-platform
     env: node
     region: singapore  # Choose the region closest to your users
+    
+    # Build configuration
     buildCommand: |
-      corepack enable
-      pnpm install --no-frozen-lockfile
-      pnpm build
-    startCommand: pnpm start
+      # Install dependencies
+      npm ci
+      
+      # Build the application
+      npm run build
+    
+    # Start command for the application
+    startCommand: npm start
+    
+    # Environment variables
     envVars:
+      # Node.js configuration
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
         value: 20.x  # Using LTS version for better stability
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=4096"
+      
+      # Package manager configuration
       - key: PNPM_VERSION
         value: 8.10.0
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
+      
+      # Next.js configuration
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+      - key: NEXT_SHARP_PATH
+        value: "/usr/local/lib/node_modules/sharp"
+      
+      # Application URLs
       - key: NEXTAUTH_URL
         value: https://coworking-platform.onrender.com
-        sync: false
-      - key: NEXTAUTH_SECRET
-        value: s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=
-        sync: false
-      - key: MONGODB_URI
-        value: mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
         sync: false
       - key: NEXT_PUBLIC_APP_URL
         value: https://coworking-platform.onrender.com
         sync: false
+      
+      # Authentication
+      - key: NEXTAUTH_SECRET
+        value: s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=
+        sync: false
+      
+      # Database
+      - key: MONGODB_URI
+        value: mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+        sync: false
+    
+    # Build settings
     build:
       useCache: true
+      cacheVersion: 1  # Increment to bust the cache when needed
+    
+    # Health check configuration
     healthCheckPath: /api/health
+    
+    # Plan and resources
     plan: free
+    
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Build environment settings
+    buildEnvironment:
+      - NODE_ENV=production
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - NPM_CONFIG_PRODUCTION=false
+      - NEXT_TELEMETRY_DISABLED=1

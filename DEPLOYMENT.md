@@ -16,7 +16,7 @@ This guide will walk you through deploying the Coworking Platform to Render.
 2. Create a new project (if you haven't already)
 3. Build a new cluster (free tier available)
 4. Add your connection IP to the IP access list
-5. Create a database user
+5. Create a database user with read/write access
 6. Get your connection string (replace placeholders with your credentials):
    ```
    mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<database>?retryWrites=true&w=majority
@@ -32,10 +32,11 @@ This guide will walk you through deploying the Coworking Platform to Render.
 4. Connect your repository
 5. Configure the service:
    - **Name**: `coworking-platform`
-   - **Region**: Choose the one closest to your users
+   - **Region**: `singapore` (or choose the one closest to your users)
    - **Branch**: `main` (or your production branch)
-   - **Build Command**: `pnpm install --no-frozen-lockfile && pnpm build`
+   - **Build Command**: See the `build` script in `package.json`
    - **Start Command**: `pnpm start`
+   - **Auto-Deploy**: Enable for automatic deployments on push to the selected branch
 
 ### Option B: Using Render Blueprint (render.yaml)
 
@@ -48,6 +49,108 @@ This guide will walk you through deploying the Coworking Platform to Render.
 ## 3. Configure Environment Variables
 
 In your Render dashboard, go to your service and add these environment variables:
+
+### Required Environment Variables
+
+```
+# Next.js
+NODE_ENV=production
+NEXT_PUBLIC_APP_URL=https://your-production-url.com
+NEXT_TELEMETRY_DISABLED=1
+NEXT_SHARP_PATH=/usr/local/lib/node_modules/sharp
+
+# Authentication
+NEXTAUTH_URL=https://your-production-url.com
+NEXTAUTH_SECRET=your_nextauth_secret_here
+
+# Database
+MONGODB_URI=your_mongodb_connection_string
+```
+
+### Optional Environment Variables
+
+```
+# Email Provider (Example using Nodemailer)
+EMAIL_SERVER=smtp://username:password@smtp.example.com:587
+EMAIL_FROM=noreply@yourdomain.com
+
+# OAuth Providers (if used)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# API Keys
+MAPBOX_ACCESS_TOKEN=your_mapbox_token
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+```
+
+## 4. Build and Runtime Configuration
+
+The application is configured with the following settings in `next.config.js`:
+
+- **Output**: Standalone (enables optimized production builds)
+- **Image Optimization**: Enabled with WebP and AVIF formats
+- **Security Headers**: Enabled with secure defaults
+- **Caching**: Configured for optimal performance
+
+## 5. Health Check Endpoint
+
+The application includes a health check endpoint at `/api/health` that returns a 200 status when the application is running correctly. This is configured in `render.yaml`.
+
+## 6. Monitoring and Logs
+
+- **Logs**: View application logs in the Render dashboard
+- **Monitoring**: Consider setting up an external monitoring service (e.g., Sentry, LogRocket)
+- **Error Tracking**: Implement error tracking for production monitoring
+
+## 7. SSL/TLS
+
+Render automatically provides SSL certificates for your production domain through Let's Encrypt. No additional configuration is needed.
+
+## 8. Scaling
+
+The application is configured to work with Render's auto-scaling. You can adjust the instance size and scaling settings in the Render dashboard based on your needs.
+
+## 9. Custom Domains
+
+To use a custom domain:
+1. Go to your service in the Render dashboard
+2. Click on "Settings"
+3. Under "Custom Domains", click "Add Custom Domain"
+4. Follow the instructions to verify domain ownership
+5. Update your DNS settings as instructed
+
+## 10. Troubleshooting
+
+### Build Failures
+
+1. Check the build logs in the Render dashboard for detailed error messages
+2. Verify all environment variables are correctly set
+3. Ensure the Node.js version in `package.json` matches the one in `render.yaml`
+4. Check for dependency issues by running `pnpm install` locally
+
+### Runtime Issues
+
+1. Check the application logs in the Render dashboard
+2. Verify the database connection string is correct
+3. Ensure all required environment variables are set
+4. Check the health check endpoint at `/api/health`
+
+## 11. Updating the Application
+
+1. Push changes to your repository
+2. Render will automatically detect the changes and trigger a new deployment
+3. Monitor the deployment in the Render dashboard
+
+## 12. Rollback
+
+If a deployment causes issues:
+1. Go to your service in the Render dashboard
+2. Click on "Deploys"
+3. Find a previous working deployment
+4. Click "Rollback" to revert to that version
 
 ```
 NODE_ENV=production

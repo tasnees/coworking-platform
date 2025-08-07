@@ -1,43 +1,32 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable App Router
+  // Enable App Router and experimental features
   experimental: {
     appDir: true,
-    serverActions: true,
+    serverActions: {
+      bodySizeLimit: '2mb',
+    },
     // Enable server components external packages
     serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+    // Enable ISR memory cache configuration
+    isrMemoryCacheSize: 0, // Disable in-memory cache in favor of file-system cache
   },
+  
+  // TypeScript configuration
   typescript: {
     // Enable type checking during build process
     ignoreBuildErrors: false,
   },
+  
+  // ESLint configuration
   eslint: {
     // Allow production builds to complete with ESLint warnings
     ignoreDuringBuilds: true,
   },
-  // Webpack configuration
-  webpack: (config, { isServer, dev }) => {
-    // Add custom webpack configurations here if needed
-    if (!dev && !isServer) {
-      // Enable optimizations for production client bundle
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        maxInitialRequests: 10,
-        minSize: 0,
-        cacheGroups: {
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /[\\/]node_modules[\\/]/,
-            priority: 20,
-          },
-        },
-      };
-    }
-    return config;
-  },
+  
   // Image optimization
   images: {
+    unoptimized: process.env.NODE_ENV !== 'production', // Enable optimization in production
     domains: [
       'localhost',
       'coworking-platform.onrender.com',
@@ -46,16 +35,9 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
-  // Enable React Strict Mode
-  reactStrictMode: true,
-  // Output configuration
-  output: 'standalone',
-  // Disable static pages generation for App Router
-  generateEtags: true, // Enable etags for better caching
-  // Disable static optimization for the entire app
-  trailingSlash: false,
+
   // Security headers
-  headers: async () => {
+  async headers() {
     return [
       {
         source: '/(.*)',
@@ -76,13 +58,48 @@ const nextConfig = {
       },
     ];
   },
-  // Disable powered by header
+
+  // Output configuration
+  output: 'standalone',
+  
+  // Enable production source maps
+  productionBrowserSourceMaps: false, // Set to true for debugging in production
+  
+  // Enable SWC minification
+  swcMinify: true,
+  
+  // Enable React Strict Mode
+  reactStrictMode: true,
+  
+  // Enable etags for better caching
+  generateEtags: true,
+  
+  // Disable trailing slashes
+  trailingSlash: false,
+  
+  // Disable powered by header for security
   poweredByHeader: false,
-  // Enable production browser source maps (optional, disable for smaller build size)
-  productionBrowserSourceMaps: false,
-  // Configure page revalidation (ISR)
-  experimental: {
-    isrMemoryCacheSize: 0, // Disable in-memory cache in favor of file-system cache
+
+  // Webpack configuration
+  webpack: (config, { isServer, dev }) => {
+    // Add custom webpack configurations here if needed
+    if (!dev && !isServer) {
+      // Enable optimizations for production client bundle
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        maxInitialRequests: 10,
+        minSize: 0,
+        cacheGroups: {
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /[\\/]node_modules[\\/]/,
+            priority: 20,
+          },
+        },
+      };
+    }
+    return config;
   },
 };
 

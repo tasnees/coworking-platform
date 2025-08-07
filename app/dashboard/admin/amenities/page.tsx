@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import dynamic from 'next/dynamic'
+import dynamic from 'next/dynamic.js'
 
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
