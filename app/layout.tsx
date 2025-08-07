@@ -1,7 +1,10 @@
 import type { Metadata, Viewport } from "next"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "./api/auth/[...nextauth]/route"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "./providers"
+
 export const metadata: Metadata = {
   title: "Coworking Platform",
   description: "Professional coworking space management system",
@@ -18,6 +21,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
 }
+
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
@@ -28,18 +32,21 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 }
-export default function RootLayout({
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const session = await getServerSession(authOptions)
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="font-sans antialiased min-h-screen bg-background">
-        <Providers>
+        <Providers session={session}>
           {children}
           <Toaster />
         </Providers>
