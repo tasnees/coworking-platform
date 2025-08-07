@@ -36,14 +36,46 @@ import {
   Save, 
   AlertTriangle 
 } from "lucide-react"
+// Mock data for regular hours
+const mockRegularHours = [
+  { id: 'monday', day: 'Monday', open: '09:00', close: '18:00', isClosed: false },
+  { id: 'tuesday', day: 'Tuesday', open: '09:00', close: '18:00', isClosed: false },
+  { id: 'wednesday', day: 'Wednesday', open: '09:00', close: '18:00', isClosed: false },
+  { id: 'thursday', day: 'Thursday', open: '09:00', close: '18:00', isClosed: false },
+  { id: 'friday', day: 'Friday', open: '09:00', close: '18:00', isClosed: false },
+  { id: 'saturday', day: 'Saturday', open: '10:00', close: '16:00', isClosed: false },
+  { id: 'sunday', day: 'Sunday', open: '', close: '', isClosed: true },
+];
+
+// Mock data for special hours
+const mockSpecialHours = [
+  { id: '1', name: 'New Year\'s Day', date: '2024-01-01', isClosed: true, open: '', close: '' },
+  { id: '2', name: 'Christmas Day', date: '2024-12-25', isClosed: true, open: '', close: '' },
+];
+
 function HoursContent() {
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("regular")
+  const [regularHours, setRegularHours] = useState<typeof mockRegularHours>([])
+  const [specialHours, setSpecialHours] = useState<typeof mockSpecialHours>([])
+  const [isLoading, setIsLoading] = useState(true)
+
   useEffect(() => {
-    setIsMounted(true)
+    // Only run on client-side
+    if (typeof window !== 'undefined') {
+      // Simulate API call
+      const timer = setTimeout(() => {
+        setRegularHours(mockRegularHours)
+        setSpecialHours(mockSpecialHours)
+        setIsMounted(true)
+        setIsLoading(false)
+      }, 500)
+      
+      return () => clearTimeout(timer)
+    }
   }, [])
-  // Show loading state until component is mounted
-  if (!isMounted) {
+  // Show loading state until component is mounted and data is loaded
+  if (!isMounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>

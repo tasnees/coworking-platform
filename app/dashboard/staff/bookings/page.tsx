@@ -127,8 +127,9 @@ const mockResources: Resource[] = [
   { id: "5", name: "Dedicated Desk 3", type: "desk", hourlyRate: 10 }
 ]
 export default function StaffBookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>(mockBookings)
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>(mockBookings)
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -137,7 +138,8 @@ export default function StaffBookingsPage() {
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all")
   // Filter bookings based on search and filters
   const filterBookings = () => {
-    let filtered = bookings
+    if (!bookings?.length) return []
+    let filtered = [...bookings]
     if (searchTerm) {
       filtered = filtered.filter(booking =>
         booking.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -156,9 +158,19 @@ export default function StaffBookingsPage() {
   // Apply filters when any filter changes
   const [isClient, setIsClient] = useState(false)
   useEffect(() => {
-    setIsClient(true)
-    filterBookings()
-  }, [searchTerm, statusFilter, resourceTypeFilter])
+    // Initialize with mock data on client-side only
+    if (typeof window !== 'undefined') {
+      setBookings(mockBookings)
+      setFilteredBookings(mockBookings)
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isClient) {
+      filterBookings()
+    }
+  }, [searchTerm, statusFilter, resourceTypeFilter, bookings, isClient])
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -230,7 +242,7 @@ export default function StaffBookingsPage() {
   const pendingBookings = bookings.filter(b => b.status === 'pending').length
   const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0)
   // Show loading state during SSR/hydration
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -337,7 +349,7 @@ export default function StaffBookingsPage() {
             </div>
             {/* Bookings List */}
             <div className="space-y-4">
-              {filteredBookings.length === 0 ? (
+              {!filteredBookings?.length ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No bookings found matching your criteria
                 </div>
