@@ -9,8 +9,13 @@ services:
     
     # Build configuration
     buildCommand: |
-      # Install dependencies
-      npm ci
+      # Install dependencies (ignore scripts to avoid husky issues)
+      npm ci --ignore-scripts
+      
+      # Install husky only if not in CI
+      if [ -z "$CI" ]; then
+        npx husky install
+      fi
       
       # Build the application
       npm run build
@@ -20,6 +25,10 @@ services:
     
     # Environment variables
     envVars:
+      # CI/CD configuration
+      - key: CI
+        value: "true"
+      
       # Node.js configuration
       - key: NODE_ENV
         value: production
@@ -29,10 +38,10 @@ services:
         value: "--max-old-space-size=4096"
       
       # Package manager configuration
-      - key: PNPM_VERSION
-        value: 8.10.0
       - key: NPM_CONFIG_PRODUCTION
         value: "false"
+      - key: HUSKY
+        value: "0"
       
       # Next.js configuration
       - key: NEXT_TELEMETRY_DISABLED
