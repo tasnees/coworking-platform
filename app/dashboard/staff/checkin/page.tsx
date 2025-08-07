@@ -33,6 +33,7 @@ interface Member {
 }
 export default function StaffCheckInPage() {
   const [isClient, setIsClient] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [checkIns, setCheckIns] = useState<CheckInRecord[]>([])
   const [members, setMembers] = useState<Member[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -42,22 +43,37 @@ export default function StaffCheckInPage() {
   const [currentTime, setCurrentTime] = useState(new Date())
   // Initialize client-side data and timer
   useEffect(() => {
-    setIsClient(true)
     // Only run on client
-    const mockMembers: Member[] = [
-      { id: '1', name: 'Alice Johnson', email: 'alice@company.com', membershipType: 'premium', status: 'active', totalVisits: 45, lastVisit: new Date('2024-07-27') },
-      { id: '2', name: 'Bob Smith', email: 'bob@startup.io', membershipType: 'basic', status: 'active', totalVisits: 12, lastVisit: new Date('2024-07-25') },
-      { id: '3', name: 'Carol Williams', email: 'carol@tech.co', membershipType: 'enterprise', status: 'active', totalVisits: 89, lastVisit: new Date('2024-07-28') },
-      { id: '4', name: 'David Brown', email: 'david@design.com', membershipType: 'premium', status: 'active', totalVisits: 34, lastVisit: new Date('2024-07-26') },
-      { id: '5', name: 'Emma Davis', email: 'emma@freelance.net', membershipType: 'basic', status: 'active', totalVisits: 8, lastVisit: new Date('2024-07-28') },
-    ]
-    const mockCheckIns: CheckInRecord[] = [
-      { id: 'ci1', memberId: '1', memberName: 'Alice Johnson', memberEmail: 'alice@company.com', membershipType: 'premium', checkInTime: new Date('2024-07-28T08:30:00'), status: 'checked-in', location: 'Main Space' },
-      { id: 'ci2', memberId: '3', memberName: 'Carol Williams', memberEmail: 'carol@tech.co', membershipType: 'enterprise', checkInTime: new Date('2024-07-28T09:15:00'), checkOutTime: new Date('2024-07-28T12:30:00'), duration: '3h 15m', status: 'checked-out', location: 'Meeting Room A' },
-      { id: 'ci3', memberId: '5', memberName: 'Emma Davis', memberEmail: 'emma@freelance.net', membershipType: 'basic', checkInTime: new Date('2024-07-28T10:00:00'), status: 'checked-in', location: 'Quiet Zone' },
-    ]
-    setMembers(mockMembers)
-    setCheckIns(mockCheckIns)
+    if (typeof window === 'undefined') return
+    
+    setIsClient(true)
+    
+    // Simulate API call
+    const loadData = () => {
+      try {
+        const mockMembers: Member[] = [
+          { id: '1', name: 'Alice Johnson', email: 'alice@company.com', membershipType: 'premium', status: 'active', totalVisits: 45, lastVisit: new Date('2024-07-27') },
+          { id: '2', name: 'Bob Smith', email: 'bob@startup.io', membershipType: 'basic', status: 'active', totalVisits: 12, lastVisit: new Date('2024-07-25') },
+          { id: '3', name: 'Carol Williams', email: 'carol@tech.co', membershipType: 'enterprise', status: 'active', totalVisits: 89, lastVisit: new Date('2024-07-28') },
+          { id: '4', name: 'David Brown', email: 'david@design.com', membershipType: 'premium', status: 'active', totalVisits: 34, lastVisit: new Date('2024-07-26') },
+          { id: '5', name: 'Emma Davis', email: 'emma@freelance.net', membershipType: 'basic', status: 'active', totalVisits: 8, lastVisit: new Date('2024-07-28') },
+        ]
+        const mockCheckIns: CheckInRecord[] = [
+          { id: 'ci1', memberId: '1', memberName: 'Alice Johnson', memberEmail: 'alice@company.com', membershipType: 'premium', checkInTime: new Date('2024-07-28T08:30:00'), status: 'checked-in', location: 'Main Space' },
+          { id: 'ci2', memberId: '3', memberName: 'Carol Williams', memberEmail: 'carol@tech.co', membershipType: 'enterprise', checkInTime: new Date('2024-07-28T09:15:00'), checkOutTime: new Date('2024-07-28T12:30:00'), duration: '3h 15m', status: 'checked-out', location: 'Meeting Room A' },
+          { id: 'ci3', memberId: '5', memberName: 'Emma Davis', memberEmail: 'emma@freelance.net', membershipType: 'basic', checkInTime: new Date('2024-07-28T10:00:00'), status: 'checked-in', location: 'Quiet Zone' },
+        ]
+        setMembers(mockMembers)
+        setCheckIns(mockCheckIns)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error loading data:', error)
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+    
     // Set up timer only on client
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
@@ -92,18 +108,24 @@ export default function StaffCheckInPage() {
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`
   }
-  const filteredMembers = members.filter(member =>
-    member.status === 'active' &&
-    (member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-     member.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  )
-  const filteredCheckIns = checkIns.filter(checkIn => {
-    if (filterStatus === 'all') return true
-    return checkIn.status === filterStatus
+  // Add null checks and defensive programming
+  const filteredMembers = (members || []).filter(member => {
+    if (!member) return false;
+    return member.status === 'active' &&
+      (member.name?.toLowerCase().includes(searchTerm?.toLowerCase() || '') ||
+       member.email?.toLowerCase().includes(searchTerm?.toLowerCase() || ''))
   })
-  const currentCheckIns = checkIns.filter(ci => ci.status === 'checked-in')
-  const todayCheckIns = checkIns.filter(ci => {
-    if (!isClient) return false;
+
+  const filteredCheckIns = (checkIns || []).filter(checkIn => {
+    if (!checkIn) return false;
+    if (filterStatus === 'all') return true;
+    return checkIn.status === filterStatus;
+  })
+
+  const currentCheckIns = (checkIns || []).filter(ci => ci?.status === 'checked-in')
+  
+  const todayCheckIns = (checkIns || []).filter(ci => {
+    if (!isClient || !ci?.checkInTime) return false;
     try {
       return ci.checkInTime.toDateString() === new Date().toDateString()
     } catch (e) {
@@ -111,11 +133,18 @@ export default function StaffCheckInPage() {
       return false
     }
   })
-  const totalDurationToday = todayCheckIns.reduce((total, ci) => {
-    if (ci.checkOutTime) {
-      return total + (ci.checkOutTime.getTime() - ci.checkInTime.getTime())
+
+  const totalDurationToday = (todayCheckIns || []).reduce((total, ci) => {
+    try {
+      if (!ci) return total;
+      if (ci.checkOutTime) {
+        return total + (new Date(ci.checkOutTime).getTime() - new Date(ci.checkInTime).getTime())
+      }
+      return total + (new Date().getTime() - new Date(ci.checkInTime).getTime())
+    } catch (e) {
+      console.error('Error calculating duration:', e)
+      return total;
     }
-    return total + (new Date().getTime() - ci.checkInTime.getTime())
   }, 0)
   const formatDuration = (ms: number): string => {
     if (!isClient) return '0h 0m';
@@ -143,6 +172,15 @@ export default function StaffCheckInPage() {
       default: return 'bg-gray-100 text-gray-800'
     }
   }
+  // Show loading state during SSR/hydration
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout userRole="staff">
       <div className="p-6 space-y-6">

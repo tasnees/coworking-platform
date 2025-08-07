@@ -59,26 +59,62 @@ function HoursContent() {
   const [regularHours, setRegularHours] = useState<typeof mockRegularHours>([])
   const [specialHours, setSpecialHours] = useState<typeof mockSpecialHours>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Only run on client-side
-    if (typeof window !== 'undefined') {
-      // Simulate API call
-      const timer = setTimeout(() => {
-        setRegularHours(mockRegularHours)
-        setSpecialHours(mockSpecialHours)
-        setIsMounted(true)
-        setIsLoading(false)
-      }, 500)
-      
-      return () => clearTimeout(timer)
-    }
+    if (typeof window === 'undefined') return;
+    
+    const loadData = async () => {
+      try {
+        // Simulate API call with a delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        if (Math.random() < 0.1) { // Simulate potential API failure
+          throw new Error('Failed to load hours data');
+        }
+        
+        setRegularHours(mockRegularHours);
+        setSpecialHours(mockSpecialHours);
+        setIsMounted(true);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading hours data:', err);
+        setError('Failed to load hours data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+    
+    // Cleanup function
+    return () => {
+      // Any cleanup if needed
+    };
   }, [])
-  // Show loading state until component is mounted and data is loaded
-  if (!isMounted || isLoading) {
+  // Show loading state during SSR/hydration
+  if (typeof window === 'undefined' || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+  
+  // Show error state if data loading failed
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+        <p className="text-muted-foreground mb-4 text-center">{error}</p>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
       </div>
     )
   }
