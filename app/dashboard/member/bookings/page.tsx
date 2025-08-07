@@ -31,7 +31,6 @@ export default function BookingsPage() {
   const [filterType, setFilterType] = useState("all")
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
-  
   // Set client-side flag
   useEffect(() => {
     setIsClient(true)
@@ -166,7 +165,6 @@ export default function BookingsPage() {
   }
   const formatBookingDate = (dateString: string) => {
     if (!isClient) return ''; // Return empty string during SSR
-    
     try {
       return new Date(dateString).toLocaleDateString('en-US', { 
         weekday: 'long', 
@@ -179,7 +177,6 @@ export default function BookingsPage() {
       return dateString; // Fallback to original string if date parsing fails
     }
   };
-
   const BookingCard = ({ booking, showActions = true }: { booking: Booking, showActions?: boolean }) => (
     <Card key={booking.id} className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">

@@ -196,7 +196,6 @@ export default function AmenitiesPage() {
   useEffect(() => {
     setIsClient(true)
   }, [])
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "operational":
@@ -211,7 +210,6 @@ export default function AmenitiesPage() {
   }
   const getStatusIcon = (status: string) => {
     if (!isClient) return AlertTriangle; // Fallback icon during SSR
-    
     switch (status) {
       case "operational":
         return CheckCircle2

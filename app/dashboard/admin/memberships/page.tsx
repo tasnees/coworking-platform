@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DynamicDashboardLayout = dynamic(
     ) 
   }
 )
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -51,7 +48,6 @@ function MembershipsContent() {
   useEffect(() => {
     setIsMounted(true)
   }, [])
-
   // Show loading state until component is mounted
   if (!isMounted) {
     return (
@@ -60,7 +56,6 @@ function MembershipsContent() {
       </div>
     )
   }
-
   // State for plans and editing
   const [membershipPlans, setMembershipPlans] = useState([
     {
@@ -752,7 +747,6 @@ function MembershipsContent() {
     </DynamicDashboardLayout>
   )
 }
-
 // Main page component with client-side only rendering
 export default function MembershipsPage() {
   return <MembershipsContent />

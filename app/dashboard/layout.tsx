@@ -1,11 +1,9 @@
 'use client'
-
 import React, { ReactNode, Suspense, ErrorInfo } from 'react'
 import { SessionProvider } from 'next-auth/react'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import DashboardLayout from '@/components/dashboard-layout'
 import { useRouter } from 'next/navigation.js'
-
 // Loading component for the dashboard
 function DashboardLoading() {
   return (
@@ -17,39 +15,31 @@ function DashboardLoading() {
     </div>
   )
 }
-
 // Error boundary component
 class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props)
     this.state = { hasError: false, error: null }
   }
-
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error }
   }
-
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Error caught by error boundary:', error, errorInfo)
   }
-
   resetError = () => {
     this.setState({ hasError: false, error: null })
   }
-
   render() {
     if (this.state.hasError) {
       return <DashboardError error={this.state.error!} reset={this.resetError} />
     }
-
     return this.props.children
   }
 }
-
 // Error display component
 function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter()
-  
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -73,7 +63,6 @@ function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
     </div>
   )
 }
-
 // Error boundary for the dashboard
 function DashboardErrorBoundary({ children }: { children: ReactNode }) {
   return (
@@ -84,18 +73,14 @@ function DashboardErrorBoundary({ children }: { children: ReactNode }) {
     </ErrorBoundary>
   )
 }
-
 // Wrapper to ensure auth is loaded
 function AuthWrapper({ children }: { children: ReactNode }) {
   const { isLoading } = useAuth()
-  
   if (isLoading) {
     return <DashboardLoading />
   }
-  
   return <>{children}</>
 }
-
 export default function DashboardRootLayout({
   children,
 }: {

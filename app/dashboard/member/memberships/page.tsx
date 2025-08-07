@@ -219,14 +219,11 @@ export default function MembershipsPage() {
     return Math.min((used / total) * 100, 100)
   }
   const [isClient, setIsClient] = useState(false)
-
   useEffect(() => {
     setIsClient(true)
   }, [])
-
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
     if (!isClient) return // Don't run on server
-    
     try {
       // In a real app, this would generate/download a PDF invoice
       // For now, we'll create a mock invoice and trigger download
@@ -250,7 +247,6 @@ Plan: ${invoiceData.plan}
 Member: ${invoiceData.member}
 Thank you for your business!
       `.trim()
-      
       const blob = new Blob([invoiceText], { type: 'text/plain' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
@@ -283,7 +279,6 @@ Thank you for your business!
       </div>
     )
   }
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">

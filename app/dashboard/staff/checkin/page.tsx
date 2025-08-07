@@ -43,7 +43,6 @@ export default function StaffCheckInPage() {
   // Initialize client-side data and timer
   useEffect(() => {
     setIsClient(true)
-    
     // Only run on client
     const mockMembers: Member[] = [
       { id: '1', name: 'Alice Johnson', email: 'alice@company.com', membershipType: 'premium', status: 'active', totalVisits: 45, lastVisit: new Date('2024-07-27') },
@@ -52,16 +51,13 @@ export default function StaffCheckInPage() {
       { id: '4', name: 'David Brown', email: 'david@design.com', membershipType: 'premium', status: 'active', totalVisits: 34, lastVisit: new Date('2024-07-26') },
       { id: '5', name: 'Emma Davis', email: 'emma@freelance.net', membershipType: 'basic', status: 'active', totalVisits: 8, lastVisit: new Date('2024-07-28') },
     ]
-    
     const mockCheckIns: CheckInRecord[] = [
       { id: 'ci1', memberId: '1', memberName: 'Alice Johnson', memberEmail: 'alice@company.com', membershipType: 'premium', checkInTime: new Date('2024-07-28T08:30:00'), status: 'checked-in', location: 'Main Space' },
       { id: 'ci2', memberId: '3', memberName: 'Carol Williams', memberEmail: 'carol@tech.co', membershipType: 'enterprise', checkInTime: new Date('2024-07-28T09:15:00'), checkOutTime: new Date('2024-07-28T12:30:00'), duration: '3h 15m', status: 'checked-out', location: 'Meeting Room A' },
       { id: 'ci3', memberId: '5', memberName: 'Emma Davis', memberEmail: 'emma@freelance.net', membershipType: 'basic', checkInTime: new Date('2024-07-28T10:00:00'), status: 'checked-in', location: 'Quiet Zone' },
     ]
-    
     setMembers(mockMembers)
     setCheckIns(mockCheckIns)
-    
     // Set up timer only on client
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)

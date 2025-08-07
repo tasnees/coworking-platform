@@ -1,17 +1,13 @@
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
-
 // Disable static generation for this route
 export const dynamic = 'force-dynamic';
-
 // Cache the MongoDB connection
 let cachedDb: MongoClient | null = null;
-
 async function checkDatabaseConnection() {
   if (!process.env.MONGODB_URI) {
     return { status: 'error', message: 'MongoDB URI not configured' };
   }
-
   try {
     // Use cached connection if available
     if (!cachedDb) {
@@ -19,7 +15,6 @@ async function checkDatabaseConnection() {
       await client.connect();
       cachedDb = client;
     }
-
     // Test the connection
     await cachedDb.db().admin().ping();
     return { status: 'ok', message: 'Database connection successful' };
@@ -33,11 +28,9 @@ async function checkDatabaseConnection() {
     return { status: 'error', message: 'Database connection failed', error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
-
 export async function GET() {
   const startTime = Date.now();
   const timestamp = new Date().toISOString();
-  
   try {
     // Check environment variables
     const requiredEnvVars = [
@@ -46,9 +39,7 @@ export async function GET() {
       'NEXTAUTH_SECRET',
       'MONGODB_URI'
     ];
-    
     const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
     if (missingEnvVars.length > 0) {
       return NextResponse.json(
         { 
@@ -63,10 +54,8 @@ export async function GET() {
         { status: 503 }
       );
     }
-    
     // Check database connection
     const dbCheck = await checkDatabaseConnection();
-    
     if (dbCheck.status === 'error') {
       return NextResponse.json(
         { 
@@ -81,9 +70,7 @@ export async function GET() {
         { status: 503 }
       );
     }
-    
     const responseTime = Date.now() - startTime;
-    
     return NextResponse.json(
       { 
         status: 'ok',
@@ -106,10 +93,8 @@ export async function GET() {
       },
       { status: 200 }
     );
-    
   } catch (error) {
     console.error('Health check failed:', error);
-    
     return NextResponse.json(
       { 
         status: 'error',

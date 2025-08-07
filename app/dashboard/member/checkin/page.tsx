@@ -168,11 +168,9 @@ export default function MemberCheckInPage() {
   }, [])
   // Wait for client-side rendering to avoid hydration issues
   const [isMounted, setIsMounted] = useState(false)
-
   useEffect(() => {
     setIsMounted(true)
   }, [])
-
   if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -180,7 +178,6 @@ export default function MemberCheckInPage() {
       </div>
     )
   }
-
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">

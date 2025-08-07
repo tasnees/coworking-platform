@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { LogOut, Trash, Camera } from "lucide-react";
-
 export default function SettingsPage() {
   const [isClient, setIsClient] = useState(false);
   // Profile photo state
@@ -21,16 +20,13 @@ export default function SettingsPage() {
     { id: 2, name: "Safari on iPhone", lastActive: "2 days ago", current: false },
     { id: 3, name: "Edge on Mac", lastActive: "1 week ago", current: false },
   ]);
-
   // Set client-side flag
   useEffect(() => {
     setIsClient(true);
   }, []);
-
   // Upload photo handler
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isClient) return;
-
     const file = e.target.files?.[0];
     if (file) {
       try {
@@ -49,13 +45,11 @@ export default function SettingsPage() {
       }
     }
   };
-
   // Remove photo
   const handleRemovePhoto = () => {
     setPhoto(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
   // Sign out device handler
   const handleSignOutDevice = (id: number) => {
     setDevices(devices.filter((d) => d.id !== id));

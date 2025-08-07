@@ -130,10 +130,8 @@ export default function StaffMembershipsPage() {
     setIsClient(true)
     setMemberships(mockMemberships)
   }, [])
-
   const formatCurrency = (amount: number) => {
     if (typeof window === 'undefined') return `$${amount.toFixed(2)}`
-    
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -144,14 +142,11 @@ export default function StaffMembershipsPage() {
       return `$${amount.toFixed(2)}`
     }
   }
-
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A'
-    
     try {
       const date = new Date(dateString)
       if (isNaN(date.getTime())) return 'Invalid Date'
-      
       return date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',

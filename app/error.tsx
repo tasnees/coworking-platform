@@ -1,9 +1,7 @@
 'use client';
-
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-
 export default function Error({
   error,
   reset,
@@ -14,7 +12,6 @@ export default function Error({
   useEffect(() => {
     console.error('An error occurred:', error);
   }, [error]);
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
       <div className="text-center max-w-md">

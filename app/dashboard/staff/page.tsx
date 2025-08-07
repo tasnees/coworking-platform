@@ -106,7 +106,6 @@ function StaffDashboardContent() {
     status: 'active' as 'active' | 'inactive' | 'suspended',
     credits: 0
   })
-
   // Set client-side flag
   useEffect(() => {
     setIsClient(true)
@@ -265,7 +264,6 @@ function StaffDashboardContent() {
   ]
   const formatCurrency = (amount: number) => {
     if (!isClient) return `$${amount.toFixed(2)}`; // Fallback for SSR
-    
     try {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',

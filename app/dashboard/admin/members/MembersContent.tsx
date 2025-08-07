@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -48,22 +47,18 @@ import {
 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { useAuth } from "@/contexts/AuthContext";
-
 export default function MembersContent() {
   const [isClient, setIsClient] = useState(false);
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("active");
-  
   // Set client-side flag and handle auth redirect
   useEffect(() => {
     setIsClient(true);
-    
     if (!isLoading && !isAuthenticated) {
       router.push('/auth/login');
     }
   }, [isAuthenticated, isLoading, router]);
-
   // Show loading state on server or during auth check
   if (!isClient || isLoading || !isAuthenticated) {
     return (
@@ -72,7 +67,6 @@ export default function MembersContent() {
       </div>
     );
   }
-
   const [members, setMembers] = useState([
     {
       id: 1,
@@ -94,7 +88,6 @@ export default function MembersContent() {
     },
     // ... rest of your members data
   ]);
-
   // Component JSX - only renders on client side after auth check
   return (
     <DashboardLayout userRole="admin">
@@ -111,7 +104,6 @@ export default function MembersContent() {
             Add Member
           </Button>
         </div>
-        
         {/* Rest of your component */}
       </div>
     </DashboardLayout>

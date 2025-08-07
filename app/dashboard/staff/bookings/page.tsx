@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -156,7 +155,6 @@ export default function StaffBookingsPage() {
   }
   // Apply filters when any filter changes
   const [isClient, setIsClient] = useState(false)
-  
   useEffect(() => {
     setIsClient(true)
     filterBookings()
@@ -239,7 +237,6 @@ export default function StaffBookingsPage() {
       </div>
     )
   }
-
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">

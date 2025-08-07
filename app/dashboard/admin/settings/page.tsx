@@ -1,8 +1,6 @@
 "use client";
-
 import { useState } from "react";
 import dynamic from 'next/dynamic';
-
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DashboardLayout = dynamic(
     ) 
   }
 );
-
 // Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +24,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { User, Mail, Phone, MapPin, Shield, Bell, Key, Save, X, Edit3, Settings, Users, Database, ShieldCheck } from "lucide-react";
-
 interface AdminProfile {
   id: string;
   name: string;

@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DynamicDashboardLayout = dynamic(
     ) 
   }
 )
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -41,7 +38,6 @@ function CheckInContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
   // Mock data state - in a real app, this would come from an API
   const [activeCheckIns, setActiveCheckIns] = useState<Array<{
     id: string;
@@ -51,7 +47,6 @@ function CheckInContent() {
     duration: string;
     status: 'active' | 'expired' | 'extended';
   }>>([]);
-  
   const [checkInLogs, setCheckInLogs] = useState<Array<{
     id: string;
     name: string;
@@ -60,16 +55,13 @@ function CheckInContent() {
     checkOutTime: string;
     duration: string;
   }>>([]);
-  
   // Search query for active check-ins
   const [searchQuery, setSearchQuery] = useState('');
-  
   // Load data on component mount
   useEffect(() => {
     const initializeComponent = async () => {
       try {
         setIsLoading(true);
-        
         // Simulate API calls
         await Promise.all([
           // Simulate loading active check-ins
@@ -93,7 +85,6 @@ function CheckInContent() {
               },
             ]);
           }),
-          
           // Simulate loading check-in logs
           new Promise(resolve => setTimeout(resolve, 700)).then(() => {
             setCheckInLogs([
@@ -116,7 +107,6 @@ function CheckInContent() {
             ]);
           }),
         ]);
-        
         setError(null);
       } catch (err) {
         console.error('Error initializing check-in data:', err);
@@ -126,15 +116,12 @@ function CheckInContent() {
         setIsMounted(true);
       }
     };
-    
     initializeComponent();
-    
     // Cleanup function
     return () => {
       // Any cleanup if needed
     };
   }, []);
-
   // Define types for our data
   type CheckInLog = {
     id: number;
@@ -144,7 +131,6 @@ function CheckInContent() {
     status: 'checked-in' | 'checked-out';
     duration: string;
   };
-
   type CurrentlyInsideMember = {
     id: number;
     member: string;
@@ -152,7 +138,6 @@ function CheckInContent() {
     location: string;
     duration: string;
   };
-
   // Today's statistics
   const todayStats = {
     totalCheckIns: 89,
@@ -160,22 +145,16 @@ function CheckInContent() {
     peakTime: "2:30 PM",
     averageStay: "4.2 hours",
   };
-
   // Mock data for recent check-ins
   const [recentCheckIns, setRecentCheckIns] = useState<CheckInLog[]>([]);
-  
   // Mock data for currently inside members
   const [currentlyInside, setCurrentlyInside] = useState<CurrentlyInsideMember[]>([]);
-  
   // Search term state
   const [searchTerm, setSearchTerm] = useState("");
-  
   // Active tab state
   const [activeTab, setActiveTab] = useState("overview");
-  
   // View log state
   const [viewLog, setViewLog] = useState<CheckInLog | null>(null);
-
   // Show loading state until component is mounted and data is loaded
   if (!isMounted || isLoading) {
     return (
@@ -184,7 +163,6 @@ function CheckInContent() {
       </div>
     );
   }
-  
   // Show error state if data loading failed
   if (error) {
     return (
@@ -711,7 +689,6 @@ function CheckInContent() {
     </DynamicDashboardLayout>
   )
 }
-
 // Main page component with client-side only rendering
 export default function CheckInPage() {
   return <CheckInContent />

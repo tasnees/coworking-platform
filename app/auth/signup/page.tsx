@@ -1,7 +1,5 @@
 "use client"
-
 export const dynamic = "force-dynamic";
-
 import { useState, useEffect, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,7 +9,6 @@ import { useToast } from "@/hooks/use-toast"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
-
 function SignupForm() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -23,13 +20,11 @@ function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
-
   useEffect(() => {
     setIsMounted(true)
     const urlError = searchParams?.get('error')
     setError(urlError || null)
   }, [searchParams])
-
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password || !name || !confirmPassword) {
@@ -76,7 +71,6 @@ function SignupForm() {
       setIsLoading(false)
     }
   }
-
   if (!isMounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -84,7 +78,6 @@ function SignupForm() {
       </div>
     )
   }
-
   return (
     <div className="container flex min-h-screen flex-col items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -158,7 +151,6 @@ function SignupForm() {
     </div>
   )
 }
-
 export default function SignupPage() {
   return (
     <Suspense fallback={

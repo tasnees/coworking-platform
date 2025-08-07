@@ -1,8 +1,6 @@
 "use client";
-
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-
 // Dynamically import components with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,17 +13,14 @@ const DashboardLayout = dynamic(
     )
   }
 );
-
 // Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
-
 // AnalyticsPage component with client-side only rendering
 export default function AnalyticsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   // State for statistics
   const [stats, setStats] = useState({
     totalMembers: 0,
@@ -38,32 +33,26 @@ export default function AnalyticsPage() {
     peakHour: "",
     churnRate: 0,
   });
-  
   // Mock trend data for the graph
   const [trendData, setTrendData] = useState({
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     checkins: [62, 70, 89, 74, 80, 65, 55],
     revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
   });
-
   // Dynamically import Chart.js and Line component on client side only
   const [Line, setLine] = useState<any>(null);
-
   useEffect(() => {
     // This effect only runs on the client side
     setIsMounted(true);
-
     // Dynamically import Chart.js and Line component
     const loadCharts = async () => {
       try {
         // Import Chart.js and registerables
         const { Chart, registerables } = await import('chart.js');
         Chart.register(...registerables);
-        
         // Import Line component from react-chartjs-2
         const { Line: LineChart } = await import('react-chartjs-2');
         setLine(() => LineChart);
-        
         // Fetch data after charts are loaded
         await fetchAnalyticsData();
       } catch (err) {
@@ -73,14 +62,12 @@ export default function AnalyticsPage() {
         setIsLoading(false);
       }
     };
-
     // Simulate fetching real data
     const fetchAnalyticsData = async () => {
       try {
         setIsLoading(true);
         // Simulate API delay
         await new Promise((res) => setTimeout(res, 500));
-        
         setStats({
           totalMembers: 236,
           newMembersThisMonth: 18,
@@ -92,13 +79,11 @@ export default function AnalyticsPage() {
           peakHour: "2:00 PM",
           churnRate: 2.1,
         });
-        
         setTrendData({
           labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
           checkins: [62, 70, 89, 74, 80, 65, 55],
           revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
         });
-        
       } catch (err) {
         console.error('Error fetching analytics data:', err);
         setError('Failed to load analytics data. Please try again later.');
@@ -106,15 +91,12 @@ export default function AnalyticsPage() {
         setIsLoading(false);
       }
     };
-
     loadCharts();
-
     // Cleanup function
     return () => {
       // Any cleanup if needed
     };
   }, []);
-
   // Don't render anything until the component is mounted on the client
   if (!isMounted) {
     return (
@@ -123,7 +105,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
     // Show loading state
   if (isLoading || !Line) {
     return (
@@ -132,7 +113,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
   // Show error state
   if (error) {
     return (
@@ -151,7 +131,6 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-
   // Chart.js data and options
   const lineData = {
     labels: trendData.labels,

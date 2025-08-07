@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-
 // Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,7 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff } from "lucide-react"
-
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -35,7 +32,6 @@ const DashboardLayout = dynamic(
     ) 
   }
 );
-
 // Main page component
 export default function WifiSettingsPage() {
   const [activeTab, setActiveTab] = useState("networks")
@@ -122,11 +118,9 @@ export default function WifiSettingsPage() {
   }
   // Client-side only rendering
   const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
-
   if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -134,7 +128,6 @@ export default function WifiSettingsPage() {
       </div>
     );
   }
-
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">

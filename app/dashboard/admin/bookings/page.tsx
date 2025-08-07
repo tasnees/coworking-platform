@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DashboardLayout = dynamic(
     ) 
   }
 )
-
 // Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -39,10 +36,8 @@ export default function BookingsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
   const [viewMode, setViewMode] = useState("day")
-  
   // Mock data - in a real app, this would come from an API
   const [bookings, setBookings] = useState<Array<{
     id: number;
@@ -54,25 +49,21 @@ export default function BookingsPage() {
     status: string;
     date: string;
   }>>([]);
-  
   const [resources] = useState([
     { id: "desk-a12", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
     { id: "meeting-b", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
     { id: "office-3", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
     { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
   ]);
-  
   // Load data on component mount
   useEffect(() => {
     // This effect only runs on the client side
     setIsMounted(true);
-    
     const fetchBookings = async () => {
       try {
         setIsLoading(true);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500));
-        
         // Mock data - replace with actual API call
         const mockBookings = [
           {
@@ -106,7 +97,6 @@ export default function BookingsPage() {
             date: new Date().toISOString().split('T')[0],
           },
         ];
-        
         setBookings(mockBookings);
         setError(null);
       } catch (err) {
@@ -116,15 +106,12 @@ export default function BookingsPage() {
         setIsLoading(false);
       }
     };
-    
     fetchBookings();
-    
     // Cleanup function
     return () => {
       // Any cleanup if needed
     };
   }, []);
-  
   // Don't render anything until the component is mounted on the client
   if (!isMounted) {
     return (
@@ -133,7 +120,6 @@ export default function BookingsPage() {
       </div>
     );
   }
-  
   // Show loading state
   if (isLoading) {
     return (
@@ -142,7 +128,6 @@ export default function BookingsPage() {
       </div>
     );
   }
-  
   // Show error state
   if (error) {
     return (

@@ -3,14 +3,12 @@ import type { DefaultSession, User } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Auth0Provider from "next-auth/providers/auth0";
 import { isUserRole, UserRole } from "@/lib/auth-types";
-
 // Extend the Profile type to include our custom claim
 declare module "next-auth/providers/auth0" {
   interface Profile {
     'https://coworking-platform/roles'?: string[];
   }
 }
-
 // Create the auth options object with proper types
 const authOptions = {
   providers: [
@@ -59,9 +57,7 @@ const authOptions = {
     error: '/auth/error',
   },
 };
-
 // Create the handler with proper typing
 const handler = NextAuth(authOptions);
-
 // Export the handler with only the allowed HTTP methods
 export { handler as GET, handler as POST };

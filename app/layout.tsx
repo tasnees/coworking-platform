@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "./providers"
-
 export const metadata: Metadata = {
   title: "Coworking Platform",
   description: "Professional coworking space management system",
@@ -19,7 +18,6 @@ export const metadata: Metadata = {
     telephone: false,
   },
 }
-
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: 'white' },
@@ -30,7 +28,6 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
 }
-
 export default function RootLayout({
   children,
 }: Readonly<{

@@ -1,6 +1,5 @@
 import NextAuth from "next-auth";
 import Auth0Provider from "next-auth/providers/auth0";
-
 const handler = NextAuth({
   providers: [
     Auth0Provider({
@@ -11,6 +10,4 @@ const handler = NextAuth({
   ],
   secret: process.env.NEXTAUTH_SECRET,
 });
-
 export { handler as GET, handler as POST };
-

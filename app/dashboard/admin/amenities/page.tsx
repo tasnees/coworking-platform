@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic.js'
-
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DynamicDashboardLayout = dynamic(
     ) 
   }
 )
-
 // UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -54,17 +51,14 @@ import {
   BarChart,
   Loader2
 } from "lucide-react"
-
 // Main component with proper loading state
 export default function AmenitiesPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [isClient, setIsClient] = useState(false)
-
   useEffect(() => {
     setIsMounted(true)
     setIsClient(true)
   }, [])
-
   // Show loading state until component is mounted
   if (!isMounted || !isClient) {
     return (
@@ -326,7 +320,6 @@ export default function AmenitiesPage() {
       </div>
     )
   }
-
   return (
     <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">

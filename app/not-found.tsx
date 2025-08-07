@@ -1,12 +1,9 @@
 "use client"
-
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
-
 export default function NotFound() {
   const router = useRouter();
-
   // Optional: Redirect to home after a delay
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -14,7 +11,6 @@ export default function NotFound() {
     }, 5000);
     return () => clearTimeout(timer);
   }, [router]);
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4 text-center">
       <h1 className="mb-4 text-6xl font-bold">404</h1>

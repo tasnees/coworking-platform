@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +8,6 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
 import { useSession } from "next-auth/react"
-
 export default function HomePage() {
   const { data: session, status } = useSession()
   const router = useRouter();
@@ -17,19 +15,16 @@ export default function HomePage() {
   const [lastLoginTime, setLastLoginTime] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
-
   useEffect(() => {
     // Only run on client side
     if (typeof window !== 'undefined') {
       setIsClient(true)
-      
       if (status === 'authenticated') {
         try {
           const lastLoginValue = localStorage.getItem("lastLogin") || session?.user?.email || ""
           const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
           setLastLogin(lastLoginValue)
           setLastLoginTime(lastLoginTimeValue)
-          
           // Set a flag to prevent multiple redirects
           if (!isRedirecting) {
             setIsRedirecting(true)
@@ -41,7 +36,6 @@ export default function HomePage() {
       }
     }
   }, [status, session, isRedirecting, router])
-
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       try {
@@ -53,7 +47,6 @@ export default function HomePage() {
     }
     router.push("/auth/login");
   };
-
   const features = [
     {
       icon: Users,
@@ -86,7 +79,6 @@ export default function HomePage() {
       description: "Live booking status, instant notifications, and dynamic pricing",
     },
   ]
-
   const plans = [
     {
       name: "Starter",
@@ -127,7 +119,6 @@ export default function HomePage() {
       popular: false,
     },
   ]
-
   // Show loading state while session is being checked or during SSR
   if (status === 'loading' || !isClient) {
     return (
@@ -136,7 +127,6 @@ export default function HomePage() {
       </div>
     )
   }
-
   // Show loading state while redirecting
   if (status === 'authenticated' && isClient) {
     return (
@@ -148,7 +138,6 @@ export default function HomePage() {
       </div>
     )
   }
-
   // Show landing page for unauthenticated users
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">

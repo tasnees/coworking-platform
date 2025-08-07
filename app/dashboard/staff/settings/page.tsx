@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DynamicDashboardLayout = dynamic(
     ) 
   }
 )
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -116,7 +113,6 @@ function StaffSettingsContent() {
   useEffect(() => {
     setIsMounted(true)
   }, [])
-
   // Show loading state until component is mounted
   if (!isMounted) {
     return (
@@ -125,7 +121,6 @@ function StaffSettingsContent() {
       </div>
     )
   }
-
   return (
     <DynamicDashboardLayout userRole="staff">
       <div className="space-y-6">
@@ -451,5 +446,4 @@ function StaffSettingsContent() {
     </DynamicDashboardLayout>
   )
 }
-
 export default StaffSettingsContent

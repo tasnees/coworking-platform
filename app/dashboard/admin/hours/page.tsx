@@ -1,8 +1,6 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -15,7 +13,6 @@ const DynamicDashboardLayout = dynamic(
     ) 
   }
 )
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,14 +36,12 @@ import {
   Save, 
   AlertTriangle 
 } from "lucide-react"
-
 function HoursContent() {
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("regular")
   useEffect(() => {
     setIsMounted(true)
   }, [])
-
   // Show loading state until component is mounted
   if (!isMounted) {
     return (
@@ -55,7 +50,6 @@ function HoursContent() {
       </div>
     )
   }
-
   const [weekdays, setWeekdays] = useState([
     { id: 1, name: "Monday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
     { id: 2, name: "Tuesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
@@ -463,7 +457,6 @@ function HoursContent() {
     </DynamicDashboardLayout>
   )
 }
-
 // Main page component with client-side only rendering
 export default function HoursPage() {
   return <HoursContent />

@@ -206,7 +206,6 @@ export default function WifiSettingsPage() {
   // Add handlers for QR code and copy functionality
   const handleCopyCode = async (code: string) => {
     if (typeof window === 'undefined') return;
-    
     try {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(code);
@@ -229,7 +228,6 @@ export default function WifiSettingsPage() {
   }
   const handleShowQrCode = (code: typeof accessCodes[0]) => {
     if (typeof window === 'undefined') return;
-    
     setSelectedCode(code);
     // Generate QR code URL (using a mock API for demonstration)
     const qrData = `WIFI:T:WPA;S:${code.network};P:${code.code};;`;
@@ -315,7 +313,6 @@ export default function WifiSettingsPage() {
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
   const [copySuccess, setCopySuccess] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
-  
   // Set client-side flag
   useEffect(() => {
     setIsClient(true)
@@ -370,7 +367,6 @@ export default function WifiSettingsPage() {
     network: string
     createdAt: string
   }>>([])
-
   // Initialize access codes on client side only
   useEffect(() => {
     setAccessCodes([

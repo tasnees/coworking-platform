@@ -1,19 +1,15 @@
 'use client';
-
 export const dynamic = "force-dynamic";
-
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-
 function LoginForm() {
   const searchParams = useSearchParams();
   const [callbackUrl, setCallbackUrl] = useState('/dashboard');
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
-
   useEffect(() => {
     setIsMounted(true);
     const urlCallback = searchParams?.get('callbackUrl');
@@ -21,11 +17,9 @@ function LoginForm() {
     setCallbackUrl(urlCallback || '/dashboard');
     setError(urlError || null);
   }, [searchParams]);
-
   const handleAuth0Login = () => {
     signIn('auth0', { callbackUrl });
   };
-
   if (!isMounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -33,7 +27,6 @@ function LoginForm() {
       </div>
     );
   }
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md space-y-8">
@@ -43,7 +36,6 @@ function LoginForm() {
             Sign in to your account to continue
           </p>
         </div>
-
         {error && (
           <div className="rounded-md bg-red-50 p-4">
             <div className="flex">
@@ -58,7 +50,6 @@ function LoginForm() {
             </div>
           </div>
         )}
-
         <div className="mt-8 space-y-6">
           <Button
             onClick={handleAuth0Login}
@@ -79,7 +70,6 @@ function LoginForm() {
     </div>
   );
 }
-
 export default function LoginPage() {
   return (
     <Suspense fallback={
