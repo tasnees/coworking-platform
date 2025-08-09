@@ -91,6 +91,8 @@ const mockMemberships: Membership[] = [
 ]
 export default function StaffMembershipsPage() {
   const [isClient, setIsClient] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -113,22 +115,46 @@ export default function StaffMembershipsPage() {
     paymentMethod: "Credit Card",
     notes: ""
   })
-  const filteredMemberships = memberships.filter(membership => {
-    const matchesSearch = membership.memberName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         membership.memberEmail.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || membership.status === statusFilter
-    const matchesType = typeFilter === "all" || membership.type === typeFilter
-    return matchesSearch && matchesStatus && matchesType
-  })
-  const totalMemberships = memberships.length
-  const activeMemberships = memberships.filter(m => m.status === "active").length
-  const expiredMemberships = memberships.filter(m => m.status === "expired").length
-  const pendingMemberships = memberships.filter(m => m.status === "pending").length
-  const totalRevenue = memberships.filter(m => m.status === "active").reduce((sum, m) => sum + m.price, 0)
+  const filteredMemberships = (memberships || []).filter(membership => {
+    if (!membership) return false;
+    const searchLower = searchQuery?.toLowerCase() || '';
+    const matchesSearch = 
+      (membership.memberName?.toLowerCase() || '').includes(searchLower) ||
+      (membership.memberEmail?.toLowerCase() || '').includes(searchLower);
+    const matchesStatus = statusFilter === "all" || membership.status === statusFilter;
+    const matchesType = typeFilter === "all" || membership.type === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
+  });
+
+  const totalMemberships = (memberships || []).length;
+  const activeMemberships = (memberships || []).filter(m => m?.status === "active").length;
+  const expiredMemberships = (memberships || []).filter(m => m?.status === "expired").length;
+  const pendingMemberships = (memberships || []).filter(m => m?.status === "pending").length;
+  
+  const totalRevenue = (memberships || [])
+    .filter(m => m?.status === "active")
+    .reduce((sum, m) => sum + (m?.price || 0), 0);
+
   // Set client-side flag and initialize data
   useEffect(() => {
-    setIsClient(true)
-    setMemberships(mockMemberships)
+    if (typeof window === 'undefined') return;
+    
+    const loadData = async () => {
+      try {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        setMemberships(mockMemberships);
+        setError(null);
+      } catch (err) {
+        console.error('Error loading memberships:', err);
+        setError('Failed to load memberships. Please try again later.');
+      } finally {
+        setIsLoading(false);
+        setIsClient(true);
+      }
+    };
+
+    loadData();
   }, [])
   const formatCurrency = (amount: number) => {
     if (typeof window === 'undefined') return `$${amount.toFixed(2)}`
@@ -228,6 +254,38 @@ export default function StaffMembershipsPage() {
     setSelectedMembership(membership)
     setShowViewDialog(true)
   }
+  // Show loading state during SSR/hydration
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Show error state if data loading failed
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="h-12 w-12 text-red-500 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+        <p className="text-muted-foreground mb-4 text-center">{error}</p>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
   return (
     <DashboardLayout userRole="staff">
       <div className="p-6">

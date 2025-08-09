@@ -1,16 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable App Router and experimental features
+  // Enable App Router (appDir is now stable and no longer needs to be in experimental)
+  // Server Actions configuration
   experimental: {
-    appDir: true,
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // Enable server components external packages
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
-    // Enable ISR memory cache configuration
-    isrMemoryCacheSize: 0, // Disable in-memory cache in favor of file-system cache
   },
+  
+  // External packages for server components
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // TypeScript configuration
   typescript: {
@@ -59,17 +58,17 @@ const nextConfig = {
     ];
   },
 
-  // Output configuration
-  output: 'standalone',
+  // Output configuration - only enable standalone if needed for deployment
+  // output: 'standalone',
   
   // Enable production source maps
   productionBrowserSourceMaps: false, // Set to true for debugging in production
   
-  // Enable SWC minification
-  swcMinify: true,
-  
-  // Enable React Strict Mode
+  // React and build configurations
   reactStrictMode: true,
+  
+  // Minification is now handled automatically in production
+  // Remove swcMinify as it's now the default
   
   // Enable etags for better caching
   generateEtags: true,
@@ -107,8 +106,7 @@ const nextConfig = {
 if (process.env.NODE_ENV === 'production') {
   // Add production-specific configurations here
   nextConfig.compress = true;
-  nextConfig.optimizeFonts = true;
-  nextConfig.swcMinify = true;
+  // SWC minification is now enabled by default in Next.js
 }
 
 module.exports = nextConfig;

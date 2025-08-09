@@ -43,11 +43,9 @@ const nextConfig = {
   // Enable React Strict Mode
   reactStrictMode: true,
   
-  // Enable production source maps
+  // Production optimizations
   productionBrowserSourceMaps: false, // Set to true for debugging in production
-  
-  // Enable SWC minification
-  swcMinify: true,
+  // SWC minification is now enabled by default in Next.js
   
   // Configure webpack
   webpack: (config, { isServer }) => {
