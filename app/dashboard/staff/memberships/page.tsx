@@ -93,11 +93,15 @@ export default function StaffMembershipsPage() {
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [memberships, setMemberships] = useState<Membership[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [typeFilter, setTypeFilter] = useState<string>("all")
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  // Initialize with empty arrays during SSR
+  const [memberships, setMemberships] = useState<Membership[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return [];
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false)
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [selectedMembership, setSelectedMembership] = useState<Membership | null>(null)
@@ -115,23 +119,30 @@ export default function StaffMembershipsPage() {
     paymentMethod: "Credit Card",
     notes: ""
   })
+  // Memoize filtered memberships with proper null checks
   const filteredMemberships = (memberships || []).filter(membership => {
     if (!membership) return false;
-    const searchLower = searchQuery?.toLowerCase() || '';
-    const matchesSearch = 
-      (membership.memberName?.toLowerCase() || '').includes(searchLower) ||
-      (membership.memberEmail?.toLowerCase() || '').includes(searchLower);
-    const matchesStatus = statusFilter === "all" || membership.status === statusFilter;
-    const matchesType = typeFilter === "all" || membership.type === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
-  });
+    try {
+      const searchLower = searchQuery?.toLowerCase?.() || '';
+      const matchesSearch = 
+        (membership.memberName?.toLowerCase?.() || '').includes(searchLower) ||
+        (membership.memberEmail?.toLowerCase?.() || '').includes(searchLower);
+      const matchesStatus = statusFilter === "all" || membership.status === statusFilter;
+      const matchesType = typeFilter === "all" || membership.type === typeFilter;
+      return matchesSearch && matchesStatus && matchesType;
+    } catch (error) {
+      console.error('Error filtering memberships:', error);
+      return false;
+    }
+  }) || [];
 
-  const totalMemberships = (memberships || []).length;
-  const activeMemberships = (memberships || []).filter(m => m?.status === "active").length;
-  const expiredMemberships = (memberships || []).filter(m => m?.status === "expired").length;
-  const pendingMemberships = (memberships || []).filter(m => m?.status === "pending").length;
+  // Calculate statistics with proper null checks
+  const totalMemberships = filteredMemberships.length;
+  const activeMemberships = filteredMemberships.filter(m => m?.status === "active").length;
+  const expiredMemberships = filteredMemberships.filter(m => m?.status === "expired").length;
+  const pendingMemberships = filteredMemberships.filter(m => m?.status === "pending").length;
   
-  const totalRevenue = (memberships || [])
+  const totalRevenue = filteredMemberships
     .filter(m => m?.status === "active")
     .reduce((sum, m) => sum + (m?.price || 0), 0);
 
@@ -376,8 +387,8 @@ export default function StaffMembershipsPage() {
         {/* Memberships List */}
         <div className="border rounded-lg">
           <div className="divide-y">
-            {filteredMemberships.map((membership) => (
-              <div key={membership.id} className="p-4 hover:bg-gray-50">
+            {filteredMemberships.map((membership, index) => (
+              <div key={`membership-${membership.id}-${index}`} className="border rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
@@ -600,8 +611,8 @@ export default function StaffMembershipsPage() {
                   <p><strong>Auto-renew:</strong> {selectedMembership.autoRenew ? "Enabled" : "Disabled"}</p>
                 </div>
                 {selectedMembership.notes && (
-                  <div>
-                    <h3 className="font-semibold">Notes</h3>
+                  <div key={`notes-${selectedMembership.id}`} className="mt-2 text-sm text-muted-foreground">
+                    <p className="font-medium">Notes:</p>
                     <p>{selectedMembership.notes}</p>
                   </div>
                 )}

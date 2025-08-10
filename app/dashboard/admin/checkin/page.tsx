@@ -55,6 +55,10 @@ function CheckInContent() {
     checkOutTime: string;
     duration: string;
   }>>([]);
+  
+  // Initialize with empty arrays during SSR
+  const [recentCheckIns, setRecentCheckIns] = useState<CheckInLog[]>([]);
+  const [currentlyInside, setCurrentlyInside] = useState<CurrentlyInsideMember[]>([]);
   // Search query for active check-ins
   const [searchQuery, setSearchQuery] = useState('');
   // Load data on component mount
@@ -145,10 +149,7 @@ function CheckInContent() {
     peakTime: "2:30 PM",
     averageStay: "4.2 hours",
   };
-  // Mock data for recent check-ins
-  const [recentCheckIns, setRecentCheckIns] = useState<CheckInLog[]>([]);
-  // Mock data for currently inside members
-  const [currentlyInside, setCurrentlyInside] = useState<CurrentlyInsideMember[]>([]);
+
   // Search term state
   const [searchTerm, setSearchTerm] = useState("");
   // Active tab state
@@ -277,14 +278,13 @@ function CheckInContent() {
     setViewLog(log);
   };
   // Filtered logs based on search
-  const filteredLogs = recentCheckIns
-    .concat(recentCheckIns)
+  const filteredLogs = (recentCheckIns || [])
     .filter(
       (log) =>
-        log.member.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.status.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+        log?.member?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log?.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log?.status?.toLowerCase().includes(searchTerm.toLowerCase())
+    ) || [];
   return (
     <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">
