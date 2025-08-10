@@ -1,6 +1,9 @@
 "use client";
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -16,6 +19,7 @@ const DashboardLayout = dynamic(
 // Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,11 +51,57 @@ interface AdminPreferences {
   adminDashboardTips: boolean;
 }
 export default function AdminSettingsPage() {
+  const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  
+  // Set client-side flag and handle auth redirect
+  useEffect(() => {
+    setIsClient(true);
+    setIsLoading(false);
+  }, []);
+
+  // Show loading state during SSR/hydration
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show error state if needed
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="h-12 w-12 text-red-500 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+        <p className="text-muted-foreground mb-4 text-center">{error}</p>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [profile, setProfile] = useState<AdminProfile>({
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const [profile, setProfile] = useState<AdminProfile>(() => ({
     id: "admin-001",
     name: "Alexandra Thompson",
     email: "alexandra.thompson@coworkspace.com",
@@ -64,16 +114,41 @@ export default function AdminSettingsPage() {
     avatar: "",
     bio: "System administrator overseeing all aspects of the coworking platform.",
     permissions: ["Full System Access", "User Management", "Analytics", "Billing"],
-    lastLogin: "2024-07-28T10:30:00Z",
-  });
-  const [preferences, setPreferences] = useState<AdminPreferences>({
+    lastLogin: new Date().toISOString(),
+  }));
+
+  const [preferences, setPreferences] = useState<AdminPreferences>(() => ({
     emailNotifications: true,
     securityAlerts: true,
     systemAlerts: true,
     twoFactorEnabled: true,
     adminDashboardTips: true,
-  });
-  const [editedProfile, setEditedProfile] = useState(profile);
+  }));
+
+  const [systemConfig, setSystemConfig] = useState(() => ({
+    siteName: 'CoworkSpace Platform',
+    maintenanceMode: false,
+    maxUsers: 1000,
+    sessionTimeout: 30,
+    defaultLanguage: 'en'
+  }));
+
+  const [databaseSettings, setDatabaseSettings] = useState(() => ({
+    backupFrequency: 'daily',
+    retentionDays: 30,
+    compressionEnabled: true,
+    encryptionEnabled: true
+  }));
+
+  const [securityPolicies, setSecurityPolicies] = useState(() => ({
+    passwordMinLength: 8,
+    requireSpecialChars: true,
+    requireNumbers: true,
+    requireUppercase: true,
+    maxLoginAttempts: 5,
+    lockoutDuration: 30
+  }));
+
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -81,52 +156,93 @@ export default function AdminSettingsPage() {
   const [showDatabaseSettingsDialog, setShowDatabaseSettingsDialog] = useState(false);
   const [showSecurityPoliciesDialog, setShowSecurityPoliciesDialog] = useState(false);
   const [showUserManagementDialog, setShowUserManagementDialog] = useState(false);
-  const [systemConfig, setSystemConfig] = useState({
-    siteName: 'CoworkSpace Platform',
-    maintenanceMode: false,
-    maxUsers: 1000,
-    sessionTimeout: 30,
-    defaultLanguage: 'en'
-  });
-  const [databaseSettings, setDatabaseSettings] = useState({
-    backupFrequency: 'daily',
-    retentionDays: 30,
-    compressionEnabled: true,
-    encryptionEnabled: true
-  });
-  const [securityPolicies, setSecurityPolicies] = useState({
-    passwordMinLength: 8,
-    requireSpecialChars: true,
-    requireNumbers: true,
-    requireUppercase: true,
-    maxLoginAttempts: 5,
-    lockoutDuration: 30
-  });
+  
   const [userManagement, setUserManagement] = useState({
     registrationOpen: true,
     requireApproval: false,
     defaultRole: 'member',
     emailVerification: true
   });
-  const handleSaveProfile = () => {
-    setProfile(editedProfile);
-    setIsEditing(false);
-  };
-  const handleCancelEdit = () => {
+
+  const [editedProfile, setEditedProfile] = useState<AdminProfile>(profile);
+
+  const handleSaveChanges = useCallback(() => {
+    setIsSaving(true);
+    try {
+      setProfile(editedProfile);
+      setIsEditing(false);
+      // Add API call here to save changes
+    } catch (error) {
+      setError('Failed to save changes. Please try again.');
+      console.error('Error saving profile:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editedProfile]);
+
+  const handleCancelEdit = useCallback(() => {
     setEditedProfile(profile);
     setIsEditing(false);
-  };
-  const handlePasswordChange = () => {
+  }, [profile]);
+
+  const handleSaveProfile = useCallback(async () => {
+    try {
+      setIsSaving(true);
+      // In a real app, you would make an API call here to save the profile
+      // await api.updateProfile(editedProfile);
+      
+      // Update the profile state with the edited values
+      setProfile(editedProfile);
+      setIsEditing(false);
+      
+      // Show success message
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been successfully updated.",
+      });
+    } catch (error) {
+      console.error('Failed to save profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update profile. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editedProfile, toast]);
+
+  const handleChangePassword = useCallback(() => {
+    setShowPasswordDialog(true);
+  }, []);
+
+  const handlePasswordChange = useCallback(() => {
     if (newPassword === confirmPassword && newPassword.length >= 8) {
       setShowPasswordDialog(false);
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     }
-  };
+  }, [newPassword, confirmPassword]);
+
   const handlePreferenceChange = (key: keyof AdminPreferences, value: boolean) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
+  // Ensure all lists have unique keys
+  const renderPermissions = useCallback((permissions: string[] = []) => {
+    if (!permissions.length) return null;
+    
+    return (
+      <div className="space-y-2">
+        {permissions.map((permission, index) => (
+          <Badge key={`permission-${index}`} variant="outline" className="mr-2">
+            {permission}
+          </Badge>
+        ))}
+      </div>
+    );
+  }, []);
+
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
