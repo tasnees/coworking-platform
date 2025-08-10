@@ -34,13 +34,14 @@ interface Member {
 export default function StaffCheckInPage() {
   const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [checkIns, setCheckIns] = useState<CheckInRecord[]>([])
-  const [members, setMembers] = useState<Member[]>([])
+  const [checkIns, setCheckIns] = useState<CheckInRecord[]>(() => [])
+  const [members, setMembers] = useState<Member[]>(() => [])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'checked-in' | 'checked-out'>('all')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [showCheckInDialog, setShowCheckInDialog] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [location, setLocation] = useState('Main Space')
   // Initialize client-side data and timer
   useEffect(() => {
     // Only run on client
