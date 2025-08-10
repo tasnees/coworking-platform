@@ -128,6 +128,7 @@ const mockResources: Resource[] = [
   { id: "4", name: "Main Event Hall", type: "event_space", hourlyRate: 50 },
   { id: "5", name: "Dedicated Desk 3", type: "desk", hourlyRate: 10 }
 ]
+
 // Helper function to safely format date
 export default function StaffBookingsPage() {
   const [isClient, setIsClient] = useState(false)
