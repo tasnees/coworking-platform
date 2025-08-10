@@ -93,8 +93,74 @@ function HoursContent() {
       // Any cleanup if needed
     };
   }, [])
+  // Initialize state with proper types and empty arrays for SSR
+  const [weekdays, setWeekdays] = useState<Array<{
+    id: number;
+    name: string;
+    open: string;
+    close: string;
+    is24Hours: boolean;
+    isClosed: boolean;
+  }>>(() => {
+    // Only initialize with data on client side
+    if (typeof window === 'undefined') return [];
+    
+    return [
+      { id: 1, name: "Monday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
+      { id: 2, name: "Tuesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
+      { id: 3, name: "Wednesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
+      { id: 4, name: "Thursday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
+      { id: 5, name: "Friday", open: "08:00", close: "22:00", is24Hours: false, isClosed: false },
+      { id: 6, name: "Saturday", open: "10:00", close: "18:00", is24Hours: false, isClosed: false },
+      { id: 7, name: "Sunday", open: "12:00", close: "16:00", is24Hours: false, isClosed: true },
+    ];
+  });
+
+  const [specialDays, setSpecialDays] = useState<Array<{
+    id: number;
+    date: string;
+    name: string;
+    open: string;
+    close: string;
+    is24Hours: boolean;
+    isClosed: boolean;
+  }>>(() => {
+    if (typeof window === 'undefined') return [];
+    
+    return [
+      { id: 1, date: "2025-01-01", name: "New Year's Day", open: "", close: "", is24Hours: false, isClosed: true },
+      { id: 2, date: "2025-12-25", name: "Christmas Day", open: "", close: "", is24Hours: false, isClosed: true },
+      { id: 3, date: "2025-12-31", name: "New Year's Eve", open: "08:00", close: "15:00", is24Hours: false, isClosed: false },
+    ];
+  });
+
+  const [membershipAccess, setMembershipAccess] = useState<Array<{
+    id: number;
+    name: string;
+    accessHours: string;
+    has24HourAccess: boolean;
+  }>>(() => {
+    if (typeof window === 'undefined') return [];
+    
+    return [
+      { id: 1, name: "Day Pass", accessHours: "Regular hours", has24HourAccess: false },
+      { id: 2, name: "Weekly Flex", accessHours: "Regular hours", has24HourAccess: false },
+      { id: 3, name: "Monthly Pro", accessHours: "Regular hours + Weekends", has24HourAccess: false },
+      { id: 4, name: "Enterprise", accessHours: "24/7 Access", has24HourAccess: true },
+    ];
+  });
+
   // Show loading state during SSR/hydration
   if (typeof window === 'undefined' || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+  
+  // Ensure arrays are properly initialized before rendering
+  if (!weekdays?.length || !specialDays?.length || !membershipAccess?.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -118,26 +184,7 @@ function HoursContent() {
       </div>
     )
   }
-  const [weekdays, setWeekdays] = useState([
-    { id: 1, name: "Monday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
-    { id: 2, name: "Tuesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
-    { id: 3, name: "Wednesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
-    { id: 4, name: "Thursday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
-    { id: 5, name: "Friday", open: "08:00", close: "22:00", is24Hours: false, isClosed: false },
-    { id: 6, name: "Saturday", open: "10:00", close: "18:00", is24Hours: false, isClosed: false },
-    { id: 7, name: "Sunday", open: "12:00", close: "16:00", is24Hours: false, isClosed: true },
-  ])
-  const [specialDays, setSpecialDays] = useState([
-    { id: 1, date: "2025-01-01", name: "New Year's Day", open: "", close: "", is24Hours: false, isClosed: true },
-    { id: 2, date: "2025-12-25", name: "Christmas Day", open: "", close: "", is24Hours: false, isClosed: true },
-    { id: 3, date: "2025-12-31", name: "New Year's Eve", open: "08:00", close: "15:00", is24Hours: false, isClosed: false },
-  ])
-  const [membershipAccess, setMembershipAccess] = useState([
-    { id: 1, name: "Day Pass", accessHours: "Regular hours", has24HourAccess: false },
-    { id: 2, name: "Weekly Flex", accessHours: "Regular hours", has24HourAccess: false },
-    { id: 3, name: "Monthly Pro", accessHours: "Regular hours + Weekends", has24HourAccess: false },
-    { id: 4, name: "Enterprise", accessHours: "24/7 Access", has24HourAccess: true },
-  ])
+
   const handleWeekdayChange = (id: number, field: string, value: string | boolean) => {
     setWeekdays(prev => prev.map(day => 
       day.id === id ? { ...day, [field]: value } : day
