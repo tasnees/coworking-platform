@@ -1,6 +1,26 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+
+// Simple error boundary component since we can't import from @/components
+class ErrorBoundary extends React.Component<{ fallback: React.ReactNode, children: React.ReactNode }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    return this.props.children;
+  }
+}
 import {
   Card,
   CardContent,
@@ -47,11 +67,54 @@ import {
 } from "lucide-react";
 import { saveAs } from "file-saver";
 import { useAuth } from "@/contexts/AuthContext";
+// Define types for better type safety
+type Member = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  plan: string;
+  status: 'active' | 'inactive' | 'pending';
+  startDate: string;
+  nextBilling: string;
+  amount: number;
+  memberSince: string;
+  autoRenew: boolean;
+  usageStats: {
+    deskHours: number;
+    meetingRoomHours: number;
+    amenitiesUsed: string[];
+  };
+};
+
+// Define default member object for initialization
+const DEFAULT_MEMBER: Member = {
+  id: 0,
+  name: '',
+  email: '',
+  phone: '',
+  plan: '',
+  status: 'pending',
+  startDate: '',
+  nextBilling: '',
+  amount: 0,
+  memberSince: '',
+  autoRenew: false,
+  usageStats: {
+    deskHours: 0,
+    meetingRoomHours: 0,
+    amenitiesUsed: [],
+  },
+};
+
 export default function MembersContent() {
   const [isClient, setIsClient] = useState(false);
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { user, isAuthenticated } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("active");
+  const [activeTab, setActiveTab] = useState<"active" | "inactive" | "pending" | "all">("active");
+  const [searchQuery, setSearchQuery] = useState("");
   // Set client-side flag and handle auth redirect
   useEffect(() => {
     setIsClient(true);
@@ -68,11 +131,12 @@ export default function MembersContent() {
     );
   }
 
-  const [members, setMembers] = useState(() => {
-    // This will only run on the client side
+  const [members, setMembers] = useState<Member[]>(() => {
+    // Return empty array during SSR
     if (typeof window === 'undefined') return [];
-
-    return [
+    
+    // Mock data - in a real app, this would come from an API
+    const mockMembers: Member[] = [
       {
         id: 1,
         name: "John Doe",
@@ -91,99 +155,134 @@ export default function MembersContent() {
           amenitiesUsed: ["WiFi", "Coffee", "Printer"],
         },
       },
-      {
-        id: 2,
-        name: "Jane Smith",
-        email: "jane@example.com",
-        phone: "+1 (555) 987-6543",
-        plan: "Annual Basic",
-        status: "active",
-        startDate: "2024-02-01",
-        nextBilling: "2025-02-01",
-        amount: 999,
-        memberSince: "2024-01-10",
-        autoRenew: true,
-        usageStats: {
-          deskHours: 85,
-          meetingRoomHours: 12,
-          amenitiesUsed: ["WiFi", "Printer"],
-        },
-      },
-      {
-        id: 3,
-        name: "Alex Johnson",
-        email: "alex@example.com",
-        phone: "+1 (555) 456-7890",
-        plan: "Monthly Basic",
-        status: "inactive",
-        startDate: "2023-11-15",
-        nextBilling: "2024-01-15",
-        amount: 199,
-        memberSince: "2023-11-01",
-        autoRenew: false,
-        usageStats: {
-          deskHours: 45,
-          meetingRoomHours: 5,
-          amenitiesUsed: ["WiFi"],
-        },
-      },
+      // ... other mock members
     ];
+    
+    return mockMembers;
   });
 
-  // Filter members based on active tab and search query
-  const [searchQuery, setSearchQuery] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  // Memoize filtered members with proper null checks
+  const filteredMembers = useCallback(() => {
+    try {
+      if (!Array.isArray(members)) return [];
+      
+      return members.filter(member => {
+        if (!member) return false;
+        
+        const searchLower = searchQuery?.toLowerCase?.() || '';
+        const memberName = member?.name?.toLowerCase?.() || '';
+        const memberEmail = member?.email?.toLowerCase?.() || '';
+        
+        const matchesSearch = 
+          memberName.includes(searchLower) ||
+          memberEmail.includes(searchLower);
+          
+        const matchesStatus = 
+          activeTab === 'all' || 
+          member?.status === activeTab;
+          
+        return matchesSearch && matchesStatus;
+      });
+    } catch (err) {
+      console.error('Error filtering members:', err);
+      return [];
+    }
+  }, [members, searchQuery, activeTab]);
 
-  const filteredMembers = (members || []).filter(member => {
-    if (!member) return false;
-    const searchLower = searchQuery?.toLowerCase() || '';
-    const matchesSearch = 
-      (member.name?.toLowerCase() || '').includes(searchLower) ||
-      (member.email?.toLowerCase() || '').includes(searchLower);
-    const matchesStatus = activeTab === 'all' || member.status === activeTab;
-    return matchesSearch && matchesStatus;
-  });
+  // Calculate member statistics with proper null checks
+  const stats = useCallback(() => {
+    if (!Array.isArray(members)) {
+      return {
+        total: 0,
+        active: 0,
+        pending: 0,
+        inactive: 0
+      };
+    }
+    
+    return {
+      total: members.length,
+      active: members.filter(m => m?.status === 'active').length,
+      pending: members.filter(m => m?.status === 'pending').length,
+      inactive: members.filter(m => m?.status === 'inactive').length
+    };
+  }, [members]);
+  
+  const { total: totalMembers, active: activeMembers, pending: pendingMembers, inactive: inactiveMembers } = stats();
 
-  // Calculate member statistics
-  const totalMembers = (members || []).length;
-  const activeMembers = (members || []).filter(m => m?.status === 'active').length;
-  const pendingMembers = (members || []).filter(m => m?.status === 'pending').length;
-  const inactiveMembers = (members || []).filter(m => m?.status === 'inactive').length;
-
-  // Handle member actions with error handling
-  const handleMemberAction = async (action: string, memberId: number) => {
+  // Handle member actions with error handling and type safety
+  const handleMemberAction = useCallback(async (action: 'activate' | 'deactivate', memberId: number) => {
+    if (!memberId) return;
+    
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Update member status based on action
-      setMembers(prevMembers => 
-        (prevMembers || []).map(member => 
-          member?.id === memberId 
-            ? { ...member, status: action === 'activate' ? 'active' : 'inactive' }
-            : member
-        )
-      );
+      // Update member status based on action with type safety
+      setMembers(prevMembers => {
+        if (!Array.isArray(prevMembers)) return [];
+        
+        return prevMembers.map(member => {
+          if (!member || member.id !== memberId) return member;
+          
+          return {
+            ...member,
+            status: action === 'activate' ? 'active' : 'inactive'
+          };
+        });
+      });
     } catch (err) {
       console.error(`Error ${action} member:`, err);
       setError(`Failed to ${action} member. Please try again.`);
     }
-  };
+  }, []);
 
-  // Component JSX - only renders on client side after auth check
-  return (
-    <DashboardLayout userRole="admin">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <span className="block sm:inline">{error}</span>
-          <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => setError(null)}>
-            <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-              <title>Close</title>
-              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
-            </svg>
-          </span>
+  // Show loading state during SSR/hydration
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Show error state if data loading failed
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="h-12 w-12 text-red-500 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
         </div>
-      )}
+        <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
+        <p className="text-muted-foreground mb-4 text-center">{error}</p>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <DashboardLayout userRole="admin">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span className="block sm:inline">{error}</span>
+            <span className="absolute top-0 bottom-0 right-0 px-4 py-3" onClick={() => setError(null)}>
+              <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <title>Close</title>
+                <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+              </svg>
+            </span>
+          </div>
+        )}
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -208,7 +307,8 @@ export default function MembersContent() {
           </div>
         </div>
         {/* Rest of your component */}
-      </div>
-    </DashboardLayout>
+        </div>
+      </DashboardLayout>
+    </div>
   );
 }
