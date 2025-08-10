@@ -1,5 +1,6 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import DashboardLayout from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle, Clock3, AlertCircle } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 interface Booking {
   id: string
   memberName: string
@@ -126,10 +128,33 @@ const mockResources: Resource[] = [
   { id: "4", name: "Main Event Hall", type: "event_space", hourlyRate: 50 },
   { id: "5", name: "Dedicated Desk 3", type: "desk", hourlyRate: 10 }
 ]
+// Helper function to safely format date
 export default function StaffBookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>([])
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([])
+  const [isClient, setIsClient] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { user, isAuthenticated } = useAuth()
+  const router = useRouter()
+  
+  // Set client-side flag and handle auth redirect
+  useEffect(() => {
+    setIsClient(true)
+    if (!isLoading && !isAuthenticated) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, isLoading, router])
+  
+  // Show loading state on server or during auth check
+  if (!isClient || isLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+  const [bookings, setBookings] = useState<Booking[]>(() => [])
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>(() => [])
+  const [selectedStatus, setSelectedStatus] = useState<string>("all")
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -155,17 +180,31 @@ export default function StaffBookingsPage() {
     }
     setFilteredBookings(filtered)
   }
-  // Apply filters when any filter changes
-  const [isClient, setIsClient] = useState(false)
   useEffect(() => {
-    // Initialize with mock data on client-side only
-    if (typeof window !== 'undefined') {
-      setBookings(mockBookings)
-      setFilteredBookings(mockBookings)
-      setIsLoading(false)
+    if (!Array.isArray(bookings)) {
+      setFilteredBookings([]);
+      return;
     }
-  }, [])
-
+    
+    const filtered = bookings.filter(booking => {
+      if (!booking) return false;
+      
+      const searchLower = searchTerm?.toLowerCase?.() || '';
+      const matchesSearch = 
+        (booking.memberName?.toLowerCase?.() || '').includes(searchLower) ||
+        (booking.memberEmail?.toLowerCase?.() || '').includes(searchLower) ||
+        (booking.resourceName?.toLowerCase?.() || '').includes(searchLower);
+        
+      const matchesStatus = 
+        selectedStatus === 'all' || 
+        booking.status === selectedStatus;
+        
+      return matchesSearch && matchesStatus;
+    });
+    
+    setFilteredBookings(filtered || []);
+  }, [bookings, searchTerm, selectedStatus])
+  // Apply filters when any filter changes
   useEffect(() => {
     if (isClient) {
       filterBookings()
