@@ -162,27 +162,30 @@ export default function MembersContent() {
   });
 
   // Memoize filtered members with proper null checks
-  const filteredMembers = useCallback(() => {
+  const filteredMembers = useCallback((): Member[] => {
     try {
-      if (!Array.isArray(members)) return [];
+      if (!Array.isArray(members) || members.length === 0) return [];
       
-      return members.filter(member => {
+      const result = members.filter(member => {
         if (!member) return false;
         
-        const searchLower = searchQuery?.toLowerCase?.() || '';
-        const memberName = member?.name?.toLowerCase?.() || '';
-        const memberEmail = member?.email?.toLowerCase?.() || '';
+        const searchLower = (searchQuery || '').toLowerCase();
+        const memberName = (member.name || '').toLowerCase();
+        const memberEmail = (member.email || '').toLowerCase();
         
         const matchesSearch = 
+          searchLower === '' ||
           memberName.includes(searchLower) ||
           memberEmail.includes(searchLower);
           
         const matchesStatus = 
           activeTab === 'all' || 
-          member?.status === activeTab;
+          member.status === activeTab;
           
         return matchesSearch && matchesStatus;
       });
+      
+      return result || [];
     } catch (err) {
       console.error('Error filtering members:', err);
       return [];
