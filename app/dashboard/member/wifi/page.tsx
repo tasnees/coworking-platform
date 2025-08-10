@@ -366,7 +366,12 @@ export default function WifiSettingsPage() {
     usageCount: number
     network: string
     createdAt: string
-  }>>([])
+  }>>(() => {
+    // Initialize with empty array during SSR
+    if (typeof window === 'undefined') return [];
+    // Initial client-side state
+    return [];
+  })
   // Initialize access codes on client side only
   useEffect(() => {
     setAccessCodes([

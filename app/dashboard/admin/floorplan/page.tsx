@@ -162,9 +162,10 @@ export default function FloorPlanPage() {
         return type
     }
   }
-  const filteredAreas = areas.filter(area => area.floor === activeTab)
-  const filteredDesks = desks.filter(desk => desk.floor === activeTab)
-  const currentFloor = floors.find(floor => floor.id === activeTab)
+  // Initialize with empty arrays/default values to prevent undefined errors during SSR
+  const filteredAreas = areas?.filter(area => area?.floor === activeTab) || []
+  const filteredDesks = desks?.filter(desk => desk?.floor === activeTab) || []
+  const currentFloor = floors?.find(floor => floor?.id === activeTab) || floors?.[0] || { id: '', name: '', capacity: 0, occupancy: 0 }
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
