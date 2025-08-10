@@ -36,6 +36,7 @@ export default function StaffCheckInPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [checkIns, setCheckIns] = useState<CheckInRecord[]>(() => [])
   const [members, setMembers] = useState<Member[]>(() => [])
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'checked-in' | 'checked-out'>('all')
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
@@ -110,11 +111,16 @@ export default function StaffCheckInPage() {
     return `${hours}h ${minutes}m`
   }
   // Add null checks and defensive programming
-  const filteredMembers = (members || []).filter(member => {
+  const filteredMembers = (Array.isArray(members) ? members : []).filter(member => {
     if (!member) return false;
-    return member.status === 'active' &&
-      (member.name?.toLowerCase().includes(searchTerm?.toLowerCase() || '') ||
-       member.email?.toLowerCase().includes(searchTerm?.toLowerCase() || ''))
+    try {
+      return member.status === 'active' &&
+        (member.name?.toLowerCase().includes(searchTerm?.toLowerCase() || '') ||
+         member.email?.toLowerCase().includes(searchTerm?.toLowerCase() || ''))
+    } catch (e) {
+      console.error('Error filtering members:', e);
+      return false;
+    }
   })
 
   const filteredCheckIns = (checkIns || []).filter(checkIn => {
@@ -123,27 +129,46 @@ export default function StaffCheckInPage() {
     return checkIn.status === filterStatus;
   })
 
-  const currentCheckIns = (checkIns || []).filter(ci => ci?.status === 'checked-in')
+  const currentCheckIns = (Array.isArray(checkIns) ? checkIns : []).filter(ci => {
+    try {
+      return ci && ci.status === 'checked-in' && ci.checkInTime;
+    } catch (e) {
+      console.error('Error processing check-in:', e);
+      return false;
+    }
+  })
   
-  const todayCheckIns = (checkIns || []).filter(ci => {
+  const todayCheckIns = (Array.isArray(checkIns) ? checkIns : []).filter(ci => {
     if (!isClient || !ci?.checkInTime) return false;
     try {
-      return ci.checkInTime.toDateString() === new Date().toDateString()
+      const checkInDate = new Date(ci.checkInTime);
+      return checkInDate.toDateString() === new Date().toDateString();
     } catch (e) {
-      console.error('Error filtering today\'s check-ins:', e)
-      return false
+      console.error('Error filtering today\'s check-ins:', e);
+      return false;
     }
   })
 
-  const totalDurationToday = (todayCheckIns || []).reduce((total, ci) => {
+  const totalDurationToday = (Array.isArray(todayCheckIns) ? todayCheckIns : []).reduce((total, ci) => {
     try {
-      if (!ci) return total;
+      if (!ci || !ci.checkInTime) return total;
+      
+      let endTime: Date;
       if (ci.checkOutTime) {
-        return total + (new Date(ci.checkOutTime).getTime() - new Date(ci.checkInTime).getTime())
+        endTime = new Date(ci.checkOutTime);
+      } else {
+        endTime = new Date();
       }
-      return total + (new Date().getTime() - new Date(ci.checkInTime).getTime())
+      
+      const startTime = new Date(ci.checkInTime);
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+        console.error('Invalid date encountered in check-in record:', ci);
+        return total;
+      }
+      
+      return total + (endTime.getTime() - startTime.getTime());
     } catch (e) {
-      console.error('Error calculating duration:', e)
+      console.error('Error calculating duration:', e, ci);
       return total;
     }
   }, 0)
@@ -178,6 +203,22 @@ export default function StaffCheckInPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Show error state if there's an error
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Error Loading Data</h2>
+        <p className="text-muted-foreground mb-4 text-center">
+          {error}
+        </p>
+        <Button onClick={() => window.location.reload()}>
+          Retry
+        </Button>
       </div>
     )
   }

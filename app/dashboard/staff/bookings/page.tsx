@@ -142,6 +142,11 @@ export default function StaffBookingsPage() {
     setIsClient(true)
     if (!isLoading && !isAuthenticated) {
       router.push('/auth/login')
+    } else if (isAuthenticated) {
+      // Initialize with mock data only on client side after auth check
+      setBookings(mockBookings)
+      setFilteredBookings(mockBookings)
+      setIsLoading(false)
     }
   }, [isAuthenticated, isLoading, router])
   
@@ -163,24 +168,43 @@ export default function StaffBookingsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all")
   // Filter bookings based on search and filters
-  const filterBookings = () => {
-    if (!bookings?.length) return []
-    let filtered = [...bookings]
-    if (searchTerm) {
-      filtered = filtered.filter(booking =>
-        booking.memberName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.memberEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        booking.resourceName.toLowerCase().includes(searchTerm.toLowerCase())
-      )
+  const filterBookings = useCallback(() => {
+    if (!Array.isArray(bookings) || !bookings.length) {
+      setFilteredBookings([]);
+      return;
     }
-    if (statusFilter !== "all") {
-      filtered = filtered.filter(booking => booking.status === statusFilter)
+    
+    try {
+      const searchLower = searchTerm?.toLowerCase?.() || '';
+      const statusLower = statusFilter?.toLowerCase?.() || 'all';
+      const resourceLower = resourceTypeFilter?.toLowerCase?.() || 'all';
+      
+      const filtered = bookings.filter(booking => {
+        if (!booking) return false;
+        
+        // Check search term
+        const matchesSearch = searchLower === '' || 
+          (booking.memberName?.toLowerCase?.() || '').includes(searchLower) ||
+          (booking.memberEmail?.toLowerCase?.() || '').includes(searchLower) ||
+          (booking.resourceName?.toLowerCase?.() || '').includes(searchLower);
+          
+        // Check status filter
+        const matchesStatus = statusLower === 'all' || 
+          (booking.status?.toLowerCase?.() || '') === statusLower;
+          
+        // Check resource type filter
+        const matchesResource = resourceLower === 'all' || 
+          (booking.resourceType?.toLowerCase?.() || '') === resourceLower;
+          
+        return matchesSearch && matchesStatus && matchesResource;
+      });
+      
+      setFilteredBookings(filtered || []);
+    } catch (error) {
+      console.error('Error filtering bookings:', error);
+      setFilteredBookings([]);
     }
-    if (resourceTypeFilter !== "all") {
-      filtered = filtered.filter(booking => booking.resourceType === resourceTypeFilter)
-    }
-    setFilteredBookings(filtered)
-  }
+  }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
   useEffect(() => {
     if (!Array.isArray(bookings)) {
       setFilteredBookings([]);
@@ -208,9 +232,9 @@ export default function StaffBookingsPage() {
   // Apply filters when any filter changes
   useEffect(() => {
     if (isClient) {
-      filterBookings()
+      filterBookings();
     }
-  }, [searchTerm, statusFilter, resourceTypeFilter, bookings, isClient])
+  }, [filterBookings, isClient]);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -276,11 +300,14 @@ export default function StaffBookingsPage() {
     setFilteredBookings(filteredBookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
     setEditingBooking(null)
   }
-  // Stats
-  const totalBookings = bookings.length
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length
-  const pendingBookings = bookings.filter(b => b.status === 'pending').length
-  const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0)
+  // Stats with null checks and safe calculations
+  const totalBookings = Array.isArray(bookings) ? bookings.length : 0;
+  const confirmedBookings = Array.isArray(bookings) ? 
+    bookings.filter(b => b?.status === 'confirmed').length : 0;
+  const pendingBookings = Array.isArray(bookings) ? 
+    bookings.filter(b => b?.status === 'pending').length : 0;
+  const totalRevenue = Array.isArray(bookings) ? 
+    bookings.reduce((sum, b) => sum + (b?.price || 0), 0) : 0;
   // Show loading state during SSR/hydration
   if (!isClient || isLoading) {
     return (
@@ -389,9 +416,9 @@ export default function StaffBookingsPage() {
             </div>
             {/* Bookings List */}
             <div className="space-y-4">
-              {!filteredBookings?.length ? (
+              {!Array.isArray(filteredBookings) || filteredBookings.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  No bookings found matching your criteria
+                  {isLoading ? 'Loading bookings...' : 'No bookings found matching your criteria'}
                 </div>
               ) : (
                 filteredBookings.map((booking) => (
