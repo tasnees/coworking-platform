@@ -10,8 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle, Clock3, AlertCircle } from "lucide-react"
+import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
+
+// ---
+// DATA INTERFACES & MOCK DATA
+// ---
 interface Booking {
   id: string
   memberName: string
@@ -27,18 +31,21 @@ interface Booking {
   notes?: string
   createdAt: string
 }
+
 interface Member {
   id: string
   name: string
   email: string
 }
+
 interface Resource {
   id: string
   name: string
   type: "desk" | "meeting_room" | "phone_booth" | "event_space"
   hourlyRate: number
 }
-// Mock data
+
+// Mock data (can be replaced with API calls)
 const mockBookings: Booking[] = [
   {
     id: "1",
@@ -114,6 +121,7 @@ const mockBookings: Booking[] = [
     createdAt: "2024-07-27T08:00:00Z"
   }
 ]
+
 const mockMembers: Member[] = [
   { id: "1", name: "Alice Johnson", email: "alice@example.com" },
   { id: "2", name: "Bob Smith", email: "bob@example.com" },
@@ -121,6 +129,7 @@ const mockMembers: Member[] = [
   { id: "4", name: "David Wilson", email: "david@example.com" },
   { id: "5", name: "Eva Martinez", email: "eva@example.com" }
 ]
+
 const mockResources: Resource[] = [
   { id: "1", name: "Conference Room A", type: "meeting_room", hourlyRate: 30 },
   { id: "2", name: "Hot Desk 5", type: "desk", hourlyRate: 10 },
@@ -129,152 +138,105 @@ const mockResources: Resource[] = [
   { id: "5", name: "Dedicated Desk 3", type: "desk", hourlyRate: 10 }
 ]
 
-// Helper function to safely format date
-export default function StaffBookingsPage() {
-  const [isClient, setIsClient] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const { user, isAuthenticated } = useAuth()
-  const router = useRouter()
-  
-  // Set client-side flag and handle auth redirect
-  useEffect(() => {
-    setIsClient(true)
-    if (!isLoading && !isAuthenticated) {
-      router.push('/auth/login')
-    } else if (isAuthenticated) {
-      // Initialize with mock data only on client side after auth check
-      setBookings(mockBookings)
-      setFilteredBookings(mockBookings)
-      setIsLoading(false)
-    }
-  }, [isAuthenticated, isLoading, router])
-  
-  // Show loading state on server or during auth check
-  if (!isClient || isLoading || !isAuthenticated) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
+// ---
+// HELPER FUNCTIONS
+// ---
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount)
+}
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'confirmed':
+      return 'bg-green-100 text-green-800'
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'cancelled':
+      return 'bg-red-100 text-red-800'
+    case 'completed':
+      return 'bg-blue-100 text-blue-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
   }
-  const [bookings, setBookings] = useState<Booking[]>(() => [])
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>(() => [])
-  const [selectedStatus, setSelectedStatus] = useState<string>("all")
+}
+
+const getResourceIcon = (type: string) => {
+  switch (type) {
+    case 'desk':
+      return '🖥️'
+    case 'meeting_room':
+      return '🏢'
+    case 'phone_booth':
+      return '📞'
+    case 'event_space':
+      return '🎪'
+    default:
+      return '📍'
+  }
+}
+
+// ---
+// MAIN COMPONENT
+// ---
+export default function StaffBookingsPage() {
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  // Initialize state with mock data directly for SSR/prerendering
+  const [bookings, setBookings] = useState<Booking[]>(mockBookings)
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>(mockBookings)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all")
+  
+  // Redirect if not authenticated. This effect runs only on the client.
+  useEffect(() => {
+    if (isAuthenticated === false) {
+      router.push('/auth/login')
+    }
+  }, [isAuthenticated, router])
+
   // Filter bookings based on search and filters
   const filterBookings = useCallback(() => {
-    if (!Array.isArray(bookings) || !bookings.length) {
-      setFilteredBookings([]);
-      return;
-    }
-    
-    try {
-      const searchLower = searchTerm?.toLowerCase?.() || '';
-      const statusLower = statusFilter?.toLowerCase?.() || 'all';
-      const resourceLower = resourceTypeFilter?.toLowerCase?.() || 'all';
-      
-      const filtered = bookings.filter(booking => {
-        if (!booking) return false;
-        
-        // Check search term
-        const matchesSearch = searchLower === '' || 
-          (booking.memberName?.toLowerCase?.() || '').includes(searchLower) ||
-          (booking.memberEmail?.toLowerCase?.() || '').includes(searchLower) ||
-          (booking.resourceName?.toLowerCase?.() || '').includes(searchLower);
-          
-        // Check status filter
-        const matchesStatus = statusLower === 'all' || 
-          (booking.status?.toLowerCase?.() || '') === statusLower;
-          
-        // Check resource type filter
-        const matchesResource = resourceLower === 'all' || 
-          (booking.resourceType?.toLowerCase?.() || '') === resourceLower;
-          
-        return matchesSearch && matchesStatus && matchesResource;
-      });
-      
-      setFilteredBookings(filtered || []);
-    } catch (error) {
-      console.error('Error filtering bookings:', error);
-      setFilteredBookings([]);
-    }
-  }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
-  useEffect(() => {
-    if (!Array.isArray(bookings)) {
-      setFilteredBookings([]);
-      return;
-    }
+    const searchLower = searchTerm.toLowerCase();
+    const statusLower = statusFilter.toLowerCase();
+    const resourceLower = resourceTypeFilter.toLowerCase();
     
     const filtered = bookings.filter(booking => {
-      if (!booking) return false;
-      
-      const searchLower = searchTerm?.toLowerCase?.() || '';
       const matchesSearch = 
-        (booking.memberName?.toLowerCase?.() || '').includes(searchLower) ||
-        (booking.memberEmail?.toLowerCase?.() || '').includes(searchLower) ||
-        (booking.resourceName?.toLowerCase?.() || '').includes(searchLower);
+        (booking.memberName?.toLowerCase() || '').includes(searchLower) ||
+        (booking.memberEmail?.toLowerCase() || '').includes(searchLower) ||
+        (booking.resourceName?.toLowerCase() || '').includes(searchLower);
         
-      const matchesStatus = 
-        selectedStatus === 'all' || 
-        booking.status === selectedStatus;
+      const matchesStatus = statusLower === 'all' || booking.status === statusLower;
         
-      return matchesSearch && matchesStatus;
+      const matchesResource = resourceLower === 'all' || booking.resourceType === resourceLower;
+        
+      return matchesSearch && matchesStatus && matchesResource;
     });
     
-    setFilteredBookings(filtered || []);
-  }, [bookings, searchTerm, selectedStatus])
+    setFilteredBookings(filtered);
+  }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
+  
   // Apply filters when any filter changes
   useEffect(() => {
-    if (isClient) {
-      filterBookings();
-    }
-  }, [filterBookings, isClient]);
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount)
-  }
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800'
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'cancelled':
-        return 'bg-red-100 text-red-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-  const getResourceIcon = (type: string) => {
-    switch (type) {
-      case 'desk':
-        return '🖥️'
-      case 'meeting_room':
-        return '🏢'
-      case 'phone_booth':
-        return '📞'
-      case 'event_space':
-        return '🎪'
-      default:
-        return '📍'
-    }
-  }
+    filterBookings();
+  }, [filterBookings]);
+
+  // Handler functions for CRUD operations (unchanged)
   const handleDeleteBooking = (id: string) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
       setBookings(bookings.filter(b => b.id !== id))
       setFilteredBookings(filteredBookings.filter(b => b.id !== id))
     }
   }
+
   const handleCreateBooking = (bookingData: Partial<Booking>) => {
     const newBooking: Booking = {
       id: Date.now().toString(),
@@ -295,27 +257,28 @@ export default function StaffBookingsPage() {
     setFilteredBookings([newBooking, ...filteredBookings])
     setShowCreateDialog(false)
   }
+
   const handleUpdateBooking = (updatedBooking: Booking) => {
     setBookings(bookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
     setFilteredBookings(filteredBookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
     setEditingBooking(null)
   }
+
   // Stats with null checks and safe calculations
-  const totalBookings = Array.isArray(bookings) ? bookings.length : 0;
-  const confirmedBookings = Array.isArray(bookings) ? 
-    bookings.filter(b => b?.status === 'confirmed').length : 0;
-  const pendingBookings = Array.isArray(bookings) ? 
-    bookings.filter(b => b?.status === 'pending').length : 0;
-  const totalRevenue = Array.isArray(bookings) ? 
-    bookings.reduce((sum, b) => sum + (b?.price || 0), 0) : 0;
-  // Show loading state during SSR/hydration
-  if (!isClient || isLoading) {
+  const totalBookings = bookings.length;
+  const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
+  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+  const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0);
+
+  // Show a loading state until authentication status is determined
+  if (isAuthenticated === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     )
   }
+
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">
@@ -416,9 +379,9 @@ export default function StaffBookingsPage() {
             </div>
             {/* Bookings List */}
             <div className="space-y-4">
-              {!Array.isArray(filteredBookings) || filteredBookings.length === 0 ? (
+              {filteredBookings.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  {isLoading ? 'Loading bookings...' : 'No bookings found matching your criteria'}
+                  No bookings found matching your criteria
                 </div>
               ) : (
                 filteredBookings.map((booking) => (
@@ -635,10 +598,7 @@ export default function StaffBookingsPage() {
                   <Button variant="outline" onClick={() => setEditingBooking(null)}>
                     Cancel
                   </Button>
-                  <Button onClick={() => {
-                    alert('Booking updated successfully!')
-                    setEditingBooking(null)
-                  }}>
+                  <Button onClick={() => handleUpdateBooking(editingBooking)}>
                     Save Changes
                   </Button>
                 </div>
@@ -724,10 +684,7 @@ export default function StaffBookingsPage() {
                 <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
                   Cancel
                 </Button>
-                <Button onClick={() => {
-                  alert('Booking created successfully!')
-                  setShowCreateDialog(false)
-                }}>
+                <Button onClick={() => handleCreateBooking({})}>
                   Create Booking
                 </Button>
               </div>
