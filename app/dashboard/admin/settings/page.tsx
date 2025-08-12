@@ -1,19 +1,20 @@
-"use client";
-"use client";
+
+'use client';
 
 import { useState, useEffect, useCallback } from "react";
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
-  { 
-    ssr: false, 
+  {
+    ssr: false,
     loading: () => (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
       </div>
-    ) 
+    )
   }
 );
 // Import UI components
@@ -28,6 +29,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { User, Mail, Phone, MapPin, Shield, Bell, Key, Save, X, Edit3, Settings, Users, Database, ShieldCheck } from "lucide-react";
+
 interface AdminProfile {
   id: string;
   name: string;
@@ -43,6 +45,7 @@ interface AdminProfile {
   permissions: string[];
   lastLogin: string;
 }
+
 interface AdminPreferences {
   emailNotifications: boolean;
   securityAlerts: boolean;
@@ -50,13 +53,14 @@ interface AdminPreferences {
   twoFactorEnabled: boolean;
   adminDashboardTips: boolean;
 }
+
 export default function AdminSettingsPage() {
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
+
   // Set client-side flag and handle auth redirect
   useEffect(() => {
     setIsClient(true);
@@ -85,8 +89,8 @@ export default function AdminSettingsPage() {
         </div>
         <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
         <p className="text-muted-foreground mb-4 text-center">{error}</p>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => window.location.reload()}
         >
           Retry
@@ -100,7 +104,7 @@ export default function AdminSettingsPage() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   const [profile, setProfile] = useState<AdminProfile>(() => ({
     id: "admin-001",
     name: "Alexandra Thompson",
@@ -156,7 +160,7 @@ export default function AdminSettingsPage() {
   const [showDatabaseSettingsDialog, setShowDatabaseSettingsDialog] = useState(false);
   const [showSecurityPoliciesDialog, setShowSecurityPoliciesDialog] = useState(false);
   const [showUserManagementDialog, setShowUserManagementDialog] = useState(false);
-  
+
   const [userManagement, setUserManagement] = useState({
     registrationOpen: true,
     requireApproval: false,
@@ -190,11 +194,11 @@ export default function AdminSettingsPage() {
       setIsSaving(true);
       // In a real app, you would make an API call here to save the profile
       // await api.updateProfile(editedProfile);
-      
+
       // Update the profile state with the edited values
       setProfile(editedProfile);
       setIsEditing(false);
-      
+
       // Show success message
       toast({
         title: "Profile updated",
@@ -228,10 +232,11 @@ export default function AdminSettingsPage() {
   const handlePreferenceChange = (key: keyof AdminPreferences, value: boolean) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
-  // Ensure all lists have unique keys
+
+  // FIX: Provide a default empty array for permissions to prevent TypeError
   const renderPermissions = useCallback((permissions: string[] = []) => {
-    if (!permissions.length) return null;
-    
+    if (!permissions || permissions.length === 0) return null;
+
     return (
       <div className="space-y-2">
         {permissions.map((permission, index) => (
@@ -410,6 +415,7 @@ export default function AdminSettingsPage() {
                     <div className="space-y-2">
                       <Label>System Permissions</Label>
                       <div className="flex flex-wrap gap-1">
+                        {/* The `key` prop is now correctly used */}
                         {profile.permissions.map((permission, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
                             {permission}
@@ -717,14 +723,14 @@ export default function AdminSettingsPage() {
             <DialogHeader>
               <DialogTitle>Security Policies</DialogTitle>
               <DialogDescription>
-                Configure security policies and access controls for the platform.
+                Configure security policies and access controls.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password-min-length">Minimum Password Length</Label>
+                <Label htmlFor="password-length">Minimum Password Length</Label>
                 <Input
-                  id="password-min-length"
+                  id="password-length"
                   type="number"
                   value={securityPolicies.passwordMinLength}
                   onChange={(e) => setSecurityPolicies(prev => ({ ...prev, passwordMinLength: parseInt(e.target.value) }))}
@@ -733,7 +739,7 @@ export default function AdminSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Require Special Characters</Label>
-                  <p className="text-sm text-muted-foreground">Passwords must contain special characters</p>
+                  <p className="text-sm text-muted-foreground">Enforce special characters in passwords</p>
                 </div>
                 <Switch
                   checked={securityPolicies.requireSpecialChars}
@@ -743,7 +749,7 @@ export default function AdminSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Require Numbers</Label>
-                  <p className="text-sm text-muted-foreground">Passwords must contain numbers</p>
+                  <p className="text-sm text-muted-foreground">Enforce numbers in passwords</p>
                 </div>
                 <Switch
                   checked={securityPolicies.requireNumbers}
@@ -753,7 +759,7 @@ export default function AdminSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Require Uppercase Letters</Label>
-                  <p className="text-sm text-muted-foreground">Passwords must contain uppercase letters</p>
+                  <p className="text-sm text-muted-foreground">Enforce uppercase letters in passwords</p>
                 </div>
                 <Switch
                   checked={securityPolicies.requireUppercase}
@@ -761,7 +767,7 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="max-login-attempts">Maximum Login Attempts</Label>
+                <Label htmlFor="max-login-attempts">Max Login Attempts</Label>
                 <Input
                   id="max-login-attempts"
                   type="number"
@@ -770,7 +776,7 @@ export default function AdminSettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lockout-duration">Lockout Duration (minutes)</Label>
+                <Label htmlFor="lockout-duration">Account Lockout Duration (minutes)</Label>
                 <Input
                   id="lockout-duration"
                   type="number"
@@ -795,14 +801,14 @@ export default function AdminSettingsPage() {
             <DialogHeader>
               <DialogTitle>User Management Settings</DialogTitle>
               <DialogDescription>
-                Configure user registration and management policies.
+                Configure user registration and account policies.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label>Registration Open</Label>
-                  <p className="text-sm text-muted-foreground">Allow new users to register</p>
+                  <Label>Open Registration</Label>
+                  <p className="text-sm text-muted-foreground">Allow new users to register without an invite</p>
                 </div>
                 <Switch
                   checked={userManagement.registrationOpen}
@@ -812,30 +818,17 @@ export default function AdminSettingsPage() {
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Require Admin Approval</Label>
-                  <p className="text-sm text-muted-foreground">New registrations require admin approval</p>
+                  <p className="text-sm text-muted-foreground">New accounts must be approved by an administrator</p>
                 </div>
                 <Switch
                   checked={userManagement.requireApproval}
                   onCheckedChange={(checked) => setUserManagement(prev => ({ ...prev, requireApproval: checked }))}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="default-role">Default User Role</Label>
-                <select
-                  id="default-role"
-                  value={userManagement.defaultRole}
-                  onChange={(e) => setUserManagement(prev => ({ ...prev, defaultRole: e.target.value }))}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
-                >
-                  <option value="member">Member</option>
-                  <option value="staff">Staff</option>
-                  <option value="admin">Admin</option>
-                </select>
-              </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Email Verification</Label>
-                  <p className="text-sm text-muted-foreground">Require email verification for new accounts</p>
+                  <p className="text-sm text-muted-foreground">New users must verify their email address</p>
                 </div>
                 <Switch
                   checked={userManagement.emailVerification}
