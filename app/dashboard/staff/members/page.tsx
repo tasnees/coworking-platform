@@ -11,8 +11,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Eye, Edit, Trash2, User, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
 // Dynamically import the dashboard layout with SSR disabled
-const DashboardLayout = dynamic(
-  () => import('@/components/dashboard-layout'),
+const DashboardLayout = dynamic<React.ComponentProps<typeof import('@/components/dashboard-layout').default>>(
+  () => import('@/components/dashboard-layout').then((mod) => mod.default),
   {
     ssr: false,
     loading: () => (

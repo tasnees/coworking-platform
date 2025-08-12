@@ -131,32 +131,40 @@ const getDeskTypeLabel = (type: string) => {
 // ---
 // MAIN COMPONENT
 // ---
+// Define floorStats outside the component to ensure it's available during SSR
+const floorStats = [
+  { title: "Total Capacity", value: "120", icon: Users },
+  { title: "Current Occupancy", value: "78", percentage: 65, icon: Users },
+  { title: "Available Desks", value: "32", icon: Square },
+  { title: "Available Rooms", value: "4", icon: Grid },
+];
+
 export default function FloorPlanPage() {
+  const [isClient, setIsClient] = useState(false);
   const [activeTab, setActiveTab] = useState("main");
   const [zoomLevel, setZoomLevel] = useState(100);
   const [editMode, setEditMode] = useState(false);
 
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Use `useMemo` to filter data once per render, improving performance
   const filteredAreas = useMemo(() => {
+    if (!isClient) return [];
     return areas.filter(area => area.floor === activeTab);
-  }, [activeTab]);
+  }, [activeTab, isClient]);
 
   const filteredDesks = useMemo(() => {
+    if (!isClient) return [];
     return desks.filter(desk => desk.floor === activeTab);
-  }, [activeTab]);
+  }, [activeTab, isClient]);
 
   const currentFloor = useMemo(() => {
+    if (!isClient || !floors.length) return null;
     return floors.find(floor => floor.id === activeTab) || floors[0];
-  }, [activeTab]);
-
-  // The `floorStats` array is causing the error because it's defined *after*
-  // it's used in the JSX.
-  const floorStats = [
-    { title: "Total Capacity", value: "120", icon: Users },
-    { title: "Current Occupancy", value: "78", percentage: 65, icon: Users },
-    { title: "Available Desks", value: "32", icon: Square },
-    { title: "Available Rooms", value: "4", icon: Grid },
-  ]
+  }, [activeTab, isClient]);
   
   return (
     <DashboardLayout userRole="admin">
