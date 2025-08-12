@@ -3,18 +3,205 @@
 import { useState, useEffect } from "react";
 import { format, isToday } from "date-fns";
 import { Check, User, Clock, QrCode } from "lucide-react";
-import DashboardLayout from "@/components/dashboard-layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+// Assuming DashboardLayout, Card, Table, and Button components are available
+// from a UI library like shadcn/ui.
+// For this self-contained example, we will create mock components.
+// In a real Next.js app, you would import them from your component library.
+
+// Define prop types for components
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  userRole: string;
+}
+
+interface CardProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface CardHeaderProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface CardTitleProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface CardDescriptionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface CardContentProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  children: React.ReactNode;
+  className?: string;
+  variant?: 'default' | 'outline' | 'secondary';
+  size?: 'default' | 'sm';
+}
+
+interface TableProps {
+  children: React.ReactNode;
+}
+
+interface TableHeaderProps {
+  children: React.ReactNode;
+}
+
+interface TableBodyProps {
+  children: React.ReactNode;
+}
+
+interface TableRowProps {
+  children: React.ReactNode;
+}
+
+interface TableHeadProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface TableCellProps {
+  children: React.ReactNode;
+  className?: string;
+  colSpan?: number;
+}
+
+interface BadgeProps {
+  children: React.ReactNode;
+  variant?: 'default' | 'secondary' | 'outline';
+}
+
+// Mock components to make this code runnable
+const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => (
+  <div className="p-6 bg-slate-50 min-h-screen">
+    <div className="max-w-7xl mx-auto">{children}</div>
+  </div>
+);
+
+const Card = ({ children, className = "" }: CardProps) => (
+  <div className={`rounded-xl border bg-card text-card-foreground shadow ${className}`}>
+    {children}
+  </div>
+);
+
+const CardHeader = ({ children, className = "" }: CardHeaderProps) => (
+  <div className={`flex flex-col space-y-1.5 p-6 ${className}`}>
+    {children}
+  </div>
+);
+
+const CardTitle = ({ children, className = "" }: CardTitleProps) => (
+  <h3 className={`text-2xl font-semibold leading-none tracking-tight ${className}`}>
+    {children}
+  </h3>
+);
+
+const CardDescription = ({ children, className = "" }: CardDescriptionProps) => (
+  <p className={`text-sm text-muted-foreground ${className}`}>
+    {children}
+  </p>
+);
+
+const CardContent = ({ children, className = "" }: CardContentProps) => (
+  <div className={`p-6 pt-0 ${className}`}>
+    {children}
+  </div>
+);
+
+const Button = ({ 
+  children, 
+  className = "", 
+  variant = 'default', 
+  size = 'default',
+  ...props 
+}: ButtonProps) => {
+  const baseClasses = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background";
+  
+  const variants = {
+    default: "bg-primary text-primary-foreground hover:bg-primary/90",
+    outline: "border border-input hover:bg-accent hover:text-accent-foreground",
+    secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+  } as const;
+  
+  const sizes = {
+    default: "h-10 py-2 px-4",
+    sm: "h-9 px-3 rounded-md",
+  } as const;
+  
+  return (
+    <button 
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+};
+
+const Table = ({ children }: TableProps) => (
+  <div className="w-full overflow-auto">
+    <table className="w-full caption-bottom text-sm">
+      {children}
+    </table>
+  </div>
+);
+
+const TableHeader = ({ children }: TableHeaderProps) => (
+  <thead className="[&_tr]:border-b">
+    {children}
+  </thead>
+);
+
+const TableBody = ({ children }: TableBodyProps) => (
+  <tbody className="[&_tr:last-child]:border-0">
+    {children}
+  </tbody>
+);
+
+const TableRow = ({ children }: TableRowProps) => (
+  <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+    {children}
+  </tr>
+);
+
+const TableHead = ({ children, className = "" }: TableHeadProps) => (
+  <th className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`}>
+    {children}
+  </th>
+);
+
+const TableCell = ({ children, className = "", colSpan }: TableCellProps) => (
+  <td 
+    className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`}
+    colSpan={colSpan}
+  >
+    {children}
+  </td>
+);
+
+const Badge = ({ children, variant = 'default' }: BadgeProps) => {
+  const baseClasses = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
+  
+  const variants = {
+    default: "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
+    secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    outline: "text-foreground",
+  } as const;
+  
+  return (
+    <span className={`${baseClasses} ${variants[variant]}`}>
+      {children}
+    </span>
+  );
+};
+
 
 // Data types
 interface CheckInHistory {
@@ -51,10 +238,7 @@ export default function StaffCheckinPage() {
   const [checkedInToday, setCheckedInToday] = useState<CheckInHistory[]>([]);
   const [totalCheckins, setTotalCheckins] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  // Use an empty array as the initial state to prevent the TypeError
   const [members, setMembers] = useState<Member[]>([]);
-  const [history, setHistory] = useState<CheckInHistory[]>([]);
 
   useEffect(() => {
     // This effect runs on the client after the component mounts
@@ -62,7 +246,6 @@ export default function StaffCheckinPage() {
     // Simulate fetching data
     setTimeout(() => {
       setMembers(mockMembers);
-      setHistory(mockCheckInHistory);
       const todayCheckins = mockCheckInHistory.filter(item => isToday(new Date(item.timestamp)));
       setCheckedInToday(todayCheckins);
       setTotalCheckins(todayCheckins.length);
@@ -168,7 +351,6 @@ export default function StaffCheckinPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* FIX: The `key` prop is now correctly added to the TableRow element */}
                   {checkedInToday.length > 0 ? (
                     checkedInToday.map((checkin) => (
                       <TableRow key={checkin.id}>
@@ -215,7 +397,6 @@ export default function StaffCheckinPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {/* FIX: The `key` prop is now correctly added to the TableRow element */}
                   {members.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell>
