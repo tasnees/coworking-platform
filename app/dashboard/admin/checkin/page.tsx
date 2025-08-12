@@ -31,6 +31,12 @@ function App() {
   const [toastMessage, setToastMessage] = useState<{ visible: boolean; message: string; type: string }>({ visible: false, message: '', type: 'success' });
   // Explicitly type the history array with the HistoryItem interface
   const [codeHistory, setCodeHistory] = useState<HistoryItem[]>([]);
+  const [isClient, setIsClient] = useState(false);
+
+  // Set isClient to true when component mounts (client-side only)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Simple toast/message box implementation
   const showToast = (message: string, type = 'success') => {
@@ -260,7 +266,7 @@ function App() {
 
             {activeTab === 'history' && (
               <div className="space-y-4">
-                {codeHistory.length > 0 ? (
+                {isClient && codeHistory.length > 0 ? (
                   codeHistory.map((item, index) => (
                     <div key={index} className="bg-gray-700 p-4 rounded-md border border-gray-600">
                       <div className="flex justify-between items-center mb-2">
@@ -289,7 +295,9 @@ function App() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-gray-400 py-8">Your generation history is empty.</p>
+                  <p className="text-center text-gray-400 py-8">
+                    {isClient ? 'Your generation history is empty.' : 'Loading history...'}
+                  </p>
                 )}
               </div>
             )}

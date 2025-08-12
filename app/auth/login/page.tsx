@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 export const dynamic = "force-dynamic";
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -10,13 +11,20 @@ function LoginForm() {
   const [callbackUrl, setCallbackUrl] = useState('/dashboard');
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  
   useEffect(() => {
     setIsMounted(true);
-    const urlCallback = searchParams?.get('callbackUrl');
-    const urlError = searchParams?.get('error');
-    setCallbackUrl(urlCallback || '/dashboard');
-    setError(urlError || null);
-  }, [searchParams]);
+    
+    // Ensure we're on the client side before accessing searchParams
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlCallback = urlParams.get('callbackUrl');
+      const urlError = urlParams.get('error');
+      
+      setCallbackUrl(urlCallback || '/dashboard');
+      setError(urlError);
+    }
+  }, []);
   const handleAuth0Login = () => {
     signIn('auth0', { callbackUrl });
   };
