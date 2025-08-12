@@ -189,39 +189,79 @@ const getFloorStats = (floorId: string): FloorStat[] => {
   ];
 };
 
+// Helper function to safely access array values
+const safeAccess = {
+  floors: {
+    find: (predicate: (floor: any) => boolean) => {
+      try {
+        return Array.isArray(floors) ? floors.find(predicate) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    filter: (predicate: (floor: any) => boolean) => {
+      try {
+        return Array.isArray(floors) ? floors.filter(predicate) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+  },
+  areas: {
+    filter: (predicate: (area: any) => boolean) => {
+      try {
+        return Array.isArray(areas) ? areas.filter(predicate) : [];
+      } catch (e) {
+        return [];
+      }
+    },
+    find: (predicate: (area: any) => boolean) => {
+      try {
+        return Array.isArray(areas) ? areas.find(predicate) : undefined;
+      } catch (e) {
+        return undefined;
+      }
+    }
+  },
+  desks: {
+    filter: (predicate: (desk: any) => boolean) => {
+      try {
+        return Array.isArray(desks) ? desks.filter(predicate) : [];
+      } catch (e) {
+        return [];
+      }
+    }
+  }
+};
+
 export default function FloorPlanPage() {
   const [isClient, setIsClient] = useState(false);
   const [activeTab, setActiveTab] = useState("main");
   const [zoomLevel, setZoomLevel] = useState(100);
   const [editMode, setEditMode] = useState(false);
   
-  // Calculate floor stats based on the active tab
-  const floorStats = useMemo(() => getFloorStats(activeTab), [activeTab]);
-
   // Set client-side flag
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Ensure we're on the client before filtering data
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // Calculate floor stats based on the active tab
+  const floorStats = useMemo(() => isClient ? getFloorStats(activeTab) : [], [activeTab, isClient]);
 
   // Use `useMemo` to filter data once per render, improving performance
   const filteredAreas = useMemo(() => {
-    if (!isClient || !Array.isArray(areas)) return [];
-    return areas.filter(area => area && area.floor === activeTab);
+    if (!isClient) return [];
+    return safeAccess.areas.filter(area => area && area.floor === activeTab);
   }, [activeTab, isClient]);
 
   const filteredDesks = useMemo(() => {
-    if (!isClient || !Array.isArray(desks)) return [];
-    return desks.filter(desk => desk && desk.floor === activeTab);
+    if (!isClient) return [];
+    return safeAccess.desks.filter(desk => desk && desk.floor === activeTab);
   }, [activeTab, isClient]);
 
   const currentFloor = useMemo(() => {
-    if (!isClient || !Array.isArray(floors) || !floors.length) return null;
-    return floors.find(floor => floor && floor.id === activeTab) || floors[0];
+    if (!isClient) return null;
+    return safeAccess.floors.find(floor => floor && floor.id === activeTab) || safeAccess.floors.find(floor => floor) || null;
   }, [activeTab, isClient]);
 
   // Show loading state until client-side rendering is ready
@@ -482,8 +522,8 @@ export default function FloorPlanPage() {
                                 <SelectValue placeholder="Select floor" />
                               </SelectTrigger>
                               <SelectContent>
-                                {floors.map((floor) => (
-                                  <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
+                                {safeAccess.floors.filter(floor => floor).map((floor) => (
+                                  <SelectItem key={floor.id} value={floor.id}>{floor.name || `Floor ${floor.id}`}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -577,8 +617,8 @@ export default function FloorPlanPage() {
                                 <SelectValue placeholder="Select area" />
                               </SelectTrigger>
                               <SelectContent>
-                                {filteredAreas.map((area) => (
-                                  <SelectItem key={area.id} value={area.id.toString()}>{area.name}</SelectItem>
+                                {filteredAreas.filter(area => area).map((area) => (
+                                  <SelectItem key={area.id} value={area.id.toString()}>{area.name || `Area ${area.id}`}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -620,7 +660,7 @@ export default function FloorPlanPage() {
                                 <div>
                                   <p className="font-medium">{getDeskTypeLabel(desk.type)}</p>
                                   <p className="text-sm text-muted-foreground">
-                                    {areas.find((a) => a.id === desk.area)?.name}
+                                    {safeAccess.areas.find((a: any) => a?.id === desk?.area)?.name || 'Unknown Area'}
                                   </p>
                                 </div>
                               </div>

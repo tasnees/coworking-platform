@@ -119,8 +119,12 @@ const mockMembers: Member[] = [
   }
 ]
 export default function StaffMembersPage() {
+  // Helper function to safely get array length
+  const getSafeLength = (arr: any[] | undefined): number => {
+    return Array.isArray(arr) ? arr.length : 0;
+  }
   const [isClient, setIsClient] = useState(false)
-  const [members, setMembers] = useState<Member[]>(mockMembers)
+  const [members, setMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -129,6 +133,7 @@ export default function StaffMembersPage() {
   const [showViewDialog, setShowViewDialog] = useState(false)
   const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [editingMember, setEditingMember] = useState<Member | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   // Form states for create/edit
   const [formData, setFormData] = useState({
     name: "",
@@ -142,28 +147,39 @@ export default function StaffMembersPage() {
     country: "",
     notes: ""
   })
-  // This useEffect ensures that the component only renders client-side-dependent logic after mounting.
+  // Initialize members on client side to avoid hydration issues
   useEffect(() => {
     setIsClient(true)
+    setMembers(mockMembers)
+    setIsLoading(false)
   }, [])
-  const filteredMembers = members.filter(member => {
-    const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          member.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          member.city.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === "all" || member.status === statusFilter
-    const matchesType = typeFilter === "all" || member.membershipType === typeFilter
-    return matchesSearch && matchesStatus && matchesType
+  const filteredMembers = (members || []).filter(member => {
+    if (!member) return false;
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = member.name?.toLowerCase().includes(searchLower) ||
+                      member.email?.toLowerCase().includes(searchLower) ||
+                      (member.company?.toLowerCase() || '').includes(searchLower) ||
+                      (member.city?.toLowerCase() || '').includes(searchLower);
+    const matchesStatus = statusFilter === "all" || member.status === statusFilter;
+    const matchesType = typeFilter === "all" || member.membershipType === typeFilter;
+    return matchesSearch && matchesStatus && matchesType;
   })
-  const totalMembers = members.length
-  const activeMembers = members.filter(m => m.status === "active").length
-  const inactiveMembers = members.filter(m => m.status === "inactive").length
-  const suspendedMembers = members.filter(m => m.status === "suspended").length
-  const newMembersThisMonth = members.filter(m => {
-    const joinDate = new Date(m.joinDate)
-    const now = new Date()
-    return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear()
-  }).length
+  const totalMembers = getSafeLength(members);
+  const activeMembers = getSafeLength(members?.filter(m => m?.status === "active"));
+  const inactiveMembers = getSafeLength(members?.filter(m => m?.status === "inactive"));
+  const suspendedMembers = getSafeLength(members?.filter(m => m?.status === "suspended"));
+  const newMembersThisMonth = getSafeLength(members?.filter(m => {
+    try {
+      if (!m?.joinDate) return false;
+      const joinDate = new Date(m.joinDate);
+      const now = new Date();
+      return joinDate.getMonth() === now.getMonth() && 
+             joinDate.getFullYear() === now.getFullYear();
+    } catch (e) {
+      console.error('Error processing join date:', e);
+      return false;
+    }
+  }));
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never'
     try {
@@ -251,12 +267,12 @@ export default function StaffMembersPage() {
     setSelectedMember(member)
     setShowViewDialog(true)
   }
-  if (!isClient) {
+  if (!isClient || isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
       </div>
-    );
+    )
   }
   return (
     <DashboardLayout userRole="staff">
