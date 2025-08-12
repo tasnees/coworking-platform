@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -40,132 +40,124 @@ import {
   Printer,
   Share2
 } from "lucide-react"
+
+// ---
+// DATA DEFINITIONS
+// You can define this data outside the component to ensure it's available for both
+// the server (during prerendering) and the client.
+// ---
+
+const floors = [
+  { id: "main", name: "Main Floor", capacity: 80, occupancy: 52 },
+  { id: "second", name: "Second Floor", capacity: 40, occupancy: 26 },
+  { id: "basement", name: "Basement", capacity: 0, occupancy: 0 },
+]
+
+const areas = [
+  { id: 1, name: "Open Workspace", type: "workspace", capacity: 40, occupancy: 28, floor: "main" },
+  { id: 2, name: "Meeting Room A", type: "meeting", capacity: 8, occupancy: 6, floor: "main" },
+  { id: 3, name: "Meeting Room B", type: "meeting", capacity: 6, occupancy: 0, floor: "main" },
+  { id: 4, name: "Phone Booth 1", type: "phone", capacity: 1, occupancy: 1, floor: "main" },
+  { id: 5, name: "Phone Booth 2", type: "phone", capacity: 1, occupancy: 0, floor: "main" },
+  { id: 6, name: "Kitchen", type: "common", capacity: 10, occupancy: 4, floor: "main" },
+  { id: 7, name: "Lounge", type: "common", capacity: 14, occupancy: 8, floor: "main" },
+  { id: 8, name: "Private Office 1", type: "office", capacity: 4, occupancy: 3, floor: "second" },
+  { id: 9, name: "Private Office 2", type: "office", capacity: 4, occupancy: 4, floor: "second" },
+  { id: 10, name: "Private Office 3", type: "office", capacity: 4, occupancy: 2, floor: "second" },
+  { id: 11, name: "Conference Room", type: "meeting", capacity: 12, occupancy: 8, floor: "second" },
+  { id: 12, name: "Quiet Zone", type: "workspace", capacity: 16, occupancy: 9, floor: "second" },
+]
+
+const desks = [
+  { id: "A1", type: "hot-desk", status: "occupied", member: "John Doe", area: 1, floor: "main" },
+  { id: "A2", type: "hot-desk", status: "occupied", member: "Jane Smith", area: 1, floor: "main" },
+  { id: "A3", type: "hot-desk", status: "available", member: null, area: 1, floor: "main" },
+  { id: "A4", type: "hot-desk", status: "available", member: null, area: 1, floor: "main" },
+  { id: "A5", type: "hot-desk", status: "occupied", member: "Mike Johnson", area: 1, floor: "main" },
+  { id: "B1", type: "dedicated", status: "occupied", member: "Sarah Wilson", area: 1, floor: "main" },
+  { id: "B2", type: "dedicated", status: "occupied", member: "Robert Brown", area: 1, floor: "main" },
+  { id: "B3", type: "dedicated", status: "occupied", member: "Emily Davis", area: 1, floor: "main" },
+  { id: "B4", type: "dedicated", status: "available", member: null, area: 1, floor: "main" },
+  { id: "C1", type: "standing", status: "occupied", member: "David Lee", area: 1, floor: "main" },
+  { id: "C2", type: "standing", status: "available", member: null, area: 1, floor: "main" },
+  { id: "D1", type: "hot-desk", status: "occupied", member: "Lisa Chen", area: 12, floor: "second" },
+  { id: "D2", type: "hot-desk", status: "occupied", member: "Tom Wilson", area: 12, floor: "second" },
+  { id: "D3", type: "hot-desk", status: "available", member: null, area: 12, floor: "second" },
+  { id: "D4", type: "dedicated", status: "occupied", member: "Karen White", area: 12, floor: "second" },
+  { id: "D5", type: "dedicated", status: "occupied", member: "James Taylor", area: 12, floor: "second" },
+]
+
+// ---
+// HELPER FUNCTIONS (UNCHANGED)
+// ---
+const getAreaTypeLabel = (type: string) => {
+  switch (type) {
+    case "workspace": return "Workspace";
+    case "meeting": return "Meeting Room";
+    case "phone": return "Phone Booth";
+    case "common": return "Common Area";
+    case "office": return "Private Office";
+    default: return type;
+  }
+}
+const getAreaTypeColor = (type: string) => {
+  switch (type) {
+    case "workspace": return "bg-blue-100 text-blue-800";
+    case "meeting": return "bg-purple-100 text-purple-800";
+    case "phone": return "bg-green-100 text-green-800";
+    case "common": return "bg-yellow-100 text-yellow-800";
+    case "office": return "bg-red-100 text-red-800";
+    default: return "bg-gray-100 text-gray-800";
+  }
+}
+const getDeskStatusColor = (status: string) => {
+  switch (status) {
+    case "occupied": return "bg-red-100 text-red-800";
+    case "available": return "bg-green-100 text-green-800";
+    case "reserved": return "bg-yellow-100 text-yellow-800";
+    case "maintenance": return "bg-gray-100 text-gray-800";
+    default: return "bg-gray-100 text-gray-800";
+  }
+}
+const getDeskTypeLabel = (type: string) => {
+  switch (type) {
+    case "hot-desk": return "Hot Desk";
+    case "dedicated": return "Dedicated Desk";
+    case "standing": return "Standing Desk";
+    default: return type;
+  }
+}
+
+// ---
+// MAIN COMPONENT
+// ---
 export default function FloorPlanPage() {
-  const [activeTab, setActiveTab] = useState("main")
-  const [zoomLevel, setZoomLevel] = useState(100)
-  const [editMode, setEditMode] = useState(false)
+  const [activeTab, setActiveTab] = useState("main");
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const [editMode, setEditMode] = useState(false);
+
+  // Use `useMemo` to filter data once per render, improving performance
+  const filteredAreas = useMemo(() => {
+    return areas.filter(area => area.floor === activeTab);
+  }, [activeTab]);
+
+  const filteredDesks = useMemo(() => {
+    return desks.filter(desk => desk.floor === activeTab);
+  }, [activeTab]);
+
+  const currentFloor = useMemo(() => {
+    return floors.find(floor => floor.id === activeTab) || floors[0];
+  }, [activeTab]);
+
+  // The `floorStats` array is causing the error because it's defined *after*
+  // it's used in the JSX.
   const floorStats = [
-    {
-      title: "Total Capacity",
-      value: "120",
-      icon: Users,
-    },
-    {
-      title: "Current Occupancy",
-      value: "78",
-      percentage: 65,
-      icon: Users,
-    },
-    {
-      title: "Available Desks",
-      value: "32",
-      icon: Square,
-    },
-    {
-      title: "Available Rooms",
-      value: "4",
-      icon: Grid,
-    },
+    { title: "Total Capacity", value: "120", icon: Users },
+    { title: "Current Occupancy", value: "78", percentage: 65, icon: Users },
+    { title: "Available Desks", value: "32", icon: Square },
+    { title: "Available Rooms", value: "4", icon: Grid },
   ]
-  const floors = [
-    { id: "main", name: "Main Floor", capacity: 80, occupancy: 52 },
-    { id: "second", name: "Second Floor", capacity: 40, occupancy: 26 },
-    { id: "basement", name: "Basement", capacity: 0, occupancy: 0 },
-  ]
-  const areas = [
-    { id: 1, name: "Open Workspace", type: "workspace", capacity: 40, occupancy: 28, floor: "main" },
-    { id: 2, name: "Meeting Room A", type: "meeting", capacity: 8, occupancy: 6, floor: "main" },
-    { id: 3, name: "Meeting Room B", type: "meeting", capacity: 6, occupancy: 0, floor: "main" },
-    { id: 4, name: "Phone Booth 1", type: "phone", capacity: 1, occupancy: 1, floor: "main" },
-    { id: 5, name: "Phone Booth 2", type: "phone", capacity: 1, occupancy: 0, floor: "main" },
-    { id: 6, name: "Kitchen", type: "common", capacity: 10, occupancy: 4, floor: "main" },
-    { id: 7, name: "Lounge", type: "common", capacity: 14, occupancy: 8, floor: "main" },
-    { id: 8, name: "Private Office 1", type: "office", capacity: 4, occupancy: 3, floor: "second" },
-    { id: 9, name: "Private Office 2", type: "office", capacity: 4, occupancy: 4, floor: "second" },
-    { id: 10, name: "Private Office 3", type: "office", capacity: 4, occupancy: 2, floor: "second" },
-    { id: 11, name: "Conference Room", type: "meeting", capacity: 12, occupancy: 8, floor: "second" },
-    { id: 12, name: "Quiet Zone", type: "workspace", capacity: 16, occupancy: 9, floor: "second" },
-  ]
-  const desks = [
-    { id: "A1", type: "hot-desk", status: "occupied", member: "John Doe", area: 1, floor: "main" },
-    { id: "A2", type: "hot-desk", status: "occupied", member: "Jane Smith", area: 1, floor: "main" },
-    { id: "A3", type: "hot-desk", status: "available", member: null, area: 1, floor: "main" },
-    { id: "A4", type: "hot-desk", status: "available", member: null, area: 1, floor: "main" },
-    { id: "A5", type: "hot-desk", status: "occupied", member: "Mike Johnson", area: 1, floor: "main" },
-    { id: "B1", type: "dedicated", status: "occupied", member: "Sarah Wilson", area: 1, floor: "main" },
-    { id: "B2", type: "dedicated", status: "occupied", member: "Robert Brown", area: 1, floor: "main" },
-    { id: "B3", type: "dedicated", status: "occupied", member: "Emily Davis", area: 1, floor: "main" },
-    { id: "B4", type: "dedicated", status: "available", member: null, area: 1, floor: "main" },
-    { id: "C1", type: "standing", status: "occupied", member: "David Lee", area: 1, floor: "main" },
-    { id: "C2", type: "standing", status: "available", member: null, area: 1, floor: "main" },
-    { id: "D1", type: "hot-desk", status: "occupied", member: "Lisa Chen", area: 12, floor: "second" },
-    { id: "D2", type: "hot-desk", status: "occupied", member: "Tom Wilson", area: 12, floor: "second" },
-    { id: "D3", type: "hot-desk", status: "available", member: null, area: 12, floor: "second" },
-    { id: "D4", type: "dedicated", status: "occupied", member: "Karen White", area: 12, floor: "second" },
-    { id: "D5", type: "dedicated", status: "occupied", member: "James Taylor", area: 12, floor: "second" },
-  ]
-  const getAreaTypeLabel = (type: string) => {
-    switch (type) {
-      case "workspace":
-        return "Workspace"
-      case "meeting":
-        return "Meeting Room"
-      case "phone":
-        return "Phone Booth"
-      case "common":
-        return "Common Area"
-      case "office":
-        return "Private Office"
-      default:
-        return type
-    }
-  }
-  const getAreaTypeColor = (type: string) => {
-    switch (type) {
-      case "workspace":
-        return "bg-blue-100 text-blue-800"
-      case "meeting":
-        return "bg-purple-100 text-purple-800"
-      case "phone":
-        return "bg-green-100 text-green-800"
-      case "common":
-        return "bg-yellow-100 text-yellow-800"
-      case "office":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-  const getDeskStatusColor = (status: string) => {
-    switch (status) {
-      case "occupied":
-        return "bg-red-100 text-red-800"
-      case "available":
-        return "bg-green-100 text-green-800"
-      case "reserved":
-        return "bg-yellow-100 text-yellow-800"
-      case "maintenance":
-        return "bg-gray-100 text-gray-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-  const getDeskTypeLabel = (type: string) => {
-    switch (type) {
-      case "hot-desk":
-        return "Hot Desk"
-      case "dedicated":
-        return "Dedicated Desk"
-      case "standing":
-        return "Standing Desk"
-      default:
-        return type
-    }
-  }
-  // Initialize with empty arrays/default values to prevent undefined errors during SSR
-  const filteredAreas = areas?.filter(area => area?.floor === activeTab) || []
-  const filteredDesks = desks?.filter(desk => desk?.floor === activeTab) || []
-  const currentFloor = floors?.find(floor => floor?.id === activeTab) || floors?.[0] || { id: '', name: '', capacity: 0, occupancy: 0 }
+  
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -199,6 +191,7 @@ export default function FloorPlanPage() {
             </Button>
           </div>
         </div>
+        
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
           {floorStats.map((stat, index) => (
@@ -221,6 +214,7 @@ export default function FloorPlanPage() {
             </Card>
           ))}
         </div>
+        
         {/* Floor Plan Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between">
@@ -362,6 +356,7 @@ export default function FloorPlanPage() {
                   </div>
                 </CardFooter>
               </Card>
+              
               {/* Areas List */}
               <Card>
                 <CardHeader>
@@ -381,15 +376,11 @@ export default function FloorPlanPage() {
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="area-name" className="text-right">
-                              Name
-                            </Label>
+                            <Label htmlFor="area-name" className="text-right">Name</Label>
                             <Input id="area-name" placeholder="e.g., Meeting Room C" className="col-span-3" />
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="area-type" className="text-right">
-                              Type
-                            </Label>
+                            <Label htmlFor="area-type" className="text-right">Type</Label>
                             <Select>
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select area type" />
@@ -404,24 +395,18 @@ export default function FloorPlanPage() {
                             </Select>
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="area-capacity" className="text-right">
-                              Capacity
-                            </Label>
+                            <Label htmlFor="area-capacity" className="text-right">Capacity</Label>
                             <Input id="area-capacity" type="number" className="col-span-3" />
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="area-floor" className="text-right">
-                              Floor
-                            </Label>
+                            <Label htmlFor="area-floor" className="text-right">Floor</Label>
                             <Select defaultValue={activeTab}>
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select floor" />
                               </SelectTrigger>
                               <SelectContent>
                                 {floors.map((floor) => (
-                                  <SelectItem key={floor.id} value={floor.id}>
-                                    {floor.name}
-                                  </SelectItem>
+                                  <SelectItem key={floor.id} value={floor.id}>{floor.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -443,11 +428,7 @@ export default function FloorPlanPage() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <p className="font-medium">{area.name}</p>
-                              <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getAreaTypeColor(
-                                  area.type
-                                )}`}
-                              >
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getAreaTypeColor(area.type)}`}>
                                 {getAreaTypeLabel(area.type)}
                               </span>
                             </div>
@@ -476,6 +457,7 @@ export default function FloorPlanPage() {
                   </div>
                 </CardContent>
               </Card>
+              
               {/* Desks List */}
               <Card>
                 <CardHeader>
@@ -495,15 +477,11 @@ export default function FloorPlanPage() {
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="desk-id" className="text-right">
-                              Desk ID
-                            </Label>
+                            <Label htmlFor="desk-id" className="text-right">Desk ID</Label>
                             <Input id="desk-id" placeholder="e.g., A6" className="col-span-3" />
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="desk-type" className="text-right">
-                              Type
-                            </Label>
+                            <Label htmlFor="desk-type" className="text-right">Type</Label>
                             <Select>
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select desk type" />
@@ -516,26 +494,20 @@ export default function FloorPlanPage() {
                             </Select>
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="desk-area" className="text-right">
-                              Area
-                            </Label>
+                            <Label htmlFor="desk-area" className="text-right">Area</Label>
                             <Select>
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select area" />
                               </SelectTrigger>
                               <SelectContent>
                                 {filteredAreas.map((area) => (
-                                  <SelectItem key={area.id} value={area.id.toString()}>
-                                    {area.name}
-                                  </SelectItem>
+                                  <SelectItem key={area.id} value={area.id.toString()}>{area.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="desk-status" className="text-right">
-                              Status
-                            </Label>
+                            <Label htmlFor="desk-status" className="text-right">Status</Label>
                             <Select defaultValue="available">
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select status" />
@@ -575,11 +547,7 @@ export default function FloorPlanPage() {
                                   </p>
                                 </div>
                               </div>
-                              <span
-                                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getDeskStatusColor(
-                                  desk.status
-                                )}`}
-                              >
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getDeskStatusColor(desk.status)}`}>
                                 {desk.status}
                               </span>
                             </div>
