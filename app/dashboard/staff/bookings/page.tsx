@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import DashboardLayout from "@/components/dashboard-layout"
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -13,6 +13,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
+// Dynamically import the dashboard layout with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+);
 // ---
 // DATA INTERFACES & MOCK DATA
 // ---
@@ -184,10 +196,8 @@ const getResourceIcon = (type: string) => {
 export default function StaffBookingsPage() {
   const { isAuthenticated } = useAuth()
   const router = useRouter()
-
-  // Initialize state with mock data directly for SSR/prerendering
+  const [isClient, setIsClient] = useState(false)
   const [bookings, setBookings] = useState<Booking[]>(mockBookings)
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>(mockBookings)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -195,45 +205,36 @@ export default function StaffBookingsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all")
   
-  // Redirect if not authenticated. This effect runs only on the client.
+  // This effect runs only on the client side after the component mounts
   useEffect(() => {
+    setIsClient(true)
     if (isAuthenticated === false) {
       router.push('/auth/login')
     }
   }, [isAuthenticated, router])
 
   // Filter bookings based on search and filters
-  const filterBookings = useCallback(() => {
+  const filteredBookings = bookings.filter(booking => {
     const searchLower = searchTerm.toLowerCase();
     const statusLower = statusFilter.toLowerCase();
     const resourceLower = resourceTypeFilter.toLowerCase();
     
-    const filtered = bookings.filter(booking => {
-      const matchesSearch = 
-        (booking.memberName?.toLowerCase() || '').includes(searchLower) ||
-        (booking.memberEmail?.toLowerCase() || '').includes(searchLower) ||
-        (booking.resourceName?.toLowerCase() || '').includes(searchLower);
-        
-      const matchesStatus = statusLower === 'all' || booking.status === statusLower;
-        
-      const matchesResource = resourceLower === 'all' || booking.resourceType === resourceLower;
-        
-      return matchesSearch && matchesStatus && matchesResource;
-    });
-    
-    setFilteredBookings(filtered);
-  }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
+    const matchesSearch = 
+      (booking.memberName?.toLowerCase() || '').includes(searchLower) ||
+      (booking.memberEmail?.toLowerCase() || '').includes(searchLower) ||
+      (booking.resourceName?.toLowerCase() || '').includes(searchLower);
+      
+    const matchesStatus = statusLower === 'all' || booking.status === statusLower;
+      
+    const matchesResource = resourceLower === 'all' || booking.resourceType === resourceLower;
+      
+    return matchesSearch && matchesStatus && matchesResource;
+  });
   
-  // Apply filters when any filter changes
-  useEffect(() => {
-    filterBookings();
-  }, [filterBookings]);
-
   // Handler functions for CRUD operations (unchanged)
   const handleDeleteBooking = (id: string) => {
     if (window.confirm('Are you sure you want to delete this booking?')) {
       setBookings(bookings.filter(b => b.id !== id))
-      setFilteredBookings(filteredBookings.filter(b => b.id !== id))
     }
   }
 
@@ -254,24 +255,22 @@ export default function StaffBookingsPage() {
       createdAt: new Date().toISOString()
     }
     setBookings([newBooking, ...bookings])
-    setFilteredBookings([newBooking, ...filteredBookings])
     setShowCreateDialog(false)
   }
 
   const handleUpdateBooking = (updatedBooking: Booking) => {
     setBookings(bookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
-    setFilteredBookings(filteredBookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
     setEditingBooking(null)
   }
 
-  // Stats with null checks and safe calculations
+  // These stats are now safely calculated in the client
   const totalBookings = bookings.length;
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0);
 
-  // Show a loading state until authentication status is determined
-  if (isAuthenticated === null) {
+  // Show a loading state until authentication status is determined AND the client has mounted
+  if (isAuthenticated === null || !isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
