@@ -1,6 +1,6 @@
 "use client"
-import { useState } from "react"
-import DashboardLayout from "@/components/dashboard-layout"
+import { useState, useEffect } from "react"
+import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -10,6 +10,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Eye, Edit, Trash2, User, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
+// Dynamically import the dashboard layout with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+);
 interface Member {
   id: string
   name: string
@@ -107,6 +119,7 @@ const mockMembers: Member[] = [
   }
 ]
 export default function StaffMembersPage() {
+  const [isClient, setIsClient] = useState(false);
   const [members, setMembers] = useState<Member[]>(mockMembers)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -129,11 +142,14 @@ export default function StaffMembersPage() {
     country: "",
     notes: ""
   })
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
   const filteredMembers = members.filter(member => {
     const matchesSearch = member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         member.city.toLowerCase().includes(searchQuery.toLowerCase())
+                          member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          member.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          member.city.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === "all" || member.status === statusFilter
     const matchesType = typeFilter === "all" || member.membershipType === typeFilter
     return matchesSearch && matchesStatus && matchesType
@@ -202,7 +218,7 @@ export default function StaffMembersPage() {
   }
   const handleEditMember = () => {
     if (editingMember) {
-      setMembers(members.map(m => 
+      setMembers(members.map(m =>
         m.id === editingMember.id ? { ...formData, id: editingMember.id, joinDate: editingMember.joinDate, totalVisits: editingMember.totalVisits } : m
       ))
       setShowEditDialog(false)
@@ -233,6 +249,13 @@ export default function StaffMembersPage() {
   const openViewDialog = (member: Member) => {
     setSelectedMember(member)
     setShowViewDialog(true)
+  }
+  if (!isClient) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   return (
     <DashboardLayout userRole="staff">
