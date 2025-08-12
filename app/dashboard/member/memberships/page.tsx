@@ -1,61 +1,167 @@
-"use client"
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog"
-import DashboardLayout from "@/components/dashboard-layout"
-import { Calendar, Clock, CreditCard, Users, Star, CheckCircle, AlertCircle, TrendingUp, Package, Zap, Shield } from "lucide-react"
+"use client";
+
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import DashboardLayout from "@/components/dashboard-layout";
+import { Calendar, Clock, CreditCard, Users, Star, CheckCircle, AlertCircle, TrendingUp, Package, Zap, Shield } from "lucide-react";
+// Type definitions
+type PlanType = "basic" | "standard" | "premium" | "enterprise";
+type BillingCycle = "monthly" | "quarterly" | "annually";
+type MembershipStatus = "active" | "inactive" | "pending";
+type BillingStatus = "paid" | "pending" | "failed";
+
 interface MembershipPlan {
-  id: string
-  name: string
-  type: "basic" | "standard" | "premium" | "enterprise"
-  price: number
-  billingCycle: "monthly" | "quarterly" | "annually"
-  features: string[]
-  credits: number
-  maxUsers: number
-  currentUsers: number
-  status: "active" | "inactive" | "pending"
-  startDate: string
-  endDate?: string
-  autoRenew: boolean
+  id: string;
+  name: string;
+  type: PlanType;
+  price: number;
+  billingCycle: BillingCycle;
+  features: string[];
+  credits: number;
+  maxUsers: number;
+  currentUsers: number;
+  status: MembershipStatus;
+  startDate: string;
+  endDate?: string;
+  autoRenew: boolean;
 }
+
 interface UsageStats {
   monthly: {
-    creditsUsed: number
-    creditsRemaining: number
-    totalCredits: number
-    bookings: number
-    hoursUsed: number
-  }
+    creditsUsed: number;
+    creditsRemaining: number;
+    totalCredits: number;
+    bookings: number;
+    hoursUsed: number;
+  };
   daily: {
-    checkIns: number
-    hoursToday: number
-    amenitiesUsed: string[]
-  }
+    checkIns: number;
+    hoursToday: number;
+    amenitiesUsed: string[];
+  };
 }
+
 interface BillingHistory {
-  id: string
-  date: string
-  amount: number
-  status: "paid" | "pending" | "failed"
-  description: string
-  invoiceUrl?: string
+  id: string;
+  date: string;
+  amount: number;
+  status: BillingStatus;
+  description: string;
+  invoiceUrl?: string;
 }
+// Mock data generation functions
+const generateMockMembership = (): MembershipPlan => ({
+  id: "premium-001",
+  name: "Premium Plan",
+  type: "premium",
+  price: 299,
+  billingCycle: "monthly",
+  features: [
+    "Unlimited desk bookings",
+    "10 meeting room hours/month",
+    "Premium WiFi",
+    "Coffee & snacks",
+    "Printing (100 pages/month)",
+    "Phone booth access",
+    "Event space discount",
+    "Priority support"
+  ],
+  credits: 50,
+  maxUsers: 1,
+  currentUsers: 1,
+  status: "active",
+  startDate: "2024-01-01",
+  autoRenew: true
+});
+
+const generateMockUsageStats = (): UsageStats => ({
+  monthly: {
+    creditsUsed: 32,
+    creditsRemaining: 18,
+    totalCredits: 50,
+    bookings: 12,
+    hoursUsed: 45.5
+  },
+  daily: {
+    checkIns: 8,
+    hoursToday: 6.5,
+    amenitiesUsed: ["WiFi", "Coffee", "Meeting Room A", "Printer"]
+  }
+});
+
+const generateMockBillingHistory = (): BillingHistory[] => [
+  {
+    id: "bill-001",
+    date: "2024-01-15",
+    amount: 299,
+    status: "paid",
+    description: "Premium Plan - January 2024",
+    invoiceUrl: "/invoices/inv-001.pdf"
+  },
+  {
+    id: "bill-002",
+    date: "2023-12-15",
+    amount: 299,
+    status: "paid",
+    description: "Premium Plan - December 2023",
+    invoiceUrl: "/invoices/inv-002.pdf"
+  },
+  {
+    id: "bill-003",
+    date: "2023-11-15",
+    amount: 299,
+    status: "paid",
+    description: "Premium Plan - November 2023",
+    invoiceUrl: "/invoices/inv-003.pdf"
+  }
+];
+
 export default function MembershipsPage() {
-  const [activeTab, setActiveTab] = useState("overview")
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
-  const [showAutoRenewDialog, setShowAutoRenewDialog] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null)
-  const [currentMembership, setCurrentMembership] = useState<MembershipPlan>({
-    id: "premium-001",
-    name: "Premium Plan",
-    type: "premium",
-    price: 299,
-    billingCycle: "monthly",
+  const [isClient, setIsClient] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showAutoRenewDialog, setShowAutoRenewDialog] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
+  const [currentMembership, setCurrentMembership] = useState<MembershipPlan | null>(null);
+  const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [billingHistory, setBillingHistory] = useState<BillingHistory[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Initialize data on client-side only
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Simulate API calls
+    const loadData = async () => {
+      try {
+        // In a real app, these would be actual API calls
+        setCurrentMembership(generateMockMembership());
+        setUsageStats(generateMockUsageStats());
+        setBillingHistory(generateMockBillingHistory());
+      } catch (error) {
+        console.error("Error loading membership data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadData();
+  }, []);
+
+  // Loading state
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
     features: [
       "Unlimited desk bookings",
       "10 meeting room hours/month",
@@ -66,15 +172,66 @@ export default function MembershipsPage() {
       "Event space discount",
       "Priority support"
     ],
-    credits: 50,
-    maxUsers: 1,
-    currentUsers: 1,
-    status: "active",
-    startDate: "2024-01-01",
-    autoRenew: true
-  })
-  // Mock usage statistics
-  const usageStats: UsageStats = {
+  // Handle auto-renew toggle
+  const handleToggleAutoRenew = () => {
+    if (!currentMembership) return;
+    
+    setCurrentMembership(prev => ({
+      ...prev!,
+      autoRenew: !prev!.autoRenew
+    }));
+    
+    setShowAutoRenewDialog(true);
+  };
+  
+  // Handle plan upgrade
+  const handleUpgradePlan = (plan: MembershipPlan) => {
+    setSelectedPlan(plan);
+    setShowUpgradeDialog(true);
+  };
+  
+  // Handle invoice download
+  const handleDownloadInvoice = (invoiceId: string, description: string) => {
+    if (!currentMembership) return;
+    
+    try {
+      const invoiceData = {
+        id: invoiceId,
+        description,
+        date: new Date().toISOString(),
+        amount: currentMembership.price,
+        member: "Current User",
+        plan: currentMembership.name
+      };
+      
+      // Create a simple text file for demo purposes
+      const invoiceText = `
+INVOICE
+=======
+Invoice ID: ${invoiceData.id}
+Description: ${invoiceData.description}
+Date: ${new Date(invoiceData.date).toLocaleDateString()}
+Amount: ${formatCurrency(invoiceData.amount)}
+Plan: ${invoiceData.plan}
+Member: ${invoiceData.member}
+Thank you for your business!
+      `.trim();
+      
+      const blob = new Blob([invoiceText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceId}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+    }
+  };
+
+  const usageStats: UsageStats | null = !isClient ? null : {
     monthly: {
       creditsUsed: 32,
       creditsRemaining: 18,
@@ -87,9 +244,9 @@ export default function MembershipsPage() {
       hoursToday: 6.5,
       amenitiesUsed: ["WiFi", "Coffee", "Meeting Room A", "Printer"]
     }
-  }
-  // Mock billing history
-  const billingHistory: BillingHistory[] = [
+  };
+
+  const billingHistory: BillingHistory[] | null = !isClient ? null : [
     {
       id: "bill-001",
       date: "2024-01-15",
@@ -114,9 +271,9 @@ export default function MembershipsPage() {
       description: "Premium Plan - November 2023",
       invoiceUrl: "/invoices/inv-003.pdf"
     }
-  ]
-  // Available plans for upgrade
-  const availablePlans: MembershipPlan[] = [
+  ];
+
+  const availablePlans: MembershipPlan[] | null = !isClient ? null : [
     {
       id: "basic-001",
       name: "Basic Plan",
@@ -180,53 +337,53 @@ export default function MembershipsPage() {
       startDate: "",
       autoRenew: true
     }
-  ]
+  ];
+
   const getPlanIcon = (type: string) => {
     switch (type) {
       case "basic":
-        return <Package className="h-5 w-5" />
+        return <Package className="h-5 w-5" />;
       case "standard":
-        return <Zap className="h-5 w-5" />
+        return <Zap className="h-5 w-5" />;
       case "premium":
-        return <Star className="h-5 w-5" />
+        return <Star className="h-5 w-5" />;
       case "enterprise":
-        return <Shield className="h-5 w-5" />
+        return <Shield className="h-5 w-5" />;
       default:
-        return <Package className="h-5 w-5" />
+        return <Package className="h-5 w-5" />;
     }
-  }
+  };
+
   const getPlanColor = (type: string) => {
     switch (type) {
       case "basic":
-        return "text-gray-600"
+        return "text-gray-600";
       case "standard":
-        return "text-blue-600"
+        return "text-blue-600";
       case "premium":
-        return "text-purple-600"
+        return "text-purple-600";
       case "enterprise":
-        return "text-orange-600"
+        return "text-orange-600";
       default:
-        return "text-gray-600"
+        return "text-gray-600";
     }
-  }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
-    }).format(amount)
-  }
+    }).format(amount);
+  };
+
   const calculateProgress = (used: number, total: number) => {
-    return Math.min((used / total) * 100, 100)
-  }
-  const [isClient, setIsClient] = useState(false)
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+    return Math.min((used / total) * 100, 100);
+  };
+
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
-    if (!isClient) return // Don't run on server
+    if (!isClient || !currentMembership) return;
+
     try {
-      // In a real app, this would generate/download a PDF invoice
-      // For now, we'll create a mock invoice and trigger download
       const invoiceData = {
         id: invoiceId,
         description: description,
@@ -234,8 +391,8 @@ export default function MembershipsPage() {
         amount: currentMembership.price,
         member: "Current User",
         plan: currentMembership.name
-      }
-      // Create a simple text file for demo purposes
+      };
+
       const invoiceText = `
 INVOICE
 =======
@@ -246,41 +403,51 @@ Amount: ${formatCurrency(invoiceData.amount)}
 Plan: ${invoiceData.plan}
 Member: ${invoiceData.member}
 Thank you for your business!
-      `.trim()
-      const blob = new Blob([invoiceText], { type: 'text/plain' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `invoice-${invoiceId}.txt`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+`.trim();
+
+      const blob = new Blob([invoiceText], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoice-${invoiceId}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Error generating invoice:', error)
+      console.error('Error generating invoice:', error);
     }
-  }
+  };
+
   const handleToggleAutoRenew = () => {
-    setShowAutoRenewDialog(true)
-  }
+    setShowAutoRenewDialog(true);
+  };
+
   const confirmToggleAutoRenew = () => {
-    // In a real app, this would make an API call to update auto-renewal
-    setCurrentMembership((prev: MembershipPlan) => ({
-      ...prev,
+    if (!currentMembership) return;
+
+    setCurrentMembership(prev => ({
+      ...prev!,
       autoRenew: !prev.autoRenew
-    }))
-    setShowAutoRenewDialog(false)
-  }
-  // Show loading state until client-side rendering is ready
-  if (!isClient) {
+    }));
+    setShowAutoRenewDialog(true);
+  };
+
+  const handleUpgradePlan = (plan: MembershipPlan) => {
+    setSelectedPlan(plan);
+    setShowUpgradeDialog(true);
+  };
+
+  if (!isClient || !currentMembership || !usageStats || !billingHistory || !availablePlans) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
+
   return (
-    <DashboardLayout userRole="member">
+    <DashboardLayout userRole="member" key="membership-layout">
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -399,8 +566,8 @@ Thank you for your business!
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {currentMembership.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2">
+                  {currentMembership?.features?.map((feature, index) => (
+                    <li key={`feature-${index}-${feature.substring(0, 10)}`} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
                       <span>{feature}</span>
                     </li>
@@ -418,7 +585,7 @@ Thank you for your business!
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {availablePlans.map((plan) => (
+                  {availablePlans?.map((plan) => (
                     <Card key={plan.id} className="relative">
                       <CardHeader>
                         <CardTitle className={`flex items-center gap-2 ${getPlanColor(plan.type)}`}>
@@ -435,13 +602,13 @@ Thank you for your business!
                             {plan.credits} credits / month
                           </div>
                           <ul className="space-y-1 text-sm">
-                            {plan.features.slice(0, 3).map((feature, index) => (
+                            {plan.features?.slice(0, 3).map((feature, index) => (
                               <li key={index} className="flex items-center gap-1">
                                 <CheckCircle className="h-3 w-3 text-gray-400" />
                                 <span className="text-gray-600">{feature}</span>
                               </li>
                             ))}
-                            {plan.features.length > 3 && (
+                            {plan.features?.length > 3 && (
                               <li className="text-xs text-muted-foreground">
                                 +{plan.features.length - 3} more features
                               </li>
@@ -511,7 +678,7 @@ Thank you for your business!
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {billingHistory.map((bill) => (
+                  {billingHistory?.map((bill) => (
                     <div key={bill.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{bill.description}</div>
