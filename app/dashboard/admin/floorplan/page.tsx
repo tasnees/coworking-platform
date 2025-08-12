@@ -139,7 +139,20 @@ interface FloorStat {
   percentage: number;
 }
 
+// Helper function to safely get array length
+const getSafeLength = (arr: any[] | undefined): number => {
+  try {
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch (e) {
+    return 0;
+  }
+};
+
 const getFloorStats = (floorId: string): FloorStat[] => {
+  // Early return if running on server
+  if (typeof window === 'undefined') {
+    return [];
+  }
   // Safely filter areas and desks, defaulting to empty arrays if undefined
   const floorAreas = Array.isArray(areas) ? areas.filter((area: any) => area?.floor === floorId) : [];
   const floorDesks = Array.isArray(desks) ? desks.filter((desk: any) => desk?.floor === floorId) : [];
@@ -190,7 +203,11 @@ const getFloorStats = (floorId: string): FloorStat[] => {
 };
 
 // Helper function to safely access array values
-const safeAccess = {
+const safeAccess = typeof window === 'undefined' ? {
+  floors: { find: () => null, filter: () => [] },
+  areas: { find: () => undefined, filter: () => [] },
+  desks: { filter: () => [] }
+} : {
   floors: {
     find: (predicate: (floor: any) => boolean) => {
       try {
@@ -246,29 +263,61 @@ export default function FloorPlanPage() {
   }, []);
 
   // Calculate floor stats based on the active tab
-  const floorStats = useMemo(() => isClient ? getFloorStats(activeTab) : [], [activeTab, isClient]);
+  const floorStats = useMemo(() => {
+    if (!isClient) return [];
+    try {
+      return getFloorStats(activeTab);
+    } catch (e) {
+      console.error('Error getting floor stats:', e);
+      return [];
+    }
+  }, [activeTab, isClient]);
 
   // Use `useMemo` to filter data once per render, improving performance
   const filteredAreas = useMemo(() => {
-    if (!isClient) return [];
-    return safeAccess.areas.filter(area => area && area.floor === activeTab);
-  }, [activeTab, isClient]);
+    if (!isClient || !areas) return [];
+    try {
+      return areas.filter(area => area && area.floor === activeTab);
+    } catch (e) {
+      console.error('Error filtering areas:', e);
+      return [];
+    }
+  }, [activeTab, isClient, areas]);
 
   const filteredDesks = useMemo(() => {
-    if (!isClient) return [];
-    return safeAccess.desks.filter(desk => desk && desk.floor === activeTab);
-  }, [activeTab, isClient]);
+    if (!isClient || !desks) return [];
+    try {
+      return desks.filter(desk => desk && desk.floor === activeTab);
+    } catch (e) {
+      console.error('Error filtering desks:', e);
+      return [];
+    }
+  }, [activeTab, isClient, desks]);
 
   const currentFloor = useMemo(() => {
-    if (!isClient) return null;
-    return safeAccess.floors.find(floor => floor && floor.id === activeTab) || safeAccess.floors.find(floor => floor) || null;
-  }, [activeTab, isClient]);
+    if (!isClient || !floors) return null;
+    try {
+      return floors.find(floor => floor && floor.id === activeTab) || floors[0] || null;
+    } catch (e) {
+      console.error('Error finding current floor:', e);
+      return null;
+    }
+  }, [activeTab, isClient, floors]);
 
   // Show loading state until client-side rendering is ready
   if (!isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Ensure we have valid data before rendering
+  if (!floors || !areas || !desks) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>Loading floor plan data...</p>
       </div>
     );
   }
