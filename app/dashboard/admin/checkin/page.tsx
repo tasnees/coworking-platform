@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { 
-  Search, 
-  Download, 
-  Plus, 
-  Trash2, 
-  Edit, 
-  QrCode, 
-  Clock, 
-  User, 
+import {
+  Search,
+  Download,
+  Plus,
+  Trash2,
+  Edit,
+  QrCode,
+  Clock,
+  User,
   Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,13 +20,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/use-toast';
 
@@ -34,7 +34,6 @@ import { toast } from '@/components/ui/use-toast';
 type CheckInStatus = 'checked-in' | 'checked-out' | 'expired' | 'pending';
 type UserType = 'member' | 'guest' | 'staff';
 type QrStatus = 'active' | 'inactive' | 'expired';
-// Removed duplicate BadgeVariant type - using the one from UI components
 
 interface CheckInLog {
   id: string;
@@ -61,10 +60,6 @@ interface QrLocation {
   createdAt: string;
   updatedAt: string;
 }
-
-
-
-type BadgeVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'success';
 
 interface TodayStats {
   totalCheckIns: number;
@@ -143,7 +138,7 @@ const DynamicDashboardLayout = dynamic(
 
 const AdminCheckInPage = () => {
   const router = useRouter();
-  
+
   // State
   const [checkInLogs, setCheckInLogs] = useState<CheckInLog[]>([]);
   const [qrLocations, setQrLocations] = useState<QrLocation[]>([]);
@@ -154,16 +149,16 @@ const AdminCheckInPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMounted, setIsMounted] = useState(false);
   const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [locationToDelete, setLocationToDelete] = useState<number | null>(null);
+  const [newQrLocation, setNewQrLocation] = useState<Omit<QrLocation, 'id' | 'createdAt' | 'updatedAt'>>({
+    name: '',
+    status: 'active',
+    description: ''
+  });
 
   // Initialize component
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-    
     const loadData = async () => {
       try {
         setIsLoading(true);
@@ -178,12 +173,12 @@ const AdminCheckInPage = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
-  
+
   // Filter logs based on search term
-  const filteredLogs = useCallback(() => {
+  const filteredLogs = useMemo(() => {
     if (!searchTerm.trim()) return checkInLogs;
     const term = searchTerm.toLowerCase();
     return checkInLogs.filter(
@@ -194,7 +189,7 @@ const AdminCheckInPage = () => {
         (log.type?.toLowerCase() || '').includes(term)
     );
   }, [checkInLogs, searchTerm]);
-  
+
   // Handle view log details
   const handleViewLogDetails = useCallback((log: CheckInLog) => {
     setViewLog(log);
@@ -208,8 +203,8 @@ const AdminCheckInPage = () => {
       title: 'PDF Download',
       description: 'PDF download functionality will be implemented here.'
     });
-  }, [toast]);
-  
+  }, []);
+
   // Handle saving QR location (add or update)
   const handleSaveQrLocation = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,16 +212,16 @@ const AdminCheckInPage = () => {
 
     try {
       setIsLoading(true);
-      
+
       if (editQrLocation) {
         // Update existing location
         setQrLocations((prev) =>
           prev.map((loc) =>
             loc.id === editQrLocation.id
-              ? { 
-                  ...loc, 
-                  ...newQrLocation, 
-                  updatedAt: new Date().toISOString() 
+              ? {
+                  ...loc,
+                  ...newQrLocation,
+                  updatedAt: new Date().toISOString()
                 }
               : loc
           )
@@ -256,9 +251,6 @@ const AdminCheckInPage = () => {
         name: '',
         description: '',
         status: 'active',
-        id: 0,
-        createdAt: '',
-        updatedAt: ''
       });
     } catch (error) {
       console.error('Error saving QR location:', error);
@@ -270,35 +262,34 @@ const AdminCheckInPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [newQrLocation, editQrLocation, toast]);
-  
+  }, [newQrLocation, editQrLocation]);
+
   // Handle deleting QR location
   const handleDeleteQrLocation = useCallback(async () => {
     if (!deleteQrLocation) return;
-    
+
     try {
-      // In a real app, this would call an API
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       setQrLocations(prev => prev.filter(loc => loc.id !== deleteQrLocation.id));
       setDeleteQrLocation(null);
       setIsDeleteDialogOpen(false);
-      
+
       toast({
         title: 'Success',
         description: 'QR location deleted successfully.'
       });
     } catch (error) {
       console.error('Error deleting QR location:', error);
-      
+
       toast({
         title: 'Error',
         description: 'Failed to delete QR location. Please try again.',
         variant: 'destructive'
       });
     }
-  }, [deleteQrLocation, toast]);
-  
+  }, [deleteQrLocation]);
+
   // Handle toggling QR location status
   const handleToggleQrStatus = useCallback(async (id: number) => {
     try {
@@ -325,7 +316,7 @@ const AdminCheckInPage = () => {
       setIsLoading(false);
     }
   }, []);
-  
+
   // Handle editing QR location
   const handleEditQrLocation = useCallback((location: QrLocation) => {
     setEditQrLocation(location);
@@ -336,14 +327,14 @@ const AdminCheckInPage = () => {
     });
     setIsQrDialogOpen(true);
   }, []);
-  
+
   // Handle opening new QR location dialog
   const handleOpenNewQrDialog = useCallback(() => {
     setEditQrLocation(null);
     setNewQrLocation({ name: '', status: 'active', description: '' });
     setIsQrDialogOpen(true);
   }, []);
-  
+
   // Get status badge variant
   const getStatusBadgeVariant = useCallback((status: CheckInStatus) => {
     switch (status) {
@@ -358,15 +349,6 @@ const AdminCheckInPage = () => {
     }
   }, []);
 
-  // Handle toast notifications
-  const showToast = useCallback((title: string, description: string, variant: 'default' | 'destructive' = 'default') => {
-    toast({
-      title,
-      description,
-      variant,
-    });
-  }, []);
-  
   // Get user type badge variant
   const getUserTypeBadgeVariant = useCallback((type: UserType) => {
     return type === 'member' ? 'default' as const : 'outline' as const;
@@ -389,8 +371,8 @@ const AdminCheckInPage = () => {
       <DynamicDashboardLayout>
         <div className="p-4 text-destructive">
           <p>{error}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
+          <Button
+            onClick={() => window.location.reload()}
             className="mt-4"
             variant="outline"
           >
@@ -538,7 +520,7 @@ const AdminCheckInPage = () => {
                         <div className="flex items-center space-x-2">
                           <QrCode className="h-4 w-4" />
                           <p className="font-medium">{location.name}</p>
-                          <Badge 
+                          <Badge
                             variant={location.status === 'active' ? 'default' : 'outline'}
                             className="ml-2"
                           >
@@ -572,7 +554,7 @@ const AdminCheckInPage = () => {
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           onClick={() => {
-                            setLocationToDelete(location.id);
+                            setDeleteQrLocation(location);
                             setIsDeleteDialogOpen(true);
                           }}
                         >
@@ -606,8 +588,8 @@ const AdminCheckInPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredLogs().length > 0 ? (
-                    filteredLogs().map((log) => (
+                  {filteredLogs.length > 0 ? (
+                    filteredLogs.map((log) => (
                       <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
@@ -667,70 +649,75 @@ const AdminCheckInPage = () => {
               {editQrLocation ? 'Edit QR Location' : 'Add New QR Location'}
             </DialogTitle>
             <DialogDescription>
-              {editQrLocation 
-                ? 'Update the QR location details.' 
+              {editQrLocation
+                ? 'Update the QR location details.'
                 : 'Add a new QR code location for check-ins.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Location Name</Label>
-              <Input
-                id="name"
-                placeholder="e.g., Main Entrance"
-                value={newQrLocation.name}
-                onChange={(e) => 
-                  setNewQrLocation({...newQrLocation, name: e.target.value})
-                }
-              />
+          <form onSubmit={handleSaveQrLocation}>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Location Name</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Main Entrance"
+                  value={newQrLocation.name}
+                  onChange={(e) =>
+                    setNewQrLocation({ ...newQrLocation, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <select
+                  id="status"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={newQrLocation.status}
+                  onChange={(e) =>
+                    setNewQrLocation({
+                      ...newQrLocation,
+                      status: e.target.value as QrStatus,
+                    })
+                  }
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <textarea
+                  id="description"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="Optional description or notes"
+                  value={newQrLocation.description}
+                  onChange={(e) =>
+                    setNewQrLocation({
+                      ...newQrLocation,
+                      description: e.target.value,
+                    })
+                  }
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
-              <select
-                id="status"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                value={newQrLocation.status}
-                onChange={(e) =>
-                  setNewQrLocation({
-                    ...newQrLocation,
-                    status: e.target.value as QrStatus,
-                  })
-                }
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsQrDialogOpen(false);
+                  setEditQrLocation(null);
+                  setNewQrLocation({ name: '', status: 'active', description: '' });
+                }}
+                type="button"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <textarea
-                id="description"
-                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                placeholder="Optional description or notes"
-                value={newQrLocation.description}
-                onChange={(e) =>
-                  setNewQrLocation({
-                    ...newQrLocation,
-                    description: e.target.value,
-                  })
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsQrDialogOpen(false);
-                setEditQrLocation(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleSaveQrLocation} disabled={!newQrLocation.name}>
-              {isLoading ? 'Saving...' : 'Save Location'}
-            </Button>
-          </DialogFooter>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!newQrLocation.name || isLoading}>
+                {isLoading ? 'Saving...' : 'Save Location'}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -748,18 +735,14 @@ const AdminCheckInPage = () => {
               variant="outline"
               onClick={() => {
                 setIsDeleteDialogOpen(false);
-                setLocationToDelete(null);
+                setDeleteQrLocation(null);
               }}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={() => {
-                if (locationToDelete !== null) {
-                  handleDeleteQrLocation(locationToDelete);
-                }
-              }}
+              onClick={handleDeleteQrLocation}
               disabled={isLoading}
             >
               {isLoading ? 'Deleting...' : 'Delete Location'}
@@ -830,292 +813,4 @@ const AdminCheckInPage = () => {
   );
 };
 
-// State for QR location management
-const [newQrLocation, setNewQrLocation] = useState<Omit<QrLocation, 'id' | 'createdAt' | 'updatedAt'>>({ 
-  name: '',
-  status: 'active',
-  description: ''
-});
-
-const [editQrDialogId, setEditQrDialogId] = useState<number | null>(null);
-const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
-
-const handleSaveQrLocation = useCallback(async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (!newQrLocation.name.trim()) return;
-
-  try {
-    setIsLoading(true);
-    
-    if (editQrDialogId !== null && editQrLocation) {
-      // Update existing location
-      setQrLocations((prev) =>
-        prev.map((loc) =>
-          loc.id === editQrDialogId
-            ? { 
-                ...loc, 
-                ...newQrLocation, 
-                updatedAt: new Date().toISOString() 
-              }
-            : loc
-        )
-      );
-      toast({
-        title: 'Success',
-        description: 'QR location updated successfully',
-      });
-    } else {
-      // Add new location
-      const newLocation: QrLocation = {
-        ...newQrLocation,
-        id: Math.max(0, ...qrLocations.map(loc => loc.id)) + 1,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      setQrLocations((prev) => [...prev, newLocation]);
-      toast({
-        title: 'Success',
-        description: 'QR location added successfully',
-      });
-    }
-
-    // Reset form and close dialog
-    setEditQrDialogId(null);
-    setEditQrLocation(null);
-    setNewQrLocation({ name: '', description: '', status: 'active' });
-    setIsQrDialogOpen(false);
-  } catch (error) {
-    console.error('Error saving QR location:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to save QR location',
-      variant: 'destructive',
-    if (!searchTerm.trim()) return checkInLogs;
-    
-    const term = searchTerm.toLowerCase();
-    return checkInLogs.filter(log => 
-      (log.name?.toLowerCase().includes(term) || '') ||
-      (log.member?.toLowerCase().includes(term) || '') ||
-      (log.location?.toLowerCase().includes(term) || '') ||
-      (log.status?.toLowerCase().includes(term) || '')
-    );
-  }, [checkInLogs, searchTerm]);
-
-  // Get status color based on status
-  const getStatusColor = useCallback((status: string) => {
-    switch (status) {
-      case 'active':
-      case 'checked-in':
-        return 'bg-green-100 text-green-800';
-      case 'inactive':
-      case 'checked-out':
-        return 'bg-gray-100 text-gray-800';
-      case 'expired':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  }, []);
-    if (!checkInLogs) return [];
-    return checkInLogs.filter(log => 
-      log.member?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.location?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [checkInLogs, searchTerm]);
-
-  // Handle saving QR location
-  const handleSaveQrLocation = useCallback(() => {
-    if (!editQrLocation) return;
-    setQrLocations(prev => 
-      prev.map(loc => 
-        loc.id === editQrLocation.id ? { ...editQrLocation } : loc
-      )
-    );
-    setEditQrDialogId(null);
-    setEditQrLocation(null);
-    toast.success("QR location updated successfully");
-  }, [editQrLocation]);
-
-  // Handle adding new QR location
-  const handleAddQrLocation = useCallback(() => {
-    if (!newQrLocation.name.trim()) {
-      toast.error("Please enter a name for the QR location");
-      return;
-    }
-    
-    const newId = Math.max(0, ...qrLocations.map(loc => loc.id)) + 1;
-    const newLocation: QrLocation = {
-      id: newId,
-      ...newQrLocation,
-      name: newQrLocation.name.trim(),
-      description: newQrLocation.description.trim()
-    };
-    
-    setQrLocations(prev => [...prev, newLocation]);
-    setAddQrDialogOpen(false);
-    setNewQrLocation({
-      name: "",
-      status: "active",
-      description: "",
-    });
-    toast.success("QR location added successfully");
-  }, [newQrLocation, qrLocations]);
-
-  // Handle toggling QR location status
-  const handleToggleQrLocation = useCallback((id: number) => {
-    setQrLocations(prev => 
-      prev.map(loc => 
-        loc.id === id 
-          ? { ...loc, status: loc.status === 'active' ? 'inactive' : 'active' } 
-          : loc
-      )
-    );
-  }, []);
-
-  // Handle deleting QR location
-  const handleDeleteQrLocation = useCallback((id: number) => {
-    if (confirm("Are you sure you want to delete this QR location?")) {
-      setQrLocations(prev => prev.filter(loc => loc.id !== id));
-      toast.success("QR location deleted successfully");
-    }
-  }, []);
-
-  // Handle generating new QR code
-  const handleGenerateNewQr = useCallback((id: number) => {
-    const location = qrLocations.find(loc => loc.id === id);
-    if (location) {
-      toast.success(`New QR code generated for ${location.name}`);
-    }
-  }, [qrLocations]);
-
-  // Handle exporting logs
-  const handleExportLogs = useCallback(() => {
-    const csv = [
-      ["Member", "Time", "Location", "Status", "Duration"],
-      ...(checkInLogs || []).map(log => [
-        log.member || '',
-        log.time || '',
-        log.location || '',
-        log.status || '',
-        log.duration || ''
-      ])
-    ].map(row => row.join(",")).join("\n");
-    
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `checkin-logs-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }, [checkInLogs]);
-
-  return (
-    <DynamicDashboardLayout userRole="admin">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Check-In Management</h1>
-          <p className="text-muted-foreground">Monitor member check-ins and manage access control</p>
-        </div>
-        {/* Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Check-ins</CardTitle>
-              <Scan className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todayStats.totalCheckIns}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">+8%</span> from yesterday
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Currently Inside</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todayStats.currentlyInside}</div>
-              <p className="text-xs text-muted-foreground">Real-time occupancy</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Peak Time</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{todayStats.peakTime}</div>
-              <p className="text-xs text-muted-foreground">Busiest hour today</p>
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="qr-codes">QR Codes</TabsTrigger>
-            <TabsTrigger value="logs">Check-in Logs</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Check-ins
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{todayStats.totalCheckIns}</div>
-                  <p className="text-xs text-muted-foreground">Today</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Active Members
-                  </CardTitle>
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{todayStats.activeMembers}</div>
-                  <p className="text-xs text-muted-foreground">Currently in space</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Peak Time</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{todayStats.peakTime}</div>
-                  <p className="text-xs text-muted-foreground">Busiest hour today</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Stay</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{todayStats.averageStay}</div>
-                  <p className="text-xs text-muted-foreground">Per member today</p>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DynamicDashboardLayout>
-  );
-};
-
-// Main page component with client-side only rendering
-export default function CheckInPage() {
-  return (
-    <div className="container mx-auto py-6 px-4">
-      <AdminCheckInPage />
-    </div>
-  );
-}
+export default AdminCheckInPage;
