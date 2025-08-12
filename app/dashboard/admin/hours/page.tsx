@@ -53,6 +53,39 @@ const mockSpecialHours = [
   { id: '2', name: 'Christmas Day', date: '2024-12-25', isClosed: true, open: '', close: '' },
 ];
 
+// Define types for better type safety
+type Weekday = {
+  id: number;
+  name: string;
+  open: string;
+  close: string;
+  is24Hours: boolean;
+  isClosed: boolean;
+};
+
+type SpecialDay = {
+  id: number;
+  date: string;
+  name: string;
+  open: string;
+  close: string;
+  is24Hours: boolean;
+  isClosed: boolean;
+};
+
+type MembershipAccess = {
+  id: number;
+  name: string;
+  accessHours: string;
+  has24HourAccess: boolean;
+};
+
+// Helper function to safely access array values
+const safeAccess = {
+  regularHours: typeof window === 'undefined' ? [] : mockRegularHours,
+  specialHours: typeof window === 'undefined' ? [] : mockSpecialHours
+};
+
 function HoursContent() {
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("regular")
@@ -94,18 +127,8 @@ function HoursContent() {
     };
   }, [])
   // Initialize state with proper types and empty arrays for SSR
-  const [weekdays, setWeekdays] = useState<Array<{
-    id: number;
-    name: string;
-    open: string;
-    close: string;
-    is24Hours: boolean;
-    isClosed: boolean;
-  }>>(() => {
-    // Only initialize with data on client side
-    if (typeof window === 'undefined') return [];
-    
-    return [
+  const [weekdays, setWeekdays] = useState<Weekday[]>(() => {
+    const defaultWeekdays = [
       { id: 1, name: "Monday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
       { id: 2, name: "Tuesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
       { id: 3, name: "Wednesday", open: "08:00", close: "20:00", is24Hours: false, isClosed: false },
@@ -114,44 +137,40 @@ function HoursContent() {
       { id: 6, name: "Saturday", open: "10:00", close: "18:00", is24Hours: false, isClosed: false },
       { id: 7, name: "Sunday", open: "12:00", close: "16:00", is24Hours: false, isClosed: true },
     ];
+    
+    // Only initialize with data on client side
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    
+    return defaultWeekdays;
   });
 
-  const [specialDays, setSpecialDays] = useState<Array<{
-    id: number;
-    date: string;
-    name: string;
-    open: string;
-    close: string;
-    is24Hours: boolean;
-    isClosed: boolean;
-  }>>(() => {
-    if (typeof window === 'undefined') return [];
-    
-    return [
+  const [specialDays, setSpecialDays] = useState<SpecialDay[]>(() => {
+    const defaultSpecialDays = [
       { id: 1, date: "2025-01-01", name: "New Year's Day", open: "", close: "", is24Hours: false, isClosed: true },
       { id: 2, date: "2025-12-25", name: "Christmas Day", open: "", close: "", is24Hours: false, isClosed: true },
       { id: 3, date: "2025-12-31", name: "New Year's Eve", open: "08:00", close: "15:00", is24Hours: false, isClosed: false },
     ];
+    
+    if (typeof window === 'undefined') return [];
+    return defaultSpecialDays;
   });
 
-  const [membershipAccess, setMembershipAccess] = useState<Array<{
-    id: number;
-    name: string;
-    accessHours: string;
-    has24HourAccess: boolean;
-  }>>(() => {
-    if (typeof window === 'undefined') return [];
-    
-    return [
+  const [membershipAccess, setMembershipAccess] = useState<MembershipAccess[]>(() => {
+    const defaultMembershipAccess = [
       { id: 1, name: "Day Pass", accessHours: "Regular hours", has24HourAccess: false },
       { id: 2, name: "Weekly Flex", accessHours: "Regular hours", has24HourAccess: false },
       { id: 3, name: "Monthly Pro", accessHours: "Regular hours + Weekends", has24HourAccess: false },
       { id: 4, name: "Enterprise", accessHours: "24/7 Access", has24HourAccess: true },
     ];
+    
+    if (typeof window === 'undefined') return [];
+    return defaultMembershipAccess;
   });
 
   // Show loading state during SSR/hydration
-  if (typeof window === 'undefined' || isLoading) {
+  if (typeof window === 'undefined' || isLoading || !weekdays || !specialDays || !membershipAccess) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -160,10 +179,13 @@ function HoursContent() {
   }
   
   // Ensure arrays are properly initialized before rendering
-  if (!weekdays?.length || !specialDays?.length || !membershipAccess?.length) {
+  if (!Array.isArray(weekdays) || !Array.isArray(specialDays) || !Array.isArray(membershipAccess) || 
+      !weekdays.length || !specialDays.length || !membershipAccess.length) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <AlertTriangle className="h-12 w-12 text-yellow-500 mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Loading Hours Data</h2>
+        <p className="text-muted-foreground mb-4 text-center">Please wait while we load the hours configuration...</p>
       </div>
     )
   }
@@ -185,24 +207,41 @@ function HoursContent() {
     )
   }
 
-  const handleWeekdayChange = (id: number, field: string, value: string | boolean) => {
-    setWeekdays(prev => prev.map(day => 
-      day.id === id ? { ...day, [field]: value } : day
-    ))
-  }
-  const handleSpecialDayChange = (id: number, field: string, value: string | boolean) => {
-    setSpecialDays(prev => prev.map(day => 
-      day.id === id ? { ...day, [field]: value } : day
-    ))
-  }
-  const handleMembershipChange = (id: number, field: string, value: boolean) => {
-    setMembershipAccess(prev => prev.map(membership => 
-      membership.id === id ? { ...membership, [field]: value } : membership
-    ))
-  }
-  const handleNewSpecialDayChange = (field: string, value: string | boolean) => {
-    setSpecialDays(prev => ({ ...prev, [field]: value }))
-  }
+  const handleWeekdayChange = (id: number, field: keyof Weekday, value: string | boolean) => {
+    setWeekdays(prev => 
+      prev.map(day => (day.id === id ? { ...day, [field]: value } : day))
+    );
+  };
+
+  const handleSpecialDayChange = (id: number, field: keyof SpecialDay, value: string | boolean) => {
+    setSpecialDays(prev => 
+      prev.map(day => (day.id === id ? { ...day, [field]: value } : day))
+    );
+  };
+
+  const handleMembershipChange = (id: number, field: keyof MembershipAccess, value: boolean) => {
+    setMembershipAccess(prev => 
+      prev.map(membership => 
+        membership.id === id ? { ...membership, [field]: value } : membership
+      )
+    );
+  };
+
+  const handleNewSpecialDayChange = (field: keyof SpecialDay, value: string | boolean) => {
+    // Create a new special day with default values and update the specified field
+    const newSpecialDay: SpecialDay = {
+      id: Date.now(),
+      date: '',
+      name: '',
+      open: '',
+      close: '',
+      is24Hours: false,
+      isClosed: false,
+      [field]: value
+    };
+    
+    setSpecialDays(prev => [...prev, newSpecialDay]);
+  };
   return (
     <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">

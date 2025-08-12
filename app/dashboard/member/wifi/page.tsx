@@ -1,17 +1,97 @@
-"use client"
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import DashboardLayout from "@/components/dashboard-layout"
-import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff, Loader2 } from "lucide-react"
+"use client";
+
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { 
+  Wifi, 
+  WifiOff, 
+  RefreshCw, 
+  Copy, 
+  Users, 
+  Shield, 
+  AlertTriangle, 
+  Eye, 
+  EyeOff,
+  Activity,
+  Download,
+  Loader2
+} from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle, 
+  CardFooter 
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogTrigger, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import DashboardLayout from "@/components/dashboard-layout";
+
+// --- Types ---
+type Theme = 'light' | 'dark';
+type NetworkStatus = 'active' | 'inactive' | 'maintenance';
+
+interface Network {
+  id: string;
+  name: string;
+  status: NetworkStatus;
+  type: 'main' | 'guest' | 'staff';
+  password: string;
+  connectedDevices: number;
+  lastUpdated: string;
+}
+
+interface SecurityLog {
+  id: number;
+  timestamp: string;
+  event: string;
+  severity: 'high' | 'medium' | 'low' | 'info';
+  source: string;
+  details: string;
+}
+
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
+// --- Contexts ---
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+// --- Custom Hooks ---
+const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (!context) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};
 
 // Type definitions
 interface SecurityLog {
