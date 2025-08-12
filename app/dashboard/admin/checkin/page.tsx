@@ -1,816 +1,328 @@
-"use client";
+import React, { useState, useEffect } from 'react';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import {
-  Search,
-  Download,
-  Plus,
-  Trash2,
-  Edit,
-  QrCode,
-  Clock,
-  User,
-  Users
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
-import { toast } from '@/components/ui/use-toast';
+// The following imports are not available in this environment.
+// They have been replaced with standard HTML elements and Tailwind CSS.
+// import { Button } from './shadcn/Button';
+// import { Input } from './shadcn/Input';
+// import { Label } from './shadcn/Label';
+// import { Card, CardContent, CardHeader, CardTitle } from './shadcn/Card';
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from './shadcn/Tabs';
+// import { Badge } from './shadcn/Badge';
+// import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './shadcn/Dialog';
+// import { toast } from './shadcn/Toast';
+// import { Toaster } from './shadcn/Toaster';
 
-// Types
-type CheckInStatus = 'checked-in' | 'checked-out' | 'expired' | 'pending';
-type UserType = 'member' | 'guest' | 'staff';
-type QrStatus = 'active' | 'inactive' | 'expired';
-
-interface CheckInLog {
-  id: string;
-  name: string;
-  member: string;
-  time: string;
-  location: string;
-  status: CheckInStatus;
-  type: UserType;
-  checkInTime: string;
-  checkOutTime: string;
-  duration: string;
-  email?: string;
-  phone?: string;
-  createdAt: string;
-  updatedAt: string;
+// Define a type for the code history items to resolve TypeScript errors
+interface HistoryItem {
+  prompt: string;
+  language: string;
+  code: string;
 }
 
-interface QrLocation {
-  id: number;
-  name: string;
-  status: QrStatus;
-  description: string;
-  createdAt: string;
-  updatedAt: string;
-}
+function App() {
+  const [prompt, setPrompt] = useState('');
+  const [language, setLanguage] = useState('javascript');
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('write');
+  const [showDialog, setShowDialog] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ visible: boolean; message: string; type: string }>({ visible: false, message: '', type: 'success' });
+  // Explicitly type the history array with the HistoryItem interface
+  const [codeHistory, setCodeHistory] = useState<HistoryItem[]>([]);
 
-interface TodayStats {
-  totalCheckIns: number;
-  activeMembers: number;
-  peakTime: string;
-  averageStay: string;
-}
+  // Simple toast/message box implementation
+  const showToast = (message: string, type = 'success') => {
+    setToastMessage({ visible: true, message, type });
+    setTimeout(() => {
+      setToastMessage({ visible: false, message: '', type: 'success' });
+    }, 3000);
+  };
 
-// Mock data
-const mockCheckInLogs: CheckInLog[] = [
-  {
-    id: '1',
-    name: 'John Doe',
-    member: 'John Doe',
-    time: '2023-10-01T09:30:00Z',
-    location: 'Main Entrance',
-    status: 'checked-in',
-    type: 'member',
-    checkInTime: '2023-10-01T09:30:00Z',
-    checkOutTime: '2023-10-01T17:30:00Z',
-    duration: '8h 0m',
-    email: 'john@example.com',
-    phone: '+1234567890',
-    createdAt: '2023-10-01T09:30:00Z',
-    updatedAt: '2023-10-01T09:30:00Z',
-  },
-  {
-    id: '2',
-    name: 'Jane Smith',
-    member: 'Jane Smith',
-    time: '2023-10-01T10:00:00Z',
-    location: 'Back Entrance',
-    status: 'checked-out',
-    type: 'guest',
-    checkInTime: '2023-10-01T10:00:00Z',
-    checkOutTime: '2023-10-01T12:00:00Z',
-    duration: '2h 0m',
-    email: 'jane@example.com',
-    phone: '+9876543210',
-    createdAt: '2023-10-01T10:00:00Z',
-    updatedAt: '2023-10-01T12:00:00Z',
-  }
-];
-
-const mockQrLocations: QrLocation[] = [
-  {
-    id: 1,
-    name: 'Main Entrance',
-    status: 'active',
-    description: 'Main entrance QR code',
-    createdAt: '2023-10-01T09:00:00Z',
-    updatedAt: '2023-10-01T09:00:00Z'
-  },
-  {
-    id: 2,
-    name: 'Back Entrance',
-    status: 'inactive',
-    description: 'Back entrance QR code',
-    createdAt: '2023-10-01T09:00:00Z',
-    updatedAt: '2023-10-01T09:00:00Z'
-  }
-];
-
-const mockTodayStats: TodayStats = {
-  totalCheckIns: 42,
-  activeMembers: 18,
-  peakTime: '2:00 PM',
-  averageStay: '3h 24m'
-};
-
-// Dynamically import the dashboard layout with SSR disabled
-const DynamicDashboardLayout = dynamic(
-  () => import("@/components/dashboard-layout"),
-  { ssr: false }
-);
-
-const AdminCheckInPage = () => {
-  const router = useRouter();
-
-  // State
-  const [checkInLogs, setCheckInLogs] = useState<CheckInLog[]>([]);
-  const [qrLocations, setQrLocations] = useState<QrLocation[]>([]);
-  const [viewLog, setViewLog] = useState<CheckInLog | null>(null);
-  const [editQrLocation, setEditQrLocation] = useState<QrLocation | null>(null);
-  const [deleteQrLocation, setDeleteQrLocation] = useState<QrLocation | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isQrDialogOpen, setIsQrDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [newQrLocation, setNewQrLocation] = useState<Omit<QrLocation, 'id' | 'createdAt' | 'updatedAt'>>({
-    name: '',
-    status: 'active',
-    description: ''
-  });
-
-  // Initialize component
-  useEffect(() => {
-    const loadData = async () => {
+  const copyToClipboard = () => {
+    if (generatedCode) {
       try {
-        setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setCheckInLogs(mockCheckInLogs);
-        setQrLocations(mockQrLocations);
+        const textarea = document.createElement('textarea');
+        textarea.value = generatedCode;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Code copied to clipboard!', 'success');
       } catch (err) {
-        setError('Failed to load data. Please try again later.');
-        console.error('Error loading data:', err);
-      } finally {
-        setIsLoading(false);
+        showToast('Failed to copy code.', 'error');
+        console.error('Failed to copy text: ', err);
       }
-    };
+    }
+  };
 
-    loadData();
-  }, []);
+  const generateCode = async (retries = 3) => {
+    if (!prompt) {
+      showToast('Please enter a prompt.', 'error');
+      return;
+    }
 
-  // Filter logs based on search term
-  const filteredLogs = useMemo(() => {
-    if (!searchTerm.trim()) return checkInLogs;
-    const term = searchTerm.toLowerCase();
-    return checkInLogs.filter(
-      (log) =>
-        (log.name?.toLowerCase() || '').includes(term) ||
-        (log.location?.toLowerCase() || '').includes(term) ||
-        (log.status?.toLowerCase() || '').includes(term) ||
-        (log.type?.toLowerCase() || '').includes(term)
-    );
-  }, [checkInLogs, searchTerm]);
+    setIsLoading(true);
+    setGeneratedCode('');
+    let attempt = 0;
+    const maxRetries = retries;
 
-  // Handle view log details
-  const handleViewLogDetails = useCallback((log: CheckInLog) => {
-    setViewLog(log);
-  }, []);
-
-  // Handle download PDF
-  const handleDownloadPdf = useCallback((log: CheckInLog) => {
-    // In a real app, this would generate and download a PDF
-    console.log('Downloading PDF for:', log);
-    toast({
-      title: 'PDF Download',
-      description: 'PDF download functionality will be implemented here.'
-    });
-  }, []);
-
-  // Handle saving QR location (add or update)
-  const handleSaveQrLocation = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newQrLocation.name.trim()) return;
-
-    try {
-      setIsLoading(true);
-
-      if (editQrLocation) {
-        // Update existing location
-        setQrLocations((prev) =>
-          prev.map((loc) =>
-            loc.id === editQrLocation.id
-              ? {
-                  ...loc,
-                  ...newQrLocation,
-                  updatedAt: new Date().toISOString()
-                }
-              : loc
-          )
-        );
-        toast({
-          title: 'Success',
-          description: 'QR location updated successfully',
+    while (attempt < maxRetries) {
+      try {
+        const chatHistory = [];
+        chatHistory.push({
+          role: 'user',
+          parts: [{ text: `Generate a complete and runnable code snippet in ${language} for the following prompt: "${prompt}". Do not provide any conversational text, only the code.` }],
         });
-      } else {
-        // Add new location
-        const newLocation: QrLocation = {
-          ...newQrLocation,
-          id: Date.now(),
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+
+        const payload = {
+          contents: chatHistory,
         };
-        setQrLocations((prev) => [...prev, newLocation]);
-        toast({
-          title: 'Success',
-          description: 'QR location added successfully',
+
+        const apiKey = "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
         });
+
+        const result = await response.json();
+        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (text) {
+          setGeneratedCode(text);
+          // Add to history with the correct type
+          setCodeHistory(prevHistory => [...prevHistory, { prompt, language, code: text }]);
+        } else {
+          showToast('Failed to generate code. Please try again.', 'error');
+        }
+
+        setIsLoading(false);
+        break; // Exit the loop on success
+      } catch (error) {
+        console.error('API call failed:', error);
+        attempt++;
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+          console.log(`Retrying API call... attempt ${attempt + 1}`);
+        } else {
+          showToast('Failed to generate code after multiple attempts. Please check your network.', 'error');
+          setIsLoading(false);
+        }
       }
-
-      setIsQrDialogOpen(false);
-      setEditQrLocation(null);
-      setNewQrLocation({
-        name: '',
-        description: '',
-        status: 'active',
-      });
-    } catch (error) {
-      console.error('Error saving QR location:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save QR location',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
     }
-  }, [newQrLocation, editQrLocation]);
+  };
 
-  // Handle deleting QR location
-  const handleDeleteQrLocation = useCallback(async () => {
-    if (!deleteQrLocation) return;
+  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLanguage(e.target.value);
+  };
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 500));
+  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPrompt(e.target.value);
+  };
 
-      setQrLocations(prev => prev.filter(loc => loc.id !== deleteQrLocation.id));
-      setDeleteQrLocation(null);
-      setIsDeleteDialogOpen(false);
+  const handleClear = () => {
+    setPrompt('');
+    setGeneratedCode('');
+    showToast('Cleared!', 'success');
+  };
 
-      toast({
-        title: 'Success',
-        description: 'QR location deleted successfully.'
-      });
-    } catch (error) {
-      console.error('Error deleting QR location:', error);
-
-      toast({
-        title: 'Error',
-        description: 'Failed to delete QR location. Please try again.',
-        variant: 'destructive'
-      });
-    }
-  }, [deleteQrLocation]);
-
-  // Handle toggling QR location status
-  const handleToggleQrStatus = useCallback(async (id: number) => {
-    try {
-      setIsLoading(true);
-      setQrLocations((prev) =>
-        prev.map((loc) =>
-          loc.id === id
-            ? { ...loc, status: loc.status === 'active' ? 'inactive' : 'active' }
-            : loc
-        )
-      );
-      toast({
-        title: 'Success',
-        description: 'QR location status updated successfully',
-      });
-    } catch (error) {
-      console.error('Error toggling QR status:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update QR location status',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Handle editing QR location
-  const handleEditQrLocation = useCallback((location: QrLocation) => {
-    setEditQrLocation(location);
-    setNewQrLocation({
-      name: location.name,
-      status: location.status,
-      description: location.description
-    });
-    setIsQrDialogOpen(true);
-  }, []);
-
-  // Handle opening new QR location dialog
-  const handleOpenNewQrDialog = useCallback(() => {
-    setEditQrLocation(null);
-    setNewQrLocation({ name: '', status: 'active', description: '' });
-    setIsQrDialogOpen(true);
-  }, []);
-
-  // Get status badge variant
-  const getStatusBadgeVariant = useCallback((status: CheckInStatus) => {
-    switch (status) {
-      case 'checked-in':
-        return 'default' as const;
-      case 'checked-out':
-        return 'outline' as const;
-      case 'expired':
-        return 'destructive' as const;
-      default:
-        return 'secondary' as const;
-    }
-  }, []);
-
-  // Get user type badge variant
-  const getUserTypeBadgeVariant = useCallback((type: UserType) => {
-    return type === 'member' ? 'default' as const : 'outline' as const;
-  }, []);
-
-  // Render loading state
-  if (isLoading) {
-    return (
-      <DynamicDashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
-        </div>
-      </DynamicDashboardLayout>
-    );
-  }
-
-  // Render error state
-  if (error) {
-    return (
-      <DynamicDashboardLayout>
-        <div className="p-4 text-destructive">
-          <p>{error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="mt-4"
-            variant="outline"
-          >
-            Retry
-          </Button>
-        </div>
-      </DynamicDashboardLayout>
-    );
-  }
+  // Custom SVG loader
+  const TailSpinLoader = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 38 38" stroke="#ffffff" className="animate-spin">
+      <g fill="none" fillRule="evenodd">
+        <g transform="translate(1 1)" strokeWidth="2">
+          <circle strokeOpacity=".5" cx="18" cy="18" r="18" />
+          <path d="M36 18c0-9.94-8.06-18-18-18">
+            <animateTransform
+              attributeName="transform"
+              type="rotate"
+              from="0 18 18"
+              to="360 18 18"
+              dur="1s"
+              repeatCount="indefinite"
+            />
+          </path>
+        </g>
+      </g>
+    </svg>
+  );
 
   return (
-    <DynamicDashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Check-in Management</h1>
-            <p className="text-muted-foreground">
-              Manage check-ins and QR code locations
-            </p>
+    <div className="min-h-screen bg-gray-900 text-gray-100 p-8 flex items-center justify-center font-sans">
+      <div className="w-full max-w-4xl space-y-8">
+        {/* Toast Notification */}
+        {toastMessage.visible && (
+          <div className={`fixed top-4 right-4 p-4 rounded-md shadow-lg transition-all duration-300 ${toastMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+            {toastMessage.message}
           </div>
-          <Button onClick={handleOpenNewQrDialog}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add QR Location
-          </Button>
+        )}
+
+        {/* Card and Tabs */}
+        <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden border border-gray-700">
+          <div className="flex justify-center p-4 border-b border-gray-700">
+            <div className="flex space-x-2 bg-gray-700 p-1 rounded-full">
+              <button
+                onClick={() => setActiveTab('write')}
+                className={`py-2 px-6 rounded-full text-sm font-medium transition-colors ${
+                  activeTab === 'write' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                Write
+              </button>
+              <button
+                onClick={() => setActiveTab('history')}
+                className={`py-2 px-6 rounded-full text-sm font-medium transition-colors ${
+                  activeTab === 'history' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                History
+              </button>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {activeTab === 'write' && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label htmlFor="prompt" className="text-gray-300 block text-sm font-medium">Prompt</label>
+                  <textarea
+                    id="prompt"
+                    value={prompt}
+                    onChange={handlePromptChange}
+                    placeholder="e.g., 'A React component for a multi-step form with validation'"
+                    className="w-full h-32 p-3 bg-gray-700 border border-gray-600 rounded-md text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="language" className="text-gray-300 block text-sm font-medium">Language</label>
+                  <select
+                    id="language"
+                    value={language}
+                    onChange={handleLanguageChange}
+                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                  >
+                    <option value="javascript">JavaScript</option>
+                    <option value="python">Python</option>
+                    <option value="html">HTML</option>
+                    <option value="java">Java</option>
+                    <option value="c++">C++</option>
+                  </select>
+                </div>
+
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => generateCode()}
+                    disabled={isLoading}
+                    className="flex-1 py-3 px-6 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <TailSpinLoader />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      'Generate Code'
+                    )}
+                  </button>
+                  <button
+                    onClick={handleClear}
+                    className="py-3 px-6 bg-gray-600 text-white font-bold rounded-lg shadow-md hover:bg-gray-700 transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+
+                {generatedCode && (
+                  <div className="relative mt-6 p-4 bg-gray-700 rounded-md shadow-inner group">
+                    <pre className="overflow-x-auto text-sm text-gray-200 p-2">
+                      <code>{generatedCode}</code>
+                    </pre>
+                    <button
+                      onClick={copyToClipboard}
+                      className="absolute top-2 right-2 p-2 bg-gray-600 text-gray-300 rounded-md hover:bg-gray-500 transition-colors opacity-0 group-hover:opacity-100"
+                      aria-label="Copy code to clipboard"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="space-y-4">
+                {codeHistory.length > 0 ? (
+                  codeHistory.map((item, index) => (
+                    <div key={index} className="bg-gray-700 p-4 rounded-md border border-gray-600">
+                      <div className="flex justify-between items-center mb-2">
+                        {/* TypeScript now recognizes item.prompt and item.language */}
+                        <h4 className="text-sm font-semibold text-gray-300 truncate">{item.prompt}</h4>
+                        <span className="text-xs px-2 py-1 rounded-full bg-indigo-500 text-white font-medium">
+                          {item.language}
+                        </span>
+                      </div>
+                      <pre className="text-sm text-gray-200 overflow-x-auto p-2 bg-gray-800 rounded-md">
+                        {/* TypeScript now recognizes item.code */}
+                        <code>{item.code.substring(0, 100)}...</code>
+                      </pre>
+                      <button
+                        onClick={() => {
+                          setGeneratedCode(item.code);
+                          setPrompt(item.prompt);
+                          setLanguage(item.language);
+                          setActiveTab('write');
+                          showToast('Loaded from history!', 'success');
+                        }}
+                        className="mt-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium"
+                      >
+                        Load to Editor
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-400 py-8">Your generation history is empty.</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="qr-codes">QR Codes</TabsTrigger>
-            <TabsTrigger value="logs">Check-in Logs</TabsTrigger>
-          </TabsList>
-
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Check-ins Today
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{mockTodayStats.totalCheckIns}</div>
-                  <p className="text-xs text-muted-foreground">
-                    +20% from yesterday
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Members</CardTitle>
-                  <User className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{mockTodayStats.activeMembers}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Currently in the space
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Peak Time</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{mockTodayStats.peakTime}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Busiest time today
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Average Stay
-                  </CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{mockTodayStats.averageStay}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Average duration
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Check-ins</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {checkInLogs.slice(0, 5).map((log) => (
-                    <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <p className="font-medium">{log.name}</p>
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                          <span>{new Date(log.time).toLocaleTimeString()}</span>
-                          <span>•</span>
-                          <span>{log.location}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={getStatusBadgeVariant(log.status)}>
-                          {log.status}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewLogDetails(log)}
-                        >
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* QR Codes Tab */}
-          <TabsContent value="qr-codes" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>QR Code Locations</CardTitle>
-                  <Button onClick={handleOpenNewQrDialog} size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Location
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {qrLocations.map((location) => (
-                    <div key={location.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
-                          <QrCode className="h-4 w-4" />
-                          <p className="font-medium">{location.name}</p>
-                          <Badge
-                            variant={location.status === 'active' ? 'default' : 'outline'}
-                            className="ml-2"
-                          >
-                            {location.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {location.description}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Last updated: {new Date(location.updatedAt).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleToggleQrStatus(location.id)}
-                        >
-                          {location.status === 'active' ? 'Deactivate' : 'Activate'}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleEditQrLocation(location)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive"
-                          onClick={() => {
-                            setDeleteQrLocation(location);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Check-in Logs Tab */}
-          <TabsContent value="logs" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:justify-between">
-                  <CardTitle>Check-in Logs</CardTitle>
-                  <div className="relative w-full max-w-sm">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="search"
-                      placeholder="Search logs..."
-                      className="pl-8 w-full"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {filteredLogs.length > 0 ? (
-                    filteredLogs.map((log) => (
-                      <div key={log.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="space-y-1">
-                          <div className="flex items-center space-x-2">
-                            <p className="font-medium">{log.name}</p>
-                            <Badge variant={getUserTypeBadgeVariant(log.type)}>
-                              {log.type}
-                            </Badge>
-                            <Badge variant={getStatusBadgeVariant(log.status)}>
-                              {log.status}
-                            </Badge>
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            <p>Location: {log.location}</p>
-                            <p>Check-in: {new Date(log.checkInTime).toLocaleString()}</p>
-                            {log.checkOutTime && (
-                              <p>Check-out: {new Date(log.checkOutTime).toLocaleString()}</p>
-                            )}
-                            <p>Duration: {log.duration || 'N/A'}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadPdf(log)}
-                          >
-                            <Download className="mr-2 h-4 w-4" />
-                            PDF
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewLogDetails(log)}
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No check-in logs found
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      {/* QR Location Dialog */}
-      <Dialog open={isQrDialogOpen} onOpenChange={setIsQrDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editQrLocation ? 'Edit QR Location' : 'Add New QR Location'}
-            </DialogTitle>
-            <DialogDescription>
-              {editQrLocation
-                ? 'Update the QR location details.'
-                : 'Add a new QR code location for check-ins.'}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSaveQrLocation}>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Location Name</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Main Entrance"
-                  value={newQrLocation.name}
-                  onChange={(e) =>
-                    setNewQrLocation({ ...newQrLocation, name: e.target.value })
-                  }
-                  required
-                />
+        {/* Dialog/Modal */}
+        {showDialog && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
+            <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full space-y-4 border border-gray-700">
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-gray-100">About this App</h3>
+                <p className="text-sm text-gray-400">
+                  This is a simple code generation app built with React and Tailwind CSS. It uses the Gemini API to
+                  generate code snippets based on your prompts.
+                </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={newQrLocation.status}
-                  onChange={(e) =>
-                    setNewQrLocation({
-                      ...newQrLocation,
-                      status: e.target.value as QrStatus,
-                    })
-                  }
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <textarea
-                  id="description"
-                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="Optional description or notes"
-                  value={newQrLocation.description}
-                  onChange={(e) =>
-                    setNewQrLocation({
-                      ...newQrLocation,
-                      description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsQrDialogOpen(false);
-                  setEditQrLocation(null);
-                  setNewQrLocation({ name: '', status: 'active', description: '' });
-                }}
-                type="button"
+              <button
+                onClick={() => setShowDialog(false)}
+                className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
               >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={!newQrLocation.name || isLoading}>
-                {isLoading ? 'Saving...' : 'Save Location'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+                Got it!
+              </button>
+            </div>
+          </div>
+        )}
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Are you sure?</DialogTitle>
-            <DialogDescription>
-              This will permanently delete the QR location and cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsDeleteDialogOpen(false);
-                setDeleteQrLocation(null);
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteQrLocation}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Deleting...' : 'Delete Location'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Log Details Dialog */}
-      <Dialog open={!!viewLog} onOpenChange={(open) => !open && setViewLog(null)}>
-        <DialogContent>
-          {viewLog && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Check-in Details</DialogTitle>
-                <DialogDescription>
-                  Detailed information about this check-in
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <h4 className="font-medium">{viewLog.name}</h4>
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Badge variant={getUserTypeBadgeVariant(viewLog.type)}>
-                      {viewLog.type}
-                    </Badge>
-                    <Badge variant={getStatusBadgeVariant(viewLog.status)}>
-                      {viewLog.status}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Location:</span>
-                    <span>{viewLog.location}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Check-in Time:</span>
-                    <span>{new Date(viewLog.checkInTime).toLocaleString()}</span>
-                  </div>
-                  {viewLog.checkOutTime && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Check-out Time:</span>
-                      <span>{new Date(viewLog.checkOutTime).toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Duration:</span>
-                    <span>{viewLog.duration || 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownloadPdf(viewLog)}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download PDF
-                </Button>
-                <Button onClick={() => setViewLog(null)}>Close</Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </DynamicDashboardLayout>
+        <div className="text-center text-sm text-gray-400">
+          <button onClick={() => setShowDialog(true)} className="hover:text-gray-200 transition-colors">
+            About
+          </button>
+        </div>
+      </div>
+    </div>
   );
-};
+}
 
-export default AdminCheckInPage;
+export default App;
