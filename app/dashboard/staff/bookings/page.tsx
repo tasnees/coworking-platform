@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,8 +14,8 @@ import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Tr
 import { useAuth } from "@/contexts/AuthContext"
 
 // Dynamically import the dashboard layout with SSR disabled
-const DashboardLayout = dynamic(
-  () => import('@/components/dashboard-layout'),
+const DashboardLayout = dynamic<React.ComponentProps<typeof import('@/components/dashboard-layout').default>>(
+  () => import('@/components/dashboard-layout').then((mod) => mod.default),
   {
     ssr: false,
     loading: () => (
@@ -214,22 +214,28 @@ export default function StaffBookingsPage() {
   }, [isAuthenticated, router])
 
   // Filter bookings based on search and filters
-  const filteredBookings = bookings.filter(booking => {
+  const filteredBookings = useMemo(() => {
+    if (!bookings || !Array.isArray(bookings)) return [];
+    
     const searchLower = searchTerm.toLowerCase();
     const statusLower = statusFilter.toLowerCase();
     const resourceLower = resourceTypeFilter.toLowerCase();
     
-    const matchesSearch = 
-      (booking.memberName?.toLowerCase() || '').includes(searchLower) ||
-      (booking.memberEmail?.toLowerCase() || '').includes(searchLower) ||
-      (booking.resourceName?.toLowerCase() || '').includes(searchLower);
+    return bookings.filter(booking => {
+      if (!booking) return false;
       
-    const matchesStatus = statusLower === 'all' || booking.status === statusLower;
-      
-    const matchesResource = resourceLower === 'all' || booking.resourceType === resourceLower;
-      
-    return matchesSearch && matchesStatus && matchesResource;
-  });
+      const matchesSearch = 
+        (booking.memberName?.toLowerCase() || '').includes(searchLower) ||
+        (booking.memberEmail?.toLowerCase() || '').includes(searchLower) ||
+        (booking.resourceName?.toLowerCase() || '').includes(searchLower);
+        
+      const matchesStatus = statusLower === 'all' || booking.status === statusLower;
+        
+      const matchesResource = resourceLower === 'all' || booking.resourceType === resourceLower;
+        
+      return matchesSearch && matchesStatus && matchesResource;
+    });
+  }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
   
   // Handler functions for CRUD operations (unchanged)
   const handleDeleteBooking = (id: string) => {
