@@ -42,50 +42,126 @@ import {
 } from "lucide-react"
 
 // ---
+// TYPE DEFINITIONS
+// ---
+
+interface Floor {
+  id: string;
+  name: string;
+  level: number;
+  capacity: number;
+  occupancy: number;
+  image?: string;
+  description?: string;
+  totalCapacity?: number;
+  currentOccupancy?: number;
+}
+
+interface Area {
+  id: number;
+  name: string;
+  type: string;
+  floor: string;
+  capacity: number;
+  occupancy: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface Desk {
+  id: string;
+  name?: string;
+  type: string;
+  status: string;
+  floor: string;
+  area?: string | number;
+  member?: string | null;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  capacity?: number;
+  occupancy?: number;
+}
+
+interface FloorStat {
+  id: string;
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  percentage: number;
+}
+
+// ---
 // DATA DEFINITIONS
 // You can define this data outside the component to ensure it's available for both
 // the server (during prerendering) and the client.
 // ---
 
-const floors = [
-  { id: "main", name: "Main Floor", capacity: 80, occupancy: 52 },
-  { id: "second", name: "Second Floor", capacity: 40, occupancy: 26 },
-  { id: "basement", name: "Basement", capacity: 0, occupancy: 0 },
+const floors: Floor[] = [
+  { 
+    id: "main", 
+    name: "Main Floor", 
+    level: 1, 
+    capacity: 80, 
+    occupancy: 52, 
+    totalCapacity: 80, 
+    currentOccupancy: 52 
+  },
+  { 
+    id: "second", 
+    name: "Second Floor", 
+    level: 2, 
+    capacity: 40, 
+    occupancy: 26, 
+    totalCapacity: 40, 
+    currentOccupancy: 26 
+  },
+  { 
+    id: "basement", 
+    name: "Basement", 
+    level: 0, 
+    capacity: 0, 
+    occupancy: 0, 
+    totalCapacity: 0, 
+    currentOccupancy: 0 
+  },
 ]
 
-const areas = [
-  { id: 1, name: "Open Workspace", type: "workspace", capacity: 40, occupancy: 28, floor: "main" },
-  { id: 2, name: "Meeting Room A", type: "meeting", capacity: 8, occupancy: 6, floor: "main" },
-  { id: 3, name: "Meeting Room B", type: "meeting", capacity: 6, occupancy: 0, floor: "main" },
-  { id: 4, name: "Phone Booth 1", type: "phone", capacity: 1, occupancy: 1, floor: "main" },
-  { id: 5, name: "Phone Booth 2", type: "phone", capacity: 1, occupancy: 0, floor: "main" },
-  { id: 6, name: "Kitchen", type: "common", capacity: 10, occupancy: 4, floor: "main" },
-  { id: 7, name: "Lounge", type: "common", capacity: 14, occupancy: 8, floor: "main" },
-  { id: 8, name: "Private Office 1", type: "office", capacity: 4, occupancy: 3, floor: "second" },
-  { id: 9, name: "Private Office 2", type: "office", capacity: 4, occupancy: 4, floor: "second" },
-  { id: 10, name: "Private Office 3", type: "office", capacity: 4, occupancy: 2, floor: "second" },
-  { id: 11, name: "Conference Room", type: "meeting", capacity: 12, occupancy: 8, floor: "second" },
-  { id: 12, name: "Quiet Zone", type: "workspace", capacity: 16, occupancy: 9, floor: "second" },
+const areas: Area[] = [
+  { id: 1, name: "Open Workspace", type: "workspace", capacity: 40, occupancy: 28, floor: "main", x: 0, y: 0, width: 10, height: 10 },
+  { id: 2, name: "Meeting Room A", type: "meeting", capacity: 8, occupancy: 6, floor: "main", x: 10, y: 0, width: 4, height: 4 },
+  { id: 3, name: "Meeting Room B", type: "meeting", capacity: 6, occupancy: 0, floor: "main", x: 14, y: 0, width: 4, height: 3 },
+  { id: 4, name: "Phone Booth 1", type: "booth", capacity: 1, occupancy: 1, floor: "main", x: 0, y: 10, width: 2, height: 2 },
+  { id: 5, name: "Phone Booth 2", type: "booth", capacity: 1, occupancy: 0, floor: "main", x: 2, y: 10, width: 2, height: 2 },
+  { id: 6, name: "Lounge Area", type: "lounge", capacity: 12, occupancy: 4, floor: "main", x: 5, y: 10, width: 5, height: 4 },
+  { id: 7, name: "Kitchen", type: "amenity", capacity: 8, occupancy: 2, floor: "main", x: 10, y: 10, width: 4, height: 4 },
+  { id: 8, name: "Private Office 1", type: "office", capacity: 4, occupancy: 3, floor: "second", x: 0, y: 0, width: 4, height: 4 },
+  { id: 9, name: "Private Office 2", type: "office", capacity: 6, occupancy: 6, floor: "second", x: 4, y: 0, width: 5, height: 5 },
+  { id: 10, name: "Conference Room", type: "meeting", capacity: 12, occupancy: 8, floor: "second", x: 9, y: 0, width: 6, height: 4 },
+  { id: 11, name: "Focus Room", type: "meeting", capacity: 2, occupancy: 1, floor: "second", x: 0, y: 4, width: 2, height: 2 },
+  { id: 12, name: "Quiet Zone", type: "workspace", capacity: 16, occupancy: 9, floor: "second", x: 0, y: 6, width: 8, height: 6 },
 ]
 
-const desks = [
-  { id: "A1", type: "hot-desk", status: "occupied", member: "John Doe", area: 1, floor: "main" },
-  { id: "A2", type: "hot-desk", status: "occupied", member: "Jane Smith", area: 1, floor: "main" },
-  { id: "A3", type: "hot-desk", status: "available", member: null, area: 1, floor: "main" },
-  { id: "A4", type: "hot-desk", status: "available", member: null, area: 1, floor: "main" },
-  { id: "A5", type: "hot-desk", status: "occupied", member: "Mike Johnson", area: 1, floor: "main" },
-  { id: "B1", type: "dedicated", status: "occupied", member: "Sarah Wilson", area: 1, floor: "main" },
-  { id: "B2", type: "dedicated", status: "occupied", member: "Robert Brown", area: 1, floor: "main" },
-  { id: "B3", type: "dedicated", status: "occupied", member: "Emily Davis", area: 1, floor: "main" },
-  { id: "B4", type: "dedicated", status: "available", member: null, area: 1, floor: "main" },
-  { id: "C1", type: "standing", status: "occupied", member: "David Lee", area: 1, floor: "main" },
-  { id: "C2", type: "standing", status: "available", member: null, area: 1, floor: "main" },
-  { id: "D1", type: "hot-desk", status: "occupied", member: "Lisa Chen", area: 12, floor: "second" },
-  { id: "D2", type: "hot-desk", status: "occupied", member: "Tom Wilson", area: 12, floor: "second" },
-  { id: "D3", type: "hot-desk", status: "available", member: null, area: 12, floor: "second" },
-  { id: "D4", type: "dedicated", status: "occupied", member: "Karen White", area: 12, floor: "second" },
-  { id: "D5", type: "dedicated", status: "occupied", member: "James Taylor", area: 12, floor: "second" },
-]
+const desks: Desk[] = [
+  { id: "A1", name: "A1", type: "hot-desk", status: "occupied", member: "John Doe", area: 1, floor: "main", x: 1, y: 1, capacity: 1, occupancy: 1 },
+  { id: "A2", name: "A2", type: "hot-desk", status: "occupied", member: "Jane Smith", area: 1, floor: "main", x: 2, y: 1, capacity: 1, occupancy: 1 },
+  { id: "A3", name: "A3", type: "hot-desk", status: "available", member: null, area: 1, floor: "main", x: 3, y: 1, capacity: 1, occupancy: 0 },
+  { id: "A4", name: "A4", type: "hot-desk", status: "available", member: null, area: 1, floor: "main", x: 4, y: 1, capacity: 1, occupancy: 0 },
+  { id: "B1", name: "B1", type: "dedicated", status: "occupied", member: "Bob Johnson", area: 1, floor: "main", x: 1, y: 2, capacity: 1, occupancy: 1 },
+  { id: "B2", name: "B2", type: "dedicated", status: "occupied", member: "Alice Brown", area: 1, floor: "main", x: 2, y: 2, capacity: 1, occupancy: 1 },
+  { id: "MR1", name: "Meeting Room 1", type: "meeting", status: "occupied", member: "Team Standup", area: 2, floor: "main", x: 10, y: 1, capacity: 8, occupancy: 5 },
+  { id: "MR2", name: "Meeting Room 2", type: "meeting", status: "available", member: null, area: 3, floor: "main", x: 14, y: 1, capacity: 6, occupancy: 0 },
+  { id: "PB1", name: "Phone Booth 1", type: "phone", status: "occupied", member: "Mike Davis", area: 4, floor: "main", x: 0, y: 10, capacity: 1, occupancy: 1 },
+  { id: "PB2", name: "Phone Booth 2", type: "phone", status: "available", member: null, area: 5, floor: "main", x: 2, y: 10, capacity: 1, occupancy: 0 },
+  { id: "PO1", name: "Private Office 1", type: "private", status: "occupied", member: "Sarah Wilson", area: 8, floor: "second", x: 0, y: 0, capacity: 4, occupancy: 1 },
+  { id: "PO2", name: "Private Office 2", type: "private", status: "occupied", member: "David Lee", area: 9, floor: "second", x: 4, y: 0, capacity: 6, occupancy: 1 },
+  { id: "PO3", name: "Private Office 3", type: "private", status: "occupied", member: "Emma Garcia", area: 10, floor: "second", x: 9, y: 0, capacity: 12, occupancy: 1 },
+  { id: "CR1", name: "Conference Room", type: "conference", status: "occupied", member: "Product Team", area: 11, floor: "second", x: 0, y: 4, capacity: 12, occupancy: 6 },
+  { id: "QZ1", name: "Quiet Zone 1", type: "focus", status: "occupied", member: "Alex Chen", area: 12, floor: "second", x: 0, y: 6, capacity: 1, occupancy: 1 },
+];
 
 // ---
 // HELPER FUNCTIONS (UNCHANGED)
@@ -141,6 +217,7 @@ interface FloorStat {
 
 // Helper function to safely get array length
 const getSafeLength = (arr: any[] | undefined): number => {
+  if (typeof window === 'undefined') return 0;
   try {
     return Array.isArray(arr) ? arr.length : 0;
   } catch (e) {
@@ -148,27 +225,29 @@ const getSafeLength = (arr: any[] | undefined): number => {
   }
 };
 
+// Safe data access for SSR
+const safeFloors: Floor[] = typeof window !== 'undefined' ? floors : [];
+const safeAreas: Area[] = typeof window !== 'undefined' ? areas : [];
+const safeDesks: Desk[] = typeof window !== 'undefined' ? desks : [];
+
 const getFloorStats = (floorId: string): FloorStat[] => {
   // Early return if running on server
   if (typeof window === 'undefined') {
     return [];
   }
   // Safely filter areas and desks, defaulting to empty arrays if undefined
-  const floorAreas = Array.isArray(areas) ? areas.filter((area: any) => area?.floor === floorId) : [];
-  const floorDesks = Array.isArray(desks) ? desks.filter((desk: any) => desk?.floor === floorId) : [];
+  const currentFloor = safeFloors.find((floor: Floor) => floor.id === floorId) || safeFloors[0];
+  const floorAreas = safeAccess.areas.filter((area: Area) => area.floor === currentFloor?.id) || [];
+  const floorDesks = safeAccess.desks.filter((desk: Desk) => desk.floor === currentFloor?.id) || [];
   
   // Filter for meeting rooms with null checks
   const meetingRooms = Array.isArray(floorAreas) ? floorAreas.filter((area: any) => area?.type === 'meeting') : [];
   const occupiedMeetingRooms = Array.isArray(meetingRooms) ? meetingRooms.filter((room: any) => room?.occupancy > 0).length : 0;
   
   // Calculate total capacity and occupancy with null checks
-  const totalCapacity = Array.isArray(floorAreas) 
-    ? floorAreas.reduce((sum: number, area: any) => sum + (Number(area?.capacity) || 0), 0)
-    : 0;
-    
-  const currentOccupancy = Array.isArray(floorDesks)
-    ? floorDesks.filter((desk: any) => desk?.status === 'occupied').length
-    : 0;
+  const totalCapacity = Array.isArray(floorAreas) ? floorAreas.reduce((total: number, area: Area) => total + (area.capacity || 0), 0) : 0;
+  const areaOccupancy = floorAreas.reduce((total: number, area: Area) => total + (area.occupancy || 0), 0);
+  const currentOccupancy = Array.isArray(floorDesks) ? floorDesks.filter((desk: any) => desk?.status === 'occupied').length : 0;
 
   return [
     { 
@@ -209,41 +288,41 @@ const safeAccess = typeof window === 'undefined' ? {
   desks: { filter: () => [] }
 } : {
   floors: {
-    find: (predicate: (floor: any) => boolean) => {
+    find: (predicate: (floor: Floor) => boolean) => {
       try {
-        return Array.isArray(floors) ? floors.find(predicate) : null;
+        return Array.isArray(safeFloors) ? safeFloors.find(predicate) : null;
       } catch (e) {
         return null;
       }
     },
-    filter: (predicate: (floor: any) => boolean) => {
+    filter: (predicate: (floor: Floor) => boolean) => {
       try {
-        return Array.isArray(floors) ? floors.filter(predicate) : [];
+        return Array.isArray(safeFloors) ? safeFloors.filter(predicate) : [];
       } catch (e) {
         return [];
       }
     }
   },
   areas: {
-    filter: (predicate: (area: any) => boolean) => {
+    filter: (predicate: (area: Area) => boolean) => {
       try {
-        return Array.isArray(areas) ? areas.filter(predicate) : [];
+        return Array.isArray(safeAreas) ? safeAreas.filter(predicate) : [];
       } catch (e) {
         return [];
       }
     },
-    find: (predicate: (area: any) => boolean) => {
+    find: (predicate: (area: Area) => boolean) => {
       try {
-        return Array.isArray(areas) ? areas.find(predicate) : undefined;
+        return Array.isArray(safeAreas) ? safeAreas.find(predicate) : undefined;
       } catch (e) {
         return undefined;
       }
     }
   },
   desks: {
-    filter: (predicate: (desk: any) => boolean) => {
+    filter: (predicate: (desk: Desk) => boolean) => {
       try {
-        return Array.isArray(desks) ? desks.filter(predicate) : [];
+        return Array.isArray(safeDesks) ? safeDesks.filter(predicate) : [];
       } catch (e) {
         return [];
       }
@@ -257,64 +336,41 @@ export default function FloorPlanPage() {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [editMode, setEditMode] = useState(false);
   
-  // Set client-side flag
+  // Set client-side flag and initialize data
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Ensure we have valid data before rendering
+  if (!isClient) {
+    return <div className="p-6">Loading floor plan...</div>;
+  }
+
   // Calculate floor stats based on the active tab
   const floorStats = useMemo(() => {
-    if (!isClient) return [];
-    try {
-      return getFloorStats(activeTab);
-    } catch (e) {
-      console.error('Error getting floor stats:', e);
-      return [];
-    }
-  }, [activeTab, isClient]);
+    return getFloorStats(activeTab);
+  }, [activeTab]);
 
   // Use `useMemo` to filter data once per render, improving performance
   const filteredAreas = useMemo(() => {
-    if (!isClient || !areas) return [];
-    try {
-      return areas.filter(area => area && area.floor === activeTab);
-    } catch (e) {
-      console.error('Error filtering areas:', e);
-      return [];
-    }
-  }, [activeTab, isClient, areas]);
+    return safeAccess.areas.filter((area: Area) => area && area.floor === activeTab);
+  }, [activeTab, safeAreas]);
 
   const filteredDesks = useMemo(() => {
-    if (!isClient || !desks) return [];
-    try {
-      return desks.filter(desk => desk && desk.floor === activeTab);
-    } catch (e) {
-      console.error('Error filtering desks:', e);
-      return [];
-    }
-  }, [activeTab, isClient, desks]);
+    return safeDesks.filter((desk: Desk) => desk && desk.floor === activeTab);
+  }, [activeTab, safeDesks]);
 
   const currentFloor = useMemo(() => {
-    if (!isClient || !floors) return null;
-    try {
-      return floors.find(floor => floor && floor.id === activeTab) || floors[0] || null;
-    } catch (e) {
-      console.error('Error finding current floor:', e);
-      return null;
-    }
-  }, [activeTab, isClient, floors]);
+    return safeFloors.find((f: Floor) => f.id === activeTab) || safeFloors[0];
+  }, [activeTab]);
 
   // Show loading state until client-side rendering is ready
   if (!isClient) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <div className="p-6">Loading floor plan...</div>;
   }
 
   // Ensure we have valid data before rendering
-  if (!floors || !areas || !desks) {
+  if (!safeFloors.length || !safeAreas.length || !safeDesks.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading floor plan data...</p>
@@ -571,7 +627,7 @@ export default function FloorPlanPage() {
                                 <SelectValue placeholder="Select floor" />
                               </SelectTrigger>
                               <SelectContent>
-                                {safeAccess.floors.filter(floor => floor).map((floor) => (
+                                {safeFloors.filter((floor: Floor) => Boolean(floor)).map((floor: Floor) => (
                                   <SelectItem key={floor.id} value={floor.id}>{floor.name || `Floor ${floor.id}`}</SelectItem>
                                 ))}
                               </SelectContent>

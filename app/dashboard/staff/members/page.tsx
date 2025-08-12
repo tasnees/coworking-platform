@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -118,11 +118,12 @@ const mockMembers: Member[] = [
     totalVisits: 12
   }
 ]
+// Helper function to safely get array length
+const getSafeLength = (arr: any[] | undefined): number => {
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
 export default function StaffMembersPage() {
-  // Helper function to safely get array length
-  const getSafeLength = (arr: any[] | undefined): number => {
-    return Array.isArray(arr) ? arr.length : 0;
-  }
   const [isClient, setIsClient] = useState(false)
   const [members, setMembers] = useState<Member[]>([])
   const [searchQuery, setSearchQuery] = useState("")
@@ -150,10 +151,16 @@ export default function StaffMembersPage() {
   // Initialize members on client side to avoid hydration issues
   useEffect(() => {
     setIsClient(true)
-    setMembers(mockMembers)
-    setIsLoading(false)
+    // Ensure we only set members on the client side
+    if (typeof window !== 'undefined') {
+      setMembers(mockMembers)
+      setIsLoading(false)
+    }
   }, [])
-  const filteredMembers = (members || []).filter(member => {
+  // Only process members on client side
+  const filteredMembers = useMemo(() => {
+    if (!isClient) return [];
+    return (members || []).filter(member => {
     if (!member) return false;
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = member.name?.toLowerCase().includes(searchLower) ||
@@ -162,24 +169,38 @@ export default function StaffMembersPage() {
                       (member.city?.toLowerCase() || '').includes(searchLower);
     const matchesStatus = statusFilter === "all" || member.status === statusFilter;
     const matchesType = typeFilter === "all" || member.membershipType === typeFilter;
-    return matchesSearch && matchesStatus && matchesType;
-  })
-  const totalMembers = getSafeLength(members);
-  const activeMembers = getSafeLength(members?.filter(m => m?.status === "active"));
-  const inactiveMembers = getSafeLength(members?.filter(m => m?.status === "inactive"));
-  const suspendedMembers = getSafeLength(members?.filter(m => m?.status === "suspended"));
-  const newMembersThisMonth = getSafeLength(members?.filter(m => {
-    try {
-      if (!m?.joinDate) return false;
-      const joinDate = new Date(m.joinDate);
-      const now = new Date();
-      return joinDate.getMonth() === now.getMonth() && 
-             joinDate.getFullYear() === now.getFullYear();
-    } catch (e) {
-      console.error('Error processing join date:', e);
-      return false;
-    }
-  }));
+      return matchesSearch && matchesStatus && matchesType;
+    });
+  }, [members, searchQuery, statusFilter, typeFilter, isClient])
+  // Memoize statistics to prevent unnecessary recalculations
+  const { totalMembers, activeMembers, inactiveMembers, suspendedMembers, newMembersThisMonth } = useMemo(() => {
+    if (!isClient) return { 
+      totalMembers: 0, 
+      activeMembers: 0, 
+      inactiveMembers: 0, 
+      suspendedMembers: 0, 
+      newMembersThisMonth: 0 
+    };
+    
+    const now = new Date();
+    return {
+      totalMembers: getSafeLength(members),
+      activeMembers: getSafeLength(members?.filter(m => m?.status === "active")),
+      inactiveMembers: getSafeLength(members?.filter(m => m?.status === "inactive")),
+      suspendedMembers: getSafeLength(members?.filter(m => m?.status === "suspended")),
+      newMembersThisMonth: getSafeLength(members?.filter(m => {
+        try {
+          if (!m?.joinDate) return false;
+          const joinDate = new Date(m.joinDate);
+          return joinDate.getMonth() === now.getMonth() && 
+                 joinDate.getFullYear() === now.getFullYear();
+        } catch (e) {
+          console.error('Error processing join date:', e);
+          return false;
+        }
+      }))
+    };
+  }, [members, isClient]);
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never'
     try {
@@ -363,7 +384,7 @@ export default function StaffMembersPage() {
         {/* Members List */}
         <div className="border rounded-lg">
           <div className="divide-y">
-            {filteredMembers.map((member) => (
+            {filteredMembers.map((member: Member) => (
               <div key={member.id} className="p-4 hover:bg-gray-50">
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
