@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import DashboardLayout from '@/components/dashboard-layout'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,10 +32,11 @@ interface Member {
   totalVisits: number
 }
 export default function StaffCheckInPage() {
-  const [isClient, setIsClient] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [checkIns, setCheckIns] = useState<CheckInRecord[]>(() => [])
-  const [members, setMembers] = useState<Member[]>(() => [])
+  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [checkIns, setCheckIns] = useState<CheckInRecord[]>([]);
+  const [filteredCheckIns, setFilteredCheckIns] = useState<CheckInRecord[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'checked-in' | 'checked-out'>('all')
@@ -46,9 +47,9 @@ export default function StaffCheckInPage() {
   // Initialize client-side data and timer
   useEffect(() => {
     // Only run on client
-    if (typeof window === 'undefined') return
+    if (typeof window === 'undefined') return;
     
-    setIsClient(true)
+    setIsClient(true);
     
     // Simulate API call
     const loadData = () => {
@@ -59,27 +60,37 @@ export default function StaffCheckInPage() {
           { id: '3', name: 'Carol Williams', email: 'carol@tech.co', membershipType: 'enterprise', status: 'active', totalVisits: 89, lastVisit: new Date('2024-07-28') },
           { id: '4', name: 'David Brown', email: 'david@design.com', membershipType: 'premium', status: 'active', totalVisits: 34, lastVisit: new Date('2024-07-26') },
           { id: '5', name: 'Emma Davis', email: 'emma@freelance.net', membershipType: 'basic', status: 'active', totalVisits: 8, lastVisit: new Date('2024-07-28') },
-        ]
+        ];
+        
         const mockCheckIns: CheckInRecord[] = [
           { id: 'ci1', memberId: '1', memberName: 'Alice Johnson', memberEmail: 'alice@company.com', membershipType: 'premium', checkInTime: new Date('2024-07-28T08:30:00'), status: 'checked-in', location: 'Main Space' },
           { id: 'ci2', memberId: '3', memberName: 'Carol Williams', memberEmail: 'carol@tech.co', membershipType: 'enterprise', checkInTime: new Date('2024-07-28T09:15:00'), checkOutTime: new Date('2024-07-28T12:30:00'), duration: '3h 15m', status: 'checked-out', location: 'Meeting Room A' },
           { id: 'ci3', memberId: '5', memberName: 'Emma Davis', memberEmail: 'emma@freelance.net', membershipType: 'basic', checkInTime: new Date('2024-07-28T10:00:00'), status: 'checked-in', location: 'Quiet Zone' },
-        ]
-        setMembers(mockMembers)
-        setCheckIns(mockCheckIns)
-        setIsLoading(false)
+        ];
+        
+        setMembers(mockMembers);
+        setCheckIns(mockCheckIns);
+        setFilteredCheckIns(mockCheckIns); // Initialize filtered check-ins
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error loading data:', error)
-        setIsLoading(false)
+        console.error('Error loading data:', error);
+        setError('Failed to load data. Please try again.');
+        setIsLoading(false);
       }
-    }
+    };
 
-    loadData()
+    loadData();
     
     // Set up timer only on client
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000)
-    return () => clearInterval(timer)
-  }, [])
+    let timer: NodeJS.Timeout;
+    if (isClient) {
+      timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    }
+    
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [isClient]);
   // Moved timer to the initialization effect
   const handleCheckIn = (member: Member, location: string) => {
     const newCheckIn: CheckInRecord = {
@@ -111,67 +122,103 @@ export default function StaffCheckInPage() {
     return `${hours}h ${minutes}m`
   }
   // Add null checks and defensive programming
-  const filteredMembers = (Array.isArray(members) ? members : []).filter(member => {
-    if (!member) return false;
+  const filteredMembers = useMemo(() => {
     try {
-      return member.status === 'active' &&
-        (member.name?.toLowerCase().includes(searchTerm?.toLowerCase() || '') ||
-         member.email?.toLowerCase().includes(searchTerm?.toLowerCase() || ''))
+      return (Array.isArray(members) ? members : []).filter(member => {
+        if (!member) return false;
+        
+        const searchLower = searchTerm?.toLowerCase?.() || '';
+        if (!searchLower) return true; // Show all members when no search term
+        
+        return member.status === 'active' &&
+          ((member.name?.toLowerCase?.() || '').includes(searchLower) ||
+           (member.email?.toLowerCase?.() || '').includes(searchLower));
+      });
     } catch (e) {
       console.error('Error filtering members:', e);
-      return false;
+      return [];
     }
-  })
+  }, [members, searchTerm]);
 
-  const filteredCheckIns = (checkIns || []).filter(checkIn => {
-    if (!checkIn) return false;
-    if (filterStatus === 'all') return true;
-    return checkIn.status === filterStatus;
-  })
-
-  const currentCheckIns = (Array.isArray(checkIns) ? checkIns : []).filter(ci => {
+  // Update filtered check-ins when check-ins or filter status changes
+  useEffect(() => {
+    if (!Array.isArray(checkIns)) {
+      setFilteredCheckIns([]);
+      return;
+    }
+    
     try {
-      return ci && ci.status === 'checked-in' && ci.checkInTime;
+      const filtered = checkIns.filter(checkIn => {
+        if (!checkIn) return false;
+        if (filterStatus === 'all') return true;
+        return checkIn.status === filterStatus;
+      });
+      
+      setFilteredCheckIns(filtered);
+    } catch (error) {
+      console.error('Error filtering check-ins:', error);
+      setFilteredCheckIns([]);
+    }
+  }, [checkIns, filterStatus]);
+
+  const currentCheckIns = useMemo(() => {
+    try {
+      return (Array.isArray(checkIns) ? checkIns : []).filter(ci => {
+        return ci && ci.status === 'checked-in' && ci.checkInTime;
+      });
     } catch (e) {
-      console.error('Error processing check-in:', e);
-      return false;
+      console.error('Error processing check-ins:', e);
+      return [];
     }
-  })
+  }, [checkIns]);
   
-  const todayCheckIns = (Array.isArray(checkIns) ? checkIns : []).filter(ci => {
-    if (!isClient || !ci?.checkInTime) return false;
+  const todayCheckIns = useMemo(() => {
+    if (!isClient) return [];
+    
     try {
-      const checkInDate = new Date(ci.checkInTime);
-      return checkInDate.toDateString() === new Date().toDateString();
+      return (Array.isArray(checkIns) ? checkIns : []).filter(ci => {
+        if (!ci?.checkInTime) return false;
+        try {
+          const checkInDate = new Date(ci.checkInTime);
+          return checkInDate.toDateString() === new Date().toDateString();
+        } catch (e) {
+          console.error('Error processing check-in date:', e);
+          return false;
+        }
+      });
     } catch (e) {
       console.error('Error filtering today\'s check-ins:', e);
-      return false;
+      return [];
     }
-  })
+  }, [checkIns, isClient]);
 
-  const totalDurationToday = (Array.isArray(todayCheckIns) ? todayCheckIns : []).reduce((total, ci) => {
-    try {
-      if (!ci || !ci.checkInTime) return total;
-      
-      let endTime: Date;
-      if (ci.checkOutTime) {
-        endTime = new Date(ci.checkOutTime);
-      } else {
-        endTime = new Date();
-      }
-      
-      const startTime = new Date(ci.checkInTime);
-      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-        console.error('Invalid date encountered in check-in record:', ci);
+  const totalDurationToday = useMemo(() => {
+    if (!Array.isArray(todayCheckIns)) return 0;
+    
+    return todayCheckIns.reduce((total, ci) => {
+      try {
+        if (!ci?.checkInTime) return total;
+        
+        let endTime: Date;
+        if (ci.checkOutTime) {
+          endTime = new Date(ci.checkOutTime);
+        } else {
+          endTime = new Date();
+        }
+        
+        const startTime = new Date(ci.checkInTime);
+        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+          console.error('Invalid date encountered in check-in record:', ci);
+          return total;
+        }
+        
+        return total + (endTime.getTime() - startTime.getTime());
+      } catch (e) {
+        console.error('Error calculating duration:', e, ci);
         return total;
       }
-      
-      return total + (endTime.getTime() - startTime.getTime());
-    } catch (e) {
-      console.error('Error calculating duration:', e, ci);
-      return total;
-    }
-  }, 0)
+    }, 0);
+  }, [todayCheckIns]);
   const formatDuration = (ms: number): string => {
     if (!isClient) return '0h 0m';
     try {
@@ -297,7 +344,7 @@ export default function StaffCheckInPage() {
                 />
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {filteredMembers.map(member => (
+                {filteredMembers.map((member: Member) => (
                   <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <p className="font-medium">{member.name}</p>
@@ -392,7 +439,7 @@ export default function StaffCheckInPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCheckIns.map(checkIn => (
+                {filteredCheckIns.map((checkIn: CheckInRecord) => (
                   <TableRow key={checkIn.id}>
                     <TableCell>
                       <div>
