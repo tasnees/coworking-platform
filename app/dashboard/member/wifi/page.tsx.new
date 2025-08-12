@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
   Wifi, 
@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 // Types
 type NetworkStatus = 'active' | 'inactive' | 'maintenance';
 
-interface Network {
+type Network = {
   id: number;
   name: string;
   status: NetworkStatus;
@@ -29,7 +29,7 @@ interface Network {
   bandwidth: string;
   connectedDevices: number;
   usagePercent: number;
-}
+};
 
 const WiFiSettingsPage = () => {
   const [isMounted, setIsMounted] = useState(false);
@@ -116,22 +116,20 @@ const WiFiSettingsPage = () => {
   };
 
   // Handle toggle network status
-  const handleToggleStatus = useCallback((networkId: number) => {
+  const handleToggleStatus = (networkId: number) => {
     setWifiNetworks(prev => {
-      const updated = prev.map(network => {
-        if (network.id === networkId) {
-          const newStatus: NetworkStatus = network.status === 'active' ? 'inactive' : 'active';
-          return { ...network, status: newStatus };
-        }
-        return network;
-      });
+      const updated = prev.map(network => 
+        network.id === networkId 
+          ? { ...network, status: network.status === 'active' ? 'inactive' : 'active' } 
+          : network
+      );
       
       const networkName = updated.find(n => n.id === networkId)?.name || 'Network';
       toast.success(`${networkName} status updated`);
       
       return updated;
     });
-  }, []);
+  };
 
   // Don't render anything during SSR or while loading initial data
   if (!isMounted || isLoading) {
