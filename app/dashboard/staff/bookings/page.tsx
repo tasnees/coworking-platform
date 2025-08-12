@@ -13,18 +13,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 
-// Dynamically import the dashboard layout with SSR disabled
-const DashboardLayout = dynamic<React.ComponentProps<typeof import('@/components/dashboard-layout').default>>(
-  () => import('@/components/dashboard-layout').then((mod) => mod.default),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-);
+// Import the DashboardLayout directly to avoid SSR issues
+import DashboardLayout from "@/components/dashboard-layout";
 // ---
 // DATA INTERFACES & MOCK DATA
 // ---
@@ -213,6 +203,15 @@ export default function StaffBookingsPage() {
     }
   }, [isAuthenticated, router]);
 
+  // Show a loading state until authentication status is determined AND the client has mounted
+  if (isAuthenticated === null || !isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   // Filter bookings based on search and filters
   const filteredBookings = useMemo(() => {
     if (!bookings || !Array.isArray(bookings)) return [];
@@ -278,13 +277,15 @@ export default function StaffBookingsPage() {
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0);
 
-  // Show a loading state until authentication status is determined AND the client has mounted
-  if (isAuthenticated === null || !isClient) {
+
+
+  // Ensure we have valid data before rendering
+  if (!Array.isArray(bookings)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-muted-foreground">Loading bookings data...</p>
       </div>
-    )
+    );
   }
 
   return (

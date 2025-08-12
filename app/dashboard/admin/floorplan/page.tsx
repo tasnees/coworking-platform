@@ -131,21 +131,44 @@ const getDeskTypeLabel = (type: string) => {
 // ---
 // MAIN COMPONENT
 // ---
-// Define floorStats outside the component to ensure it's available during SSR
-const floorStats = [
-  { title: "Total Capacity", value: "120", icon: Users },
-  { title: "Current Occupancy", value: "78", percentage: 65, icon: Users },
-  { title: "Available Desks", value: "32", icon: Square },
-  { title: "Available Rooms", value: "4", icon: Grid },
-];
+// Calculate floor stats based on the data
+const getFloorStats = (floorId: string) => {
+  if (!floors || !areas || !desks) return [];
+  
+  const floor = floors.find(f => f.id === floorId);
+  if (!floor) return [];
+  
+  const floorAreas = areas.filter(area => area.floor === floorId);
+  const floorDesks = desks.filter(desk => desk.floor === floorId);
+  
+  const totalCapacity = floorAreas.reduce((sum, area) => sum + (area?.capacity || 0), 0);
+  const currentOccupancy = floorAreas.reduce((sum, area) => sum + (area?.occupancy || 0), 0);
+  const meetingRooms = floorAreas.filter(area => area?.type === 'meeting');
+  const occupiedMeetingRooms = meetingRooms.filter(room => room.occupancy > 0).length;
+  
+  return [
+    { id: 'capacity', title: "Total Capacity", value: totalCapacity.toString(), icon: Users, percentage: 0 },
+    { id: 'occupancy', title: "Current Occupancy", value: currentOccupancy.toString(), icon: Users, percentage: totalCapacity > 0 ? Math.round((currentOccupancy / totalCapacity) * 100) : 0 },
+    { id: 'meeting-rooms', title: "Meeting Rooms", value: `${occupiedMeetingRooms}/${meetingRooms.length}`, icon: MapPin, percentage: meetingRooms.length > 0 ? Math.round((occupiedMeetingRooms / meetingRooms.length) * 100) : 0 },
+    { id: 'revenue', title: "Daily Revenue", value: "$1,245", icon: DollarSign, percentage: 0 },
+  ];
+};
 
 export default function FloorPlanPage() {
   const [isClient, setIsClient] = useState(false);
   const [activeTab, setActiveTab] = useState("main");
   const [zoomLevel, setZoomLevel] = useState(100);
   const [editMode, setEditMode] = useState(false);
+  
+  // Calculate floor stats based on the active tab
+  const floorStats = useMemo(() => getFloorStats(activeTab), [activeTab]);
 
   // Set client-side flag
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Ensure we're on the client before filtering data
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -165,6 +188,15 @@ export default function FloorPlanPage() {
     if (!isClient || !Array.isArray(floors) || !floors.length) return null;
     return floors.find(floor => floor && floor.id === activeTab) || floors[0];
   }, [activeTab, isClient]);
+
+  // Show loading state until client-side rendering is ready
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
   
   return (
     <DashboardLayout userRole="admin">
