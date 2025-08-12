@@ -152,18 +152,18 @@ export default function FloorPlanPage() {
 
   // Use `useMemo` to filter data once per render, improving performance
   const filteredAreas = useMemo(() => {
-    if (!isClient) return [];
-    return areas.filter(area => area.floor === activeTab);
+    if (!isClient || !Array.isArray(areas)) return [];
+    return areas.filter(area => area && area.floor === activeTab);
   }, [activeTab, isClient]);
 
   const filteredDesks = useMemo(() => {
-    if (!isClient) return [];
-    return desks.filter(desk => desk.floor === activeTab);
+    if (!isClient || !Array.isArray(desks)) return [];
+    return desks.filter(desk => desk && desk.floor === activeTab);
   }, [activeTab, isClient]);
 
   const currentFloor = useMemo(() => {
-    if (!isClient || !floors.length) return null;
-    return floors.find(floor => floor.id === activeTab) || floors[0];
+    if (!isClient || !Array.isArray(floors) || !floors.length) return null;
+    return floors.find(floor => floor && floor.id === activeTab) || floors[0];
   }, [activeTab, isClient]);
   
   return (
@@ -202,8 +202,8 @@ export default function FloorPlanPage() {
         
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
-          {floorStats.map((stat, index) => (
-            <Card key={index}>
+          {Array.isArray(floorStats) && floorStats.map((stat, index) => (
+            <Card key={`stat-${index}-${stat.title || ''}`}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -227,10 +227,12 @@ export default function FloorPlanPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between">
             <TabsList>
-              {floors.map((floor) => (
-                <TabsTrigger key={floor.id} value={floor.id}>
-                  {floor.name}
-                </TabsTrigger>
+              {Array.isArray(floors) && floors.map((floor) => (
+                floor && (
+                  <TabsTrigger key={`floor-${floor.id}`} value={floor.id}>
+                    {floor.name || `Floor ${floor.id}`}
+                  </TabsTrigger>
+                )
               ))}
             </TabsList>
             <div className="flex items-center gap-2">

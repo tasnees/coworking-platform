@@ -207,31 +207,34 @@ export default function StaffBookingsPage() {
   
   // This effect runs only on the client side after the component mounts
   useEffect(() => {
-    setIsClient(true)
+    setIsClient(true);
     if (isAuthenticated === false) {
-      router.push('/auth/login')
+      router.push('/auth/login');
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, router]);
 
   // Filter bookings based on search and filters
   const filteredBookings = useMemo(() => {
     if (!bookings || !Array.isArray(bookings)) return [];
     
-    const searchLower = searchTerm.toLowerCase();
-    const statusLower = statusFilter.toLowerCase();
-    const resourceLower = resourceTypeFilter.toLowerCase();
+    const searchLower = searchTerm ? searchTerm.toLowerCase() : '';
+    const statusLower = statusFilter ? statusFilter.toLowerCase() : 'all';
+    const resourceLower = resourceTypeFilter ? resourceTypeFilter.toLowerCase() : 'all';
     
     return bookings.filter(booking => {
       if (!booking) return false;
       
+      const memberName = booking.memberName || '';
+      const memberEmail = booking.memberEmail || '';
+      const resourceName = booking.resourceName || '';
+      
       const matchesSearch = 
-        (booking.memberName?.toLowerCase() || '').includes(searchLower) ||
-        (booking.memberEmail?.toLowerCase() || '').includes(searchLower) ||
-        (booking.resourceName?.toLowerCase() || '').includes(searchLower);
+        memberName.toLowerCase().includes(searchLower) ||
+        memberEmail.toLowerCase().includes(searchLower) ||
+        resourceName.toLowerCase().includes(searchLower);
         
-      const matchesStatus = statusLower === 'all' || booking.status === statusLower;
-        
-      const matchesResource = resourceLower === 'all' || booking.resourceType === resourceLower;
+      const matchesStatus = statusLower === 'all' || (booking.status || '') === statusLower;
+      const matchesResource = resourceLower === 'all' || (booking.resourceType || '') === resourceLower;
         
       return matchesSearch && matchesStatus && matchesResource;
     });
@@ -384,9 +387,9 @@ export default function StaffBookingsPage() {
             </div>
             {/* Bookings List */}
             <div className="space-y-4">
-              {filteredBookings.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No bookings found matching your criteria
+              {!filteredBookings || filteredBookings.length === 0 ? (
+                <div key="no-bookings" className="text-center py-12">
+                  <p className="text-muted-foreground">No bookings found matching your criteria.</p>
                 </div>
               ) : (
                 filteredBookings.map((booking) => (
