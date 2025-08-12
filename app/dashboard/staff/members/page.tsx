@@ -119,7 +119,7 @@ const mockMembers: Member[] = [
   }
 ]
 export default function StaffMembersPage() {
-  const [isClient, setIsClient] = useState(false);
+  const [isClient, setIsClient] = useState(false)
   const [members, setMembers] = useState<Member[]>(mockMembers)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
@@ -142,6 +142,7 @@ export default function StaffMembersPage() {
     country: "",
     notes: ""
   })
+  // This useEffect ensures that the component only renders client-side-dependent logic after mounting.
   useEffect(() => {
     setIsClient(true)
   }, [])
