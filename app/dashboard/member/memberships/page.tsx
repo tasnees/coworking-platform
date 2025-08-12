@@ -6,9 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import DashboardLayout from "@/components/dashboard-layout";
-import { Calendar, Clock, CreditCard, Users, Star, CheckCircle, AlertCircle, TrendingUp, Package, Zap, Shield } from "lucide-react";
+import { 
+  Calendar, 
+  Clock, 
+  CreditCard, 
+  Users, 
+  Star, 
+  CheckCircle, 
+  AlertCircle, 
+  TrendingUp, 
+  Package, 
+  Zap, 
+  Shield, 
+  Download, 
+  ArrowUpRight,
+  ChevronRight,
+  Loader2
+} from "lucide-react";
+
 // Type definitions
 type PlanType = "basic" | "standard" | "premium" | "enterprise";
 type BillingCycle = "monthly" | "quarterly" | "annually";
@@ -54,6 +75,7 @@ interface BillingHistory {
   description: string;
   invoiceUrl?: string;
 }
+
 // Mock data generation functions
 const generateMockMembership = (): MembershipPlan => ({
   id: "premium-001",
@@ -121,21 +143,110 @@ const generateMockBillingHistory = (): BillingHistory[] => [
   }
 ];
 
+// Available plans mock data
+const availablePlans: MembershipPlan[] = [
+  {
+    id: "basic-001",
+    name: "Basic Plan",
+    type: "basic",
+    price: 99,
+    billingCycle: "monthly",
+    features: [
+      "5 desk bookings/month",
+      "Basic WiFi",
+      "Coffee access"
+    ],
+    credits: 10,
+    maxUsers: 1,
+    currentUsers: 0,
+    status: "inactive",
+    startDate: "",
+    autoRenew: true
+  },
+  {
+    id: "standard-001",
+    name: "Standard Plan",
+    type: "standard",
+    price: 199,
+    billingCycle: "monthly",
+    features: [
+      "25 desk bookings/month",
+      "5 meeting room hours/month",
+      "Premium WiFi",
+      "Coffee & snacks",
+      "Printing (50 pages/month)"
+    ],
+    credits: 25,
+    maxUsers: 1,
+    currentUsers: 0,
+    status: "inactive",
+    startDate: "",
+    autoRenew: true
+  },
+  {
+    id: "premium-001",
+    name: "Premium Plan",
+    type: "premium",
+    price: 299,
+    billingCycle: "monthly",
+    features: [
+      "Unlimited desk bookings",
+      "10 meeting room hours/month",
+      "Premium WiFi",
+      "Coffee & snacks",
+      "Printing (100 pages/month)",
+      "Phone booth access",
+      "Event space discount",
+      "Priority support"
+    ],
+    credits: 50,
+    maxUsers: 1,
+    currentUsers: 1,
+    status: "active",
+    startDate: "2024-01-01",
+    autoRenew: true
+  },
+  {
+    id: "enterprise-001",
+    name: "Enterprise Plan",
+    type: "enterprise",
+    price: 599,
+    billingCycle: "monthly",
+    features: [
+      "Unlimited everything",
+      "50 meeting room hours/month",
+      "Premium WiFi",
+      "Coffee & snacks",
+      "Unlimited printing",
+      "Dedicated desk option",
+      "24/7 access",
+      "Event space access",
+      "Priority booking",
+      "Team management"
+    ],
+    credits: 100,
+    maxUsers: 5,
+    currentUsers: 0,
+    status: "inactive",
+    startDate: "",
+    autoRenew: true
+  }
+];
+
 export default function MembershipsPage() {
   const [isClient, setIsClient] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showAutoRenewDialog, setShowAutoRenewDialog] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<MembershipPlan | null>(null);
   const [currentMembership, setCurrentMembership] = useState<MembershipPlan | null>(null);
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [billingHistory, setBillingHistory] = useState<BillingHistory[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Initialize data on client-side only
   useEffect(() => {
     setIsClient(true);
-    
+
     // Simulate API calls
     const loadData = async () => {
       try {
@@ -149,223 +260,28 @@ export default function MembershipsPage() {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
   }, []);
 
-  // Loading state
-  if (!isClient || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-    features: [
-      "Unlimited desk bookings",
-      "10 meeting room hours/month",
-      "Premium WiFi",
-      "Coffee & snacks",
-      "Printing (100 pages/month)",
-      "Phone booth access",
-      "Event space discount",
-      "Priority support"
-    ],
-  // Handle auto-renew toggle
-  const handleToggleAutoRenew = () => {
-    if (!currentMembership) return;
-    
-    setCurrentMembership(prev => ({
-      ...prev!,
-      autoRenew: !prev!.autoRenew
-    }));
-    
-    setShowAutoRenewDialog(true);
-  };
-  
-  // Handle plan upgrade
-  const handleUpgradePlan = (plan: MembershipPlan) => {
-    setSelectedPlan(plan);
-    setShowUpgradeDialog(true);
-  };
-  
-  // Handle invoice download
-  const handleDownloadInvoice = (invoiceId: string, description: string) => {
-    if (!currentMembership) return;
-    
-    try {
-      const invoiceData = {
-        id: invoiceId,
-        description,
-        date: new Date().toISOString(),
-        amount: currentMembership.price,
-        member: "Current User",
-        plan: currentMembership.name
-      };
-      
-      // Create a simple text file for demo purposes
-      const invoiceText = `
-INVOICE
-=======
-Invoice ID: ${invoiceData.id}
-Description: ${invoiceData.description}
-Date: ${new Date(invoiceData.date).toLocaleDateString()}
-Amount: ${formatCurrency(invoiceData.amount)}
-Plan: ${invoiceData.plan}
-Member: ${invoiceData.member}
-Thank you for your business!
-      `.trim();
-      
-      const blob = new Blob([invoiceText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${invoiceId}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error generating invoice:', error);
-    }
-  };
-
-  const usageStats: UsageStats | null = !isClient ? null : {
-    monthly: {
-      creditsUsed: 32,
-      creditsRemaining: 18,
-      totalCredits: 50,
-      bookings: 12,
-      hoursUsed: 45.5
-    },
-    daily: {
-      checkIns: 8,
-      hoursToday: 6.5,
-      amenitiesUsed: ["WiFi", "Coffee", "Meeting Room A", "Printer"]
-    }
-  };
-
-  const billingHistory: BillingHistory[] | null = !isClient ? null : [
-    {
-      id: "bill-001",
-      date: "2024-01-15",
-      amount: 299,
-      status: "paid",
-      description: "Premium Plan - January 2024",
-      invoiceUrl: "/invoices/inv-001.pdf"
-    },
-    {
-      id: "bill-002",
-      date: "2023-12-15",
-      amount: 299,
-      status: "paid",
-      description: "Premium Plan - December 2023",
-      invoiceUrl: "/invoices/inv-002.pdf"
-    },
-    {
-      id: "bill-003",
-      date: "2023-11-15",
-      amount: 299,
-      status: "paid",
-      description: "Premium Plan - November 2023",
-      invoiceUrl: "/invoices/inv-003.pdf"
-    }
-  ];
-
-  const availablePlans: MembershipPlan[] | null = !isClient ? null : [
-    {
-      id: "basic-001",
-      name: "Basic Plan",
-      type: "basic",
-      price: 99,
-      billingCycle: "monthly",
-      features: [
-        "5 desk bookings/month",
-        "Basic WiFi",
-        "Coffee access"
-      ],
-      credits: 10,
-      maxUsers: 1,
-      currentUsers: 0,
-      status: "inactive",
-      startDate: "",
-      autoRenew: true
-    },
-    {
-      id: "standard-001",
-      name: "Standard Plan",
-      type: "standard",
-      price: 199,
-      billingCycle: "monthly",
-      features: [
-        "25 desk bookings/month",
-        "5 meeting room hours/month",
-        "Premium WiFi",
-        "Coffee & snacks",
-        "Printing (50 pages/month)"
-      ],
-      credits: 25,
-      maxUsers: 1,
-      currentUsers: 0,
-      status: "inactive",
-      startDate: "",
-      autoRenew: true
-    },
-    {
-      id: "enterprise-001",
-      name: "Enterprise Plan",
-      type: "enterprise",
-      price: 599,
-      billingCycle: "monthly",
-      features: [
-        "Unlimited everything",
-        "50 meeting room hours/month",
-        "Premium WiFi",
-        "Coffee & snacks",
-        "Unlimited printing",
-        "Dedicated desk option",
-        "24/7 access",
-        "Event space access",
-        "Priority booking",
-        "Team management"
-      ],
-      credits: 100,
-      maxUsers: 5,
-      currentUsers: 0,
-      status: "inactive",
-      startDate: "",
-      autoRenew: true
-    }
-  ];
-
+  // Helper functions
   const getPlanIcon = (type: string) => {
     switch (type) {
-      case "basic":
-        return <Package className="h-5 w-5" />;
-      case "standard":
-        return <Zap className="h-5 w-5" />;
-      case "premium":
-        return <Star className="h-5 w-5" />;
-      case "enterprise":
-        return <Shield className="h-5 w-5" />;
-      default:
-        return <Package className="h-5 w-5" />;
+      case "basic": return <Package className="h-5 w-5" />;
+      case "standard": return <Zap className="h-5 w-5" />;
+      case "premium": return <Star className="h-5 w-5" />;
+      case "enterprise": return <Shield className="h-5 w-5" />;
+      default: return <Package className="h-5 w-5" />;
     }
   };
 
   const getPlanColor = (type: string) => {
     switch (type) {
-      case "basic":
-        return "text-gray-600";
-      case "standard":
-        return "text-blue-600";
-      case "premium":
-        return "text-purple-600";
-      case "enterprise":
-        return "text-orange-600";
-      default:
-        return "text-gray-600";
+      case "basic": return "text-gray-600";
+      case "standard": return "text-blue-600";
+      case "premium": return "text-purple-600";
+      case "enterprise": return "text-orange-600";
+      default: return "text-gray-600";
     }
   };
 
@@ -380,8 +296,9 @@ Thank you for your business!
     return Math.min((used / total) * 100, 100);
   };
 
+  // Event handlers
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
-    if (!isClient || !currentMembership) return;
+    if (!currentMembership) return;
 
     try {
       const invoiceData = {
@@ -419,29 +336,43 @@ Thank you for your business!
     }
   };
 
+  // Toggle Auto-Renewal
   const handleToggleAutoRenew = () => {
+    if (currentMembership) {
+      const newAutoRenewStatus = !currentMembership.autoRenew;
+      setCurrentMembership(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          autoRenew: newAutoRenewStatus
+        };
+      });
+    }
     setShowAutoRenewDialog(true);
   };
 
-  const confirmToggleAutoRenew = () => {
-    if (!currentMembership) return;
-
-    setCurrentMembership(prev => ({
-      ...prev!,
-      autoRenew: !prev.autoRenew
-    }));
-    setShowAutoRenewDialog(true);
-  };
-
-  const handleUpgradePlan = (plan: MembershipPlan) => {
-    setSelectedPlan(plan);
+  // Handle upgrade button click
+  const handleUpgradePlan = () => {
     setShowUpgradeDialog(true);
   };
 
-  if (!isClient || !currentMembership || !usageStats || !billingHistory || !availablePlans) {
+  // The state for the selected plan in the dialog
+  const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<MembershipPlan | null>(null);
+  
+  // Loading state
+  if (!isClient || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Error state - ensure all required data is loaded
+  if (!currentMembership || !usageStats || !billingHistory) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-muted-foreground">Error loading membership data. Please try again.</div>
       </div>
     );
   }
@@ -477,8 +408,8 @@ Thank you for your business!
                   <span>Credits Used This Month</span>
                   <span>{usageStats.monthly.creditsUsed} / {usageStats.monthly.totalCredits}</span>
                 </div>
-                <Progress 
-                  value={calculateProgress(usageStats.monthly.creditsUsed, usageStats.monthly.totalCredits)} 
+                <Progress
+                  value={calculateProgress(usageStats.monthly.creditsUsed, usageStats.monthly.totalCredits)}
                   className="h-2"
                 />
               </div>
@@ -533,21 +464,21 @@ Thank you for your business!
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
-                  className="w-full" 
-                  onClick={() => setShowUpgradeDialog(true)}
+                <Button
+                  className="w-full"
+                  onClick={handleUpgradePlan}
                 >
                   Upgrade Plan
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
-                  onClick={handleToggleAutoRenew}
+                  onClick={() => setShowAutoRenewDialog(true)}
                 >
                   Manage Auto-Renewal
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full"
                   onClick={() => handleDownloadInvoice('latest', 'Latest Invoice')}
                 >
@@ -566,7 +497,7 @@ Thank you for your business!
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {currentMembership?.features?.map((feature, index) => (
+                  {currentMembership.features.map((feature, index) => (
                     <li key={`feature-${index}-${feature.substring(0, 10)}`} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
                       <span>{feature}</span>
@@ -585,7 +516,7 @@ Thank you for your business!
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {availablePlans?.map((plan) => (
+                  {availablePlans.map((plan) => (
                     <Card key={plan.id} className="relative">
                       <CardHeader>
                         <CardTitle className={`flex items-center gap-2 ${getPlanColor(plan.type)}`}>
@@ -602,25 +533,28 @@ Thank you for your business!
                             {plan.credits} credits / month
                           </div>
                           <ul className="space-y-1 text-sm">
-                            {plan.features?.slice(0, 3).map((feature, index) => (
+                            {plan.features.slice(0, 3).map((feature, index) => (
                               <li key={index} className="flex items-center gap-1">
                                 <CheckCircle className="h-3 w-3 text-gray-400" />
                                 <span className="text-gray-600">{feature}</span>
                               </li>
                             ))}
-                            {plan.features?.length > 3 && (
+                            {plan.features.length > 3 && (
                               <li className="text-xs text-muted-foreground">
                                 +{plan.features.length - 3} more features
                               </li>
                             )}
                           </ul>
-                          <Button 
-                            className="w-full" 
-                            variant={plan.type === currentMembership.type ? "outline" : "default"}
-                            disabled={plan.type === currentMembership.type}
-                            onClick={() => setSelectedPlan(plan)}
+                          <Button
+                            className="w-full"
+                            variant={currentMembership && plan.type === currentMembership.type ? "outline" : "default"}
+                            disabled={currentMembership && plan.type === currentMembership.type}
+                            onClick={() => {
+                              setSelectedPlanForUpgrade(plan);
+                              setShowUpgradeDialog(true);
+                            }}
                           >
-                            {plan.type === currentMembership.type ? "Current Plan" : "Upgrade"}
+                            {currentMembership && plan.type === currentMembership.type ? "Current Plan" : "Upgrade"}
                           </Button>
                         </div>
                       </CardContent>
@@ -656,10 +590,10 @@ Thank you for your business!
                     </Badge>
                   </div>
                   <div className="pt-4">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
-                      onClick={handleToggleAutoRenew}
+                      onClick={() => setShowAutoRenewDialog(true)}
                       className="w-full"
                     >
                       {currentMembership.autoRenew ? "Disable Auto-Renewal" : "Enable Auto-Renewal"}
@@ -678,7 +612,7 @@ Thank you for your business!
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {billingHistory?.map((bill) => (
+                  {billingHistory.map((bill) => (
                     <div key={bill.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <div className="font-medium">{bill.description}</div>
@@ -692,16 +626,16 @@ Thank you for your business!
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-semibold">{formatCurrency(bill.amount)}</span>
-                        <Badge 
+                        <Badge
                           variant={
-                            bill.status === "paid" ? "default" : 
+                            bill.status === "paid" ? "default" :
                             bill.status === "pending" ? "secondary" : "destructive"
                           }
                         >
                           {bill.status}
                         </Badge>
-                        <Button 
-                          variant="ghost" 
+                        <Button
+                          variant="ghost"
                           size="sm"
                           onClick={() => handleDownloadInvoice(bill.id, bill.description)}
                         >
@@ -734,11 +668,11 @@ Thank you for your business!
                         {formatCurrency(plan.price)} / {plan.billingCycle}
                       </div>
                     </div>
-                    <Button 
+                    <Button
                       size="sm"
-                      disabled={plan.type === currentMembership.type}
+                      disabled={currentMembership && plan.type === currentMembership.type}
                     >
-                      {plan.type === currentMembership.type ? "Current" : "Select"}
+                      {currentMembership && plan.type === currentMembership.type ? "Current" : "Select"}
                     </Button>
                   </div>
                 </Card>
@@ -752,24 +686,24 @@ Thank you for your business!
             <DialogHeader>
               <DialogTitle>Confirm Auto-Renewal Change</DialogTitle>
               <DialogDescription>
-                {currentMembership.autoRenew 
+                {currentMembership?.autoRenew
                   ? "Are you sure you want to disable auto-renewal? Your membership will expire at the end of the current billing cycle."
                   : "Are you sure you want to enable auto-renewal? Your membership will automatically renew at the end of each billing cycle."
                 }
               </DialogDescription>
             </DialogHeader>
             <div className="flex justify-end gap-3 mt-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setShowAutoRenewDialog(false)}
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={confirmToggleAutoRenew}
-                variant={currentMembership.autoRenew ? "destructive" : "default"}
+              <Button
+                onClick={handleToggleAutoRenew}
+                variant={currentMembership?.autoRenew ? "destructive" : "default"}
               >
-                {currentMembership.autoRenew ? "Disable" : "Enable"} Auto-Renewal
+                {currentMembership?.autoRenew ? "Disable" : "Enable"} Auto-Renewal
               </Button>
             </div>
           </DialogContent>
@@ -778,3 +712,4 @@ Thank you for your business!
     </DashboardLayout>
   )
 }
+
