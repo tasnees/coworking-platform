@@ -131,26 +131,61 @@ const getDeskTypeLabel = (type: string) => {
 // ---
 // MAIN COMPONENT
 // ---
-// Calculate floor stats based on the data
-const getFloorStats = (floorId: string) => {
-  if (!floors || !areas || !desks) return [];
+interface FloorStat {
+  id: string;
+  title: string;
+  value: string;
+  icon: React.ElementType;
+  percentage: number;
+}
+
+const getFloorStats = (floorId: string): FloorStat[] => {
+  // Safely filter areas and desks, defaulting to empty arrays if undefined
+  const floorAreas = Array.isArray(areas) ? areas.filter((area: any) => area?.floor === floorId) : [];
+  const floorDesks = Array.isArray(desks) ? desks.filter((desk: any) => desk?.floor === floorId) : [];
   
-  const floor = floors.find(f => f.id === floorId);
-  if (!floor) return [];
+  // Filter for meeting rooms with null checks
+  const meetingRooms = Array.isArray(floorAreas) ? floorAreas.filter((area: any) => area?.type === 'meeting') : [];
+  const occupiedMeetingRooms = Array.isArray(meetingRooms) ? meetingRooms.filter((room: any) => room?.occupancy > 0).length : 0;
   
-  const floorAreas = areas.filter(area => area.floor === floorId);
-  const floorDesks = desks.filter(desk => desk.floor === floorId);
-  
-  const totalCapacity = floorAreas.reduce((sum, area) => sum + (area?.capacity || 0), 0);
-  const currentOccupancy = floorAreas.reduce((sum, area) => sum + (area?.occupancy || 0), 0);
-  const meetingRooms = floorAreas.filter(area => area?.type === 'meeting');
-  const occupiedMeetingRooms = meetingRooms.filter(room => room.occupancy > 0).length;
-  
+  // Calculate total capacity and occupancy with null checks
+  const totalCapacity = Array.isArray(floorAreas) 
+    ? floorAreas.reduce((sum: number, area: any) => sum + (Number(area?.capacity) || 0), 0)
+    : 0;
+    
+  const currentOccupancy = Array.isArray(floorDesks)
+    ? floorDesks.filter((desk: any) => desk?.status === 'occupied').length
+    : 0;
+
   return [
-    { id: 'capacity', title: "Total Capacity", value: totalCapacity.toString(), icon: Users, percentage: 0 },
-    { id: 'occupancy', title: "Current Occupancy", value: currentOccupancy.toString(), icon: Users, percentage: totalCapacity > 0 ? Math.round((currentOccupancy / totalCapacity) * 100) : 0 },
-    { id: 'meeting-rooms', title: "Meeting Rooms", value: `${occupiedMeetingRooms}/${meetingRooms.length}`, icon: MapPin, percentage: meetingRooms.length > 0 ? Math.round((occupiedMeetingRooms / meetingRooms.length) * 100) : 0 },
-    { id: 'revenue', title: "Daily Revenue", value: "$1,245", icon: DollarSign, percentage: 0 },
+    { 
+      id: 'capacity', 
+      title: "Total Capacity", 
+      value: totalCapacity.toString(), 
+      icon: Users, 
+      percentage: 0 
+    },
+    { 
+      id: 'occupancy', 
+      title: "Current Occupancy", 
+      value: currentOccupancy.toString(), 
+      icon: Users, 
+      percentage: totalCapacity > 0 ? Math.round((currentOccupancy / totalCapacity) * 100) : 0 
+    },
+    { 
+      id: 'meeting-rooms', 
+      title: "Meeting Rooms", 
+      value: `${occupiedMeetingRooms}/${meetingRooms.length}`, 
+      icon: MapPin, 
+      percentage: meetingRooms.length > 0 ? Math.round((occupiedMeetingRooms / meetingRooms.length) * 100) : 0 
+    },
+    { 
+      id: 'revenue', 
+      title: "Daily Revenue", 
+      value: "$1,245", 
+      icon: DollarSign, 
+      percentage: 0 
+    },
   ];
 };
 
