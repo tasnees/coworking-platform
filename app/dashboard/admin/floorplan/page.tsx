@@ -226,9 +226,17 @@ const getSafeLength = (arr: any[] | undefined): number => {
 };
 
 // Safe data access for SSR
-const safeFloors: Floor[] = typeof window !== 'undefined' ? floors : [];
-const safeAreas: Area[] = typeof window !== 'undefined' ? areas : [];
-const safeDesks: Desk[] = typeof window !== 'undefined' ? desks : [];
+const safeFloors: Floor[] = [];
+const safeAreas: Area[] = [];
+const safeDesks: Desk[] = [];
+
+// Initialize client-side data
+if (typeof window !== 'undefined') {
+  // Only access window-dependent data on the client side
+  safeFloors.push(...(floors || []));
+  safeAreas.push(...(areas || []));
+  safeDesks.push(...(desks || []));
+}
 
 const getFloorStats = (floorId: string): FloorStat[] => {
   // Early return if running on server
@@ -348,21 +356,25 @@ export default function FloorPlanPage() {
 
   // Calculate floor stats based on the active tab
   const floorStats = useMemo(() => {
+    if (!isClient) return [];
     return getFloorStats(activeTab);
-  }, [activeTab]);
+  }, [activeTab, isClient]);
 
   // Use `useMemo` to filter data once per render, improving performance
   const filteredAreas = useMemo(() => {
+    if (!isClient) return [];
     return safeAccess.areas.filter((area: Area) => area && area.floor === activeTab);
-  }, [activeTab, safeAreas]);
+  }, [activeTab, isClient]);
 
   const filteredDesks = useMemo(() => {
+    if (!isClient) return [];
     return safeDesks.filter((desk: Desk) => desk && desk.floor === activeTab);
-  }, [activeTab, safeDesks]);
+  }, [activeTab, isClient, safeDesks]);
 
   const currentFloor = useMemo(() => {
+    if (!isClient || !safeFloors.length) return null;
     return safeFloors.find((f: Floor) => f.id === activeTab) || safeFloors[0];
-  }, [activeTab]);
+  }, [activeTab, isClient, safeFloors]);
 
   // Show loading state until client-side rendering is ready
   if (!isClient) {
@@ -370,10 +382,19 @@ export default function FloorPlanPage() {
   }
 
   // Ensure we have valid data before rendering
-  if (!safeFloors.length || !safeAreas.length || !safeDesks.length) {
+  if (!isClient || !safeFloors?.length || !safeAreas?.length || !safeDesks?.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Loading floor plan data...</p>
+      </div>
+    );
+  }
+  
+  // Ensure currentFloor is available
+  if (!currentFloor) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p>No floor data available.</p>
       </div>
     );
   }

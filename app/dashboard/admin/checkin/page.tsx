@@ -21,7 +21,24 @@ interface HistoryItem {
   code: string;
 }
 
-function App() {
+// Main CheckInPage component
+export default function CheckInPage() {
+  // Only render on client-side to avoid hydration mismatches
+  const [isMounted, setIsMounted] = useState(false);
+  
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
+  if (!isMounted) {
+    return <div className="p-6">Loading check-in system...</div>;
+  }
+  
+  return <CheckInApp />;
+}
+
+// Main app component that runs only on client-side
+function CheckInApp() {
   const [prompt, setPrompt] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [generatedCode, setGeneratedCode] = useState('');
@@ -31,35 +48,92 @@ function App() {
   const [toastMessage, setToastMessage] = useState<{ visible: boolean; message: string; type: string }>({ visible: false, message: '', type: 'success' });
   // Explicitly type the history array with the HistoryItem interface
   const [codeHistory, setCodeHistory] = useState<HistoryItem[]>([]);
+  // Client-side state
   const [isClient, setIsClient] = useState(false);
 
   // Set isClient to true when component mounts (client-side only)
   useEffect(() => {
     setIsClient(true);
+    
+    // Load saved history from localStorage if available
+    try {
+      const savedHistory = localStorage.getItem('codeHistory');
+      if (savedHistory) {
+        setCodeHistory(JSON.parse(savedHistory));
+      }
+    } catch (error) {
+      console.error('Error loading history from localStorage:', error);
+    }
   }, []);
+  
+  // Save history to localStorage when it changes
+  useEffect(() => {
+    if (codeHistory.length > 0) {
+      try {
+        localStorage.setItem('codeHistory', JSON.stringify(codeHistory));
+      } catch (error) {
+        console.error('Error saving history to localStorage:', error);
+      }
+    }
+  }, [codeHistory]);
 
-  // Simple toast/message box implementation
+  // Simple toast/message box implementation with cleanup
   const showToast = (message: string, type = 'success') => {
+    // Clear any existing timeout
+    if ((window as any).toastTimeout) {
+      clearTimeout((window as any).toastTimeout);
+    }
+    
     setToastMessage({ visible: true, message, type });
-    setTimeout(() => {
-      setToastMessage({ visible: false, message: '', type: 'success' });
+    
+    // Set timeout to hide toast
+    (window as any).toastTimeout = setTimeout(() => {
+      setToastMessage(prev => ({ ...prev, visible: false }));
     }, 3000);
   };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if ((window as any).toastTimeout) {
+        clearTimeout((window as any).toastTimeout);
+      }
+    };
+  }, []);
 
   const copyToClipboard = () => {
-    if (generatedCode) {
+    if (typeof window === 'undefined' || !generatedCode) return;
+    
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = generatedCode;
+      document.body.appendChild(textarea);
+      textarea.select();
+      
+      let success = false;
       try {
-        const textarea = document.createElement('textarea');
-        textarea.value = generatedCode;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textarea);
-        showToast('Code copied to clipboard!', 'success');
+        success = document.execCommand('copy');
       } catch (err) {
-        showToast('Failed to copy code.', 'error');
-        console.error('Failed to copy text: ', err);
+        console.error('Failed to copy using execCommand:', err);
       }
+      
+      if (!success) {
+        // Fallback to modern Clipboard API
+        navigator.clipboard.writeText(generatedCode).then(
+          () => showToast('Code copied to clipboard!', 'success'),
+          () => {
+            console.error('Failed to copy using Clipboard API');
+            showToast('Failed to copy code.', 'error');
+          }
+        );
+      } else {
+        showToast('Code copied to clipboard!', 'success');
+      }
+      
+      document.body.removeChild(textarea);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      showToast('Failed to copy code.', 'error');
     }
   };
 
@@ -335,4 +409,4 @@ function App() {
   );
 }
 
-export default App;
+
