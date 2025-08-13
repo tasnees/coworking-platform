@@ -510,8 +510,9 @@ export default function AdminMembersPage() {
     setIsClient(true);
     // Simulate API call
     const timer = setTimeout(() => {
-      setMembers(mockMembers);
-      setFilteredMembers(mockMembers);
+      const membersData = [...mockMembers]; // Create a copy of mock data
+      setMembers(membersData);
+      setFilteredMembers(membersData);
       setLoading(false);
     }, 500);
 
@@ -520,7 +521,7 @@ export default function AdminMembersPage() {
 
   // Handle search and filter
   useEffect(() => {
-    if (!members) return;
+    if (!members || !Array.isArray(members)) return;
     
     let result = [...members];
     
@@ -541,6 +542,15 @@ export default function AdminMembersPage() {
     
     setFilteredMembers(result);
   }, [searchTerm, statusFilter, members]);
+
+  // Show loading state if not mounted or still loading
+  if (!isClient || loading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <DashboardLayout userRole="admin" onNavigate={() => {}}>
@@ -584,11 +594,7 @@ export default function AdminMembersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {!isClient || loading ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-              </div>
-            ) : !members ? (
+            {!members ? (
               <p className="text-center text-gray-500">Failed to load members</p>
             ) : (
               <Table>

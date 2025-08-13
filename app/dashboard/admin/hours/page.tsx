@@ -71,10 +71,11 @@ function HoursContent() {
   const [activeTab, setActiveTab] = useState("regular");
   const [regularHours, setRegularHours] = useState<Weekday[] | null>(null);
   const [specialHours, setSpecialHours] = useState<SpecialDay[] | null>(null);
+  const [membershipAccess, setMembershipAccess] = useState<MembershipAccess[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-    // Mock data for regular hours
+  // Mock data for regular hours
   const mockRegularHours: Weekday[] = [
     { id: 'monday', day: 'Monday', open: '09:00', close: '18:00', is24Hours: false, isClosed: false },
     { id: 'tuesday', day: 'Tuesday', open: '09:00', close: '18:00', is24Hours: false, isClosed: false },
@@ -98,8 +99,6 @@ function HoursContent() {
     { id: '3', name: 'Custom Hours', accessHours: 'Custom', has24HourAccess: false },
   ];
 
-  const [membershipAccess, setMembershipAccess] = useState<MembershipAccess[]>([]);
-
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -121,8 +120,8 @@ function HoursContent() {
     initializeData();
   }, []);
 
-  // Show loading state if not mounted, still loading, or data not initialized yet
-  if (!isMounted || isLoading || !regularHours || !specialHours) {
+  // Show loading state if not mounted, still loading, or data not initialized
+  if (!isMounted || isLoading || regularHours === null || specialHours === null || membershipAccess === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -178,7 +177,7 @@ function HoursContent() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {regularHours.map((day) => (
+                {regularHours?.map((day) => (
                   <div key={day.id} className="flex items-center space-x-4 rounded-lg border p-4">
                     <div className="w-32 font-medium">{day.day}</div>
                     <div className="flex-1">

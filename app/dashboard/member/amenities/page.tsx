@@ -192,9 +192,22 @@ export default function AmenitiesPage() {
       status: "completed"
     },
   ]
-  // Initialize client-side flag
+  // Initialize client-side flag and state
+  const [isLoading, setIsLoading] = useState(true);
+  const [clientSideAmenities, setClientSideAmenities] = useState<typeof amenities | null>(null);
+  const [clientSideMaintenance, setClientSideMaintenance] = useState<typeof maintenanceSchedule | null>(null);
+
+  // Load data on client side only
   useEffect(() => {
-    setIsClient(true)
+    setIsClient(true);
+    // Simulate API call with a small delay
+    const timer = setTimeout(() => {
+      setClientSideAmenities([...amenities]);
+      setClientSideMaintenance([...maintenanceSchedule]);
+      setIsLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [])
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -209,7 +222,7 @@ export default function AmenitiesPage() {
     }
   }
   const getStatusIcon = (status: string) => {
-    if (!isClient) return AlertTriangle; // Fallback icon during SSR
+    if (!isClient || isLoading) return AlertTriangle; // Fallback icon during SSR/loading
     switch (status) {
       case "operational":
         return CheckCircle2
@@ -233,6 +246,21 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
+  // Show loading state during SSR or while loading
+  if (!isClient || isLoading) {
+    return (
+      <DashboardLayout userRole="member">
+        <div className="flex h-screen w-full items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Use client-side data when available
+  const displayAmenities = clientSideAmenities || [];
+  const displayMaintenance = clientSideMaintenance || [];
+
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
@@ -250,7 +278,7 @@ export default function AmenitiesPage() {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{amenities.length}</div>
+              <div className="text-2xl font-bold">{displayAmenities.length}</div>
               <p className="text-xs text-muted-foreground">
                 <span className="text-green-600">+2</span> from last month
               </p>
@@ -263,10 +291,12 @@ export default function AmenitiesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {amenities.filter(a => a.status === "operational").length}
+                {displayAmenities.filter(a => a.status === "operational").length}
               </div>
               <p className="text-xs text-muted-foreground">
-                {Math.round((amenities.filter(a => a.status === "operational").length / amenities.length) * 100)}% of total amenities
+                {displayAmenities.length > 0 
+                  ? `${Math.round((displayAmenities.filter(a => a.status === "operational").length / displayAmenities.length) * 100)}% of total amenities`
+                  : 'No amenities available'}
               </p>
             </CardContent>
           </Card>
@@ -277,10 +307,12 @@ export default function AmenitiesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {amenities.filter(a => a.status === "maintenance").length}
+                {displayAmenities.filter(a => a.status === "maintenance").length}
               </div>
               <p className="text-xs text-muted-foreground">
-                {Math.round((amenities.filter(a => a.status === "maintenance").length / amenities.length) * 100)}% of total amenities
+                {displayAmenities.length > 0 
+                  ? `${Math.round((displayAmenities.filter(a => a.status === "maintenance").length / displayAmenities.length) * 100)}% of total amenities`
+                  : 'No amenities available'}
               </p>
             </CardContent>
           </Card>
@@ -291,12 +323,12 @@ export default function AmenitiesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {maintenanceSchedule.filter(m => m.status === "scheduled").length}
+                {displayMaintenance.filter(m => m.status === "scheduled").length}
               </div>
               <p className="text-xs text-muted-foreground">
-                {isClient ? (
-                  `Next: ${maintenanceSchedule.find(m => m.status === "scheduled")?.date || "N/A"}`
-                ) : 'Loading...'}
+                {displayMaintenance.length > 0 
+                  ? `Next: ${displayMaintenance.find(m => m.status === "scheduled")?.date || "N/A"}`
+                  : 'No scheduled maintenance'}
               </p>
             </CardContent>
           </Card>
@@ -311,7 +343,7 @@ export default function AmenitiesPage() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {amenities.map((amenity) => {
+              {displayAmenities.map((amenity) => {
                 const StatusIcon = getStatusIcon(amenity.status)
                 return (
                   <Card key={amenity.id} className="overflow-hidden">
@@ -368,7 +400,7 @@ export default function AmenitiesPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {maintenanceSchedule.map((maintenance) => (
+                  {displayMaintenance.map((maintenance) => (
                     <div key={maintenance.id} className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
