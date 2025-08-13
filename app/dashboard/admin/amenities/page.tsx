@@ -52,15 +52,21 @@ import {
   Loader2
 } from "lucide-react"
 // Main component with proper loading state
+// Helper function to safely get array length
+const getSafeLength = (arr: any[] | undefined): number => {
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
 export default function AmenitiesPage() {
   const [isMounted, setIsMounted] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  
   useEffect(() => {
     setIsMounted(true)
     setIsClient(true)
   }, [])
-  // Show loading state until component is mounted
-  if (!isMounted || !isClient) {
+  // Show loading state until component is mounted on client
+  if (typeof window === 'undefined' || !isMounted || !isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>

@@ -1,7 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Home, Settings, Users, Sun, Moon, Calendar, Clock, CreditCard, Star, CheckCircle, TrendingUp, Package, Zap, Shield } from "lucide-react";
+
+// Helper function to safely access window object
+type SafeWindow = {
+  document?: Document;
+  URL?: {
+    createObjectURL: (obj: Blob | MediaSource) => string;
+    revokeObjectURL: (url: string) => void;
+  };
+};
+
+const safeWindow: SafeWindow = typeof window !== 'undefined' ? window : {};
 
 // The `lucide-react` library is used here, and it is assumed to be available.
 // If you are using a different icon library, you may need to adjust the imports.
@@ -371,26 +382,61 @@ const availablePlans: MembershipPlan[] = [
 
 const MembershipsPage = () => {
   const [isClient, setIsClient] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "billing" | "usage">("overview");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [showAutoRenewDialog, setShowAutoRenewDialog] = useState(false);
   const [currentMembership, setCurrentMembership] = useState<MembershipPlan | null>(null);
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [billingHistory, setBillingHistory] = useState<BillingHistory[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<MembershipPlan | null>(null);
+
+  const handleTabChange = (value: string) => {
+    if (value === "overview" || value === "billing" || value === "usage") {
+      setActiveTab(value);
+    }
+  };
+
+  const handleUpgradePlan = (plan?: MembershipPlan) => {
+    if (plan) {
+      setSelectedPlanForUpgrade(plan);
+    }
+    setShowUpgradeDialog(true);
+  };
+
+  const handleToggleAutoRenew = () => {
+    if (currentMembership) {
+      const newAutoRenewStatus = !currentMembership.autoRenew;
+      setCurrentMembership(prev => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          autoRenew: newAutoRenewStatus
+        };
+      });
+    }
+    setShowAutoRenewDialog(false);
+  };
 
   // Initialize data on client-side only
   useEffect(() => {
-    setIsClient(true);
-
+    // Only run on client
+    if (typeof window === 'undefined') return;
+    
     const loadData = async () => {
       try {
+        setIsLoading(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         setCurrentMembership(generateMockMembership());
         setUsageStats(generateMockUsageStats());
         setBillingHistory(generateMockBillingHistory());
-      } catch (error) {
-        console.error("Error loading membership data:", error);
+        setError(null);
+      } catch (err) {
+        console.error("Error loading membership data:", err);
+        setError(err instanceof Error ? err : new Error('Failed to load data'));
       } finally {
         setIsLoading(false);
       }
@@ -433,8 +479,11 @@ const MembershipsPage = () => {
   };
 
   // Event handlers
-  const handleDownloadInvoice = (invoiceId: string, description: string) => {
-    if (!currentMembership) return;
+  const handleDownloadInvoice = useCallback((invoiceId: string, description: string) => {
+    if (!currentMembership || !safeWindow.document || !safeWindow.URL) {
+      console.error('Cannot generate invoice: window or document not available');
+      return;
+    }
 
     try {
       const invoiceData = {
@@ -459,36 +508,20 @@ Thank you for your business!
 `.trim();
 
       const blob = new Blob([invoiceText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const url = safeWindow.URL.createObjectURL(blob);
+      const a = safeWindow.document.createElement('a');
       a.href = url;
       a.download = `invoice-${invoiceId}.txt`;
-      document.body.appendChild(a);
+      safeWindow.document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      safeWindow.document.body.removeChild(a);
+      safeWindow.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error generating invoice:', error);
+      setError(error instanceof Error ? error : new Error('Failed to generate invoice'));
     }
-  };
+  }, [currentMembership]);
 
-  const handleToggleAutoRenew = () => {
-    if (currentMembership) {
-      const newAutoRenewStatus = !currentMembership.autoRenew;
-      setCurrentMembership(prev => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          autoRenew: newAutoRenewStatus
-        };
-      });
-    }
-    setShowAutoRenewDialog(false);
-  };
-
-  const handleUpgradePlan = () => {
-    setShowUpgradeDialog(true);
-  };
 
   if (isLoading) {
     return (
@@ -554,7 +587,15 @@ Thank you for your business!
           </div>
         </CardContent>
       </Card>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs 
+        value={activeTab} 
+        onValueChange={(value) => {
+          if (value === "overview" || value === "billing" || value === "usage") {
+            setActiveTab(value);
+          }
+        }} 
+        className="space-y-4"
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="features">Features</TabsTrigger>

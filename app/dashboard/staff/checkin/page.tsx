@@ -234,24 +234,45 @@ const mockMembers: Member[] = [
   { id: 'm5', name: 'Michael Brown', email: 'michael.brown@example.com', status: 'checkedOut' },
 ];
 
+// Helper function to safely get array length
+const getSafeLength = (arr: any[] | undefined): number => {
+  return Array.isArray(arr) ? arr.length : 0;
+}
+
 export default function StaffCheckinPage() {
   const [checkedInToday, setCheckedInToday] = useState<CheckInHistory[]>([]);
   const [totalCheckins, setTotalCheckins] = useState(0);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    // Only run on client side
+    setIsClient(true);
+    
     // This effect runs on the client after the component mounts
     setLoading(true);
+    
     // Simulate fetching data
     setTimeout(() => {
-      setMembers(mockMembers);
-      const todayCheckins = mockCheckInHistory.filter(item => isToday(new Date(item.timestamp)));
-      setCheckedInToday(todayCheckins);
-      setTotalCheckins(todayCheckins.length);
-      setLoading(false);
+      if (typeof window !== 'undefined') {
+        setMembers(mockMembers);
+        const todayCheckins = mockCheckInHistory.filter(item => isToday(new Date(item.timestamp)));
+        setCheckedInToday(todayCheckins);
+        setTotalCheckins(getSafeLength(todayCheckins));
+        setLoading(false);
+      }
     }, 1000);
   }, []);
+  
+  // Show loading state until component is mounted on client
+  if (typeof window === 'undefined' || !isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const getStatusBadge = (status: Member['status']) => {
     switch (status) {
