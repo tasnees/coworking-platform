@@ -125,7 +125,7 @@ const getSafeLength = (arr: any[] | undefined): number => {
 
 export default function StaffMembersPage() {
   const [isClient, setIsClient] = useState(false)
-  const [members, setMembers] = useState<Member[]>([])
+  const [members, setMembers] = useState<Member[] | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -150,45 +150,47 @@ export default function StaffMembersPage() {
   })
   // Initialize members on client side to avoid hydration issues
   useEffect(() => {
-    setIsClient(true)
+    setIsClient(true);
     // Ensure we only set members on the client side
     if (typeof window !== 'undefined') {
-      setMembers(mockMembers)
-      setIsLoading(false)
+      setMembers(mockMembers);
+      setIsLoading(false);
     }
   }, [])
   // Only process members on client side
   const filteredMembers = useMemo(() => {
-    if (!isClient) return [];
-    return (members || []).filter(member => {
-    if (!member) return false;
-    const searchLower = searchQuery.toLowerCase();
-    const matchesSearch = member.name?.toLowerCase().includes(searchLower) ||
-                      member.email?.toLowerCase().includes(searchLower) ||
-                      (member.company?.toLowerCase() || '').includes(searchLower) ||
-                      (member.city?.toLowerCase() || '').includes(searchLower);
-    const matchesStatus = statusFilter === "all" || member.status === statusFilter;
-    const matchesType = typeFilter === "all" || member.membershipType === typeFilter;
+    if (!isClient || !members) return [];
+    return members.filter(member => {
+      if (!member) return false;
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = member.name?.toLowerCase().includes(searchLower) ||
+                        member.email?.toLowerCase().includes(searchLower) ||
+                        (member.company?.toLowerCase() || '').includes(searchLower) ||
+                        (member.city?.toLowerCase() || '').includes(searchLower);
+      const matchesStatus = statusFilter === "all" || member.status === statusFilter;
+      const matchesType = typeFilter === "all" || member.membershipType === typeFilter;
       return matchesSearch && matchesStatus && matchesType;
     });
-  }, [members, searchQuery, statusFilter, typeFilter, isClient])
+  }, [members, searchQuery, statusFilter, typeFilter, isClient]);
   // Memoize statistics to prevent unnecessary recalculations
   const { totalMembers, activeMembers, inactiveMembers, suspendedMembers, newMembersThisMonth } = useMemo(() => {
-    if (!isClient) return { 
-      totalMembers: 0, 
-      activeMembers: 0, 
-      inactiveMembers: 0, 
-      suspendedMembers: 0, 
-      newMembersThisMonth: 0 
-    };
+    if (!isClient || !members) { 
+      return { 
+        totalMembers: 0, 
+        activeMembers: 0, 
+        inactiveMembers: 0, 
+        suspendedMembers: 0, 
+        newMembersThisMonth: 0 
+      };
+    }
     
     const now = new Date();
     return {
-      totalMembers: getSafeLength(members),
-      activeMembers: getSafeLength(members?.filter(m => m?.status === "active")),
-      inactiveMembers: getSafeLength(members?.filter(m => m?.status === "inactive")),
-      suspendedMembers: getSafeLength(members?.filter(m => m?.status === "suspended")),
-      newMembersThisMonth: getSafeLength(members?.filter(m => {
+      totalMembers: members.length,
+      activeMembers: members.filter(m => m?.status === "active").length,
+      inactiveMembers: members.filter(m => m?.status === "inactive").length,
+      suspendedMembers: members.filter(m => m?.status === "suspended").length,
+      newMembersThisMonth: members.filter(m => {
         try {
           if (!m?.joinDate) return false;
           const joinDate = new Date(m.joinDate);
@@ -198,7 +200,7 @@ export default function StaffMembersPage() {
           console.error('Error processing join date:', e);
           return false;
         }
-      }))
+      }).length
     };
   }, [members, isClient]);
   const formatDate = (dateString?: string) => {
@@ -239,7 +241,7 @@ export default function StaffMembersPage() {
       joinDate: new Date().toISOString().split('T')[0],
       totalVisits: 0
     }
-    setMembers([...members, newMember])
+    setMembers(members ? [...members, newMember] : [newMember])
     setShowCreateDialog(false)
     setFormData({
       name: "",
@@ -255,7 +257,7 @@ export default function StaffMembersPage() {
     })
   }
   const handleEditMember = () => {
-    if (editingMember) {
+    if (editingMember && members) {
       setMembers(members.map(m =>
         m.id === editingMember.id ? { ...formData, id: editingMember.id, joinDate: editingMember.joinDate, totalVisits: editingMember.totalVisits } : m
       ))
@@ -264,7 +266,7 @@ export default function StaffMembersPage() {
     }
   }
   const handleDeleteMember = (id: string) => {
-    if (confirm("Are you sure you want to delete this member? This will also remove their bookings and memberships.")) {
+    if (confirm("Are you sure you want to delete this member? This will also remove their bookings and memberships.") && members) {
       setMembers(members.filter(m => m.id !== id))
     }
   }
@@ -288,10 +290,10 @@ export default function StaffMembersPage() {
     setSelectedMember(member)
     setShowViewDialog(true)
   }
-  if (!isClient || isLoading) {
+  if (isLoading || !isClient || members === null) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     )
   }

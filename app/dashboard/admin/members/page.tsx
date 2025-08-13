@@ -444,12 +444,14 @@ const getMemberActions = (member: Member) => {
 
 // Main component, combining the original `MembersPage` and `MembersContent`
 export default function AdminMembersPage() {
+  const [isClient, setIsClient] = useState(false);
+  
   // State for members list
-  const [members, setMembers] = useState<Member[]>(mockMembers);
-  const [filteredMembers, setFilteredMembers] = useState<Member[]>(mockMembers);
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [dialogAction, setDialogAction] = useState<'activate' | 'suspend' | 'cancel' | null>(null);
@@ -482,7 +484,7 @@ export default function AdminMembersPage() {
   };
 
   const confirmAction = () => {
-    if (selectedMember && dialogAction) {
+    if (selectedMember && dialogAction && members) {
       const updatedMembers = members.map(member => {
         if (member.id === selectedMember.id) {
           let newStatus: Member['status'] = 'active';
@@ -503,23 +505,38 @@ export default function AdminMembersPage() {
     setDialogAction(null);
   };
 
+  // Load data on client side
+  useEffect(() => {
+    setIsClient(true);
+    // Simulate API call
+    const timer = setTimeout(() => {
+      setMembers(mockMembers);
+      setFilteredMembers(mockMembers);
+      setLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Handle search and filter
   useEffect(() => {
+    if (!members) return;
+    
     let result = [...members];
     
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(member => 
-        member.name.toLowerCase().includes(term) || 
-        member.email.toLowerCase().includes(term) ||
-        (member.phone && member.phone.includes(term))
+        member?.name?.toLowerCase().includes(term) || 
+        member?.email?.toLowerCase().includes(term) ||
+        (member?.phone && member.phone.includes(term))
       );
     }
     
     // Apply status filter
     if (statusFilter !== 'all') {
-      result = result.filter(member => member.status === statusFilter);
+      result = result.filter(member => member?.status === statusFilter);
     }
     
     setFilteredMembers(result);
@@ -567,8 +584,12 @@ export default function AdminMembersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <p className="text-center text-gray-500">Loading...</p>
+            {!isClient || loading ? (
+              <div className="flex items-center justify-center p-8">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+              </div>
+            ) : !members ? (
+              <p className="text-center text-gray-500">Failed to load members</p>
             ) : (
               <Table>
                 <TableHeader>
@@ -581,7 +602,7 @@ export default function AdminMembersPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredMembers.length > 0 ? (
-                    filteredMembers.map((member) => (
+                    (filteredMembers || []).map((member) => (
                       <TableRow key={member.id}>
                         <TableCell className="font-medium">{member.name}</TableCell>
                         <TableCell>{member.email}</TableCell>
