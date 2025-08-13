@@ -187,7 +187,7 @@ export default function StaffBookingsPage() {
   const { isAuthenticated } = useAuth()
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
-  const [bookings, setBookings] = useState<Booking[]>(mockBookings)
+  const [bookings, setBookings] = useState<Booking[] | null>(null)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -200,8 +200,11 @@ export default function StaffBookingsPage() {
     setIsClient(true);
     if (isAuthenticated === false) {
       router.push('/auth/login');
+    } else if (isAuthenticated === true && bookings === null) {
+      // Initialize with mock data only on client side
+      setBookings(mockBookings);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, bookings]);
 
   // Show a loading state until authentication status is determined AND the client has mounted
   if (isAuthenticated === null || !isClient) {
@@ -241,8 +244,8 @@ export default function StaffBookingsPage() {
   
   // Handler functions for CRUD operations (unchanged)
   const handleDeleteBooking = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this booking?')) {
-      setBookings(bookings.filter(b => b.id !== id))
+    if (window.confirm('Are you sure you want to delete this booking?') && bookings) {
+      setBookings(bookings.filter(b => b?.id !== id));
     }
   }
 
@@ -261,29 +264,27 @@ export default function StaffBookingsPage() {
       price: bookingData.price || 0,
       notes: bookingData.notes,
       createdAt: new Date().toISOString()
-    }
-    setBookings([newBooking, ...bookings])
-    setShowCreateDialog(false)
+    };
+    setBookings(prev => [newBooking, ...(prev || [])]);
+    setShowCreateDialog(false);
   }
 
   const handleUpdateBooking = (updatedBooking: Booking) => {
-    setBookings(bookings.map(b => b.id === updatedBooking.id ? updatedBooking : b))
-    setEditingBooking(null)
+    setBookings(prev => prev?.map(b => b?.id === updatedBooking.id ? updatedBooking : b) || []);
+    setEditingBooking(null);
   }
 
-  // These stats are now safely calculated in the client
-  const totalBookings = bookings.length;
-  const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
-  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-  const totalRevenue = bookings.reduce((sum, b) => sum + b.price, 0);
+  // Calculate stats safely
+  const totalBookings = bookings?.length || 0;
+  const confirmedBookings = bookings?.filter(b => b?.status === 'confirmed').length || 0;
+  const pendingBookings = bookings?.filter(b => b?.status === 'pending').length || 0;
+  const totalRevenue = bookings?.reduce((sum, b) => sum + (b?.price || 0), 0) || 0;
 
-
-
-  // Ensure we have valid data before rendering
-  if (!Array.isArray(bookings)) {
+  // Show loading state until bookings are loaded
+  if (bookings === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Loading bookings data...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
