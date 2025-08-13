@@ -10,40 +10,41 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Eye, Edit, Trash2, User, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
+// Simple loading component
+const LoadingSpinner = () => (
+  <div className="flex h-screen w-full items-center justify-center">
+    <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+  </div>
+);
+
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic<React.ComponentProps<typeof import('@/components/dashboard-layout').default>>(
   () => import('@/components/dashboard-layout').then((mod) => mod.default),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
+  { ssr: false, loading: () => <LoadingSpinner /> }
 );
 interface Member {
-  id: string
-  name: string
-  email: string
-  phone: string
-  joinDate: string
-  membershipType: "basic" | "premium" | "enterprise"
-  status: "active" | "inactive" | "suspended"
-  company?: string
-  address: string
-  city: string
-  country: string
-  notes?: string
-  lastVisit?: string
-  totalVisits: number
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  joinDate: string;
+  membershipType: "basic" | "premium" | "enterprise";
+  status: "active" | "inactive" | "suspended";
+  company: string;
+  address: string;
+  city: string;
+  country: string;
+  notes: string;
+  lastVisit?: string;
+  totalVisits: number;
+  profileImage?: string;
 }
 const mockMembers: Member[] = [
   {
     id: "1",
     name: "Alice Johnson",
     email: "alice@example.com",
-    phone: "+1-555-0123",
+    phone: "+1-555-1234",
     joinDate: "2024-01-15",
     membershipType: "premium",
     status: "active",
@@ -51,71 +52,153 @@ const mockMembers: Member[] = [
     address: "123 Main St",
     city: "San Francisco",
     country: "USA",
-    notes: "VIP member, prefers corner desk",
-    lastVisit: "2024-07-27",
-    totalVisits: 45
+    notes: "VIP client, prefers corner desk",
+    lastVisit: "2024-03-10T14:30:00Z",
+    totalVisits: 24
   },
   {
     id: "2",
     name: "Bob Smith",
     email: "bob@example.com",
-    phone: "+1-555-0124",
-    joinDate: "2023-06-01",
+    phone: "+1-555-5678",
+    joinDate: "2024-02-01",
     membershipType: "basic",
     status: "inactive",
+    company: "Freelance",
     address: "456 Oak Ave",
     city: "New York",
     country: "USA",
-    notes: "On extended leave",
-    lastVisit: "2024-05-15",
-    totalVisits: 23
-  },
-  {
-    id: "3",
-    name: "Carol Davis",
-    email: "carol@example.com",
-    phone: "+1-555-0125",
-    joinDate: "2024-03-01",
-    membershipType: "enterprise",
-    status: "active",
-    company: "Global Corp",
-    address: "789 Pine Rd",
-    city: "Austin",
-    country: "USA",
-    notes: "Team lead, books meeting rooms frequently",
-    lastVisit: "2024-07-28",
-    totalVisits: 67
-  },
-  {
-    id: "4",
-    name: "David Wilson",
-    email: "david@example.com",
-    phone: "+1-555-0126",
-    joinDate: "2024-07-01",
-    membershipType: "basic",
-    status: "active",
-    address: "321 Elm St",
-    city: "Seattle",
-    country: "USA",
-    notes: "New member, still exploring",
-    lastVisit: "2024-07-26",
+    notes: "Occasional visitor, usually comes on weekends",
+    lastVisit: "2024-02-28T11:15:00Z",
     totalVisits: 8
   },
   {
-    id: "5",
-    name: "Emma Brown",
-    email: "emma@example.com",
-    phone: "+1-555-0127",
-    joinDate: "2024-05-15",
-    membershipType: "premium",
+    id: "3",
+    name: "Charlie Brown",
+    email: "charlie@example.com",
+    phone: "+1-555-9012",
+    joinDate: "2024-03-05",
+    membershipType: "enterprise",
     status: "suspended",
-    company: "Freelance Designer",
-    address: "654 Maple Dr",
+    company: "Big Corp",
+    address: "789 Pine St",
+    city: "Chicago",
+    country: "USA",
+    notes: "Team of 5, needs conference room access",
+    lastVisit: "2024-03-08T16:45:00Z",
+    totalVisits: 3
+  },
+  {
+    id: "4",
+    name: "Diana Prince",
+    email: "diana@example.com",
+    phone: "+1-555-3456",
+    joinDate: "2024-01-20",
+    membershipType: "basic",
+    status: "active",
+    company: "Freelance",
+    address: "1010 Park Ave",
+    city: "Boston",
+    country: "USA",
+    notes: "Remote worker, comes in 3x a week",
+    lastVisit: "2024-03-12T09:30:00Z",
+    totalVisits: 32
+  },
+  {
+    id: "5",
+    name: "Evan Davis",
+    email: "evan@example.com",
+    phone: "+1-555-7890",
+    joinDate: "2024-03-01",
+    membershipType: "premium",
+    status: "active",
+    company: "Startup XYZ",
+    address: "2020 Tech Blvd",
+    city: "Austin",
+    country: "USA",
+    notes: "New member, orientation completed",
+    lastVisit: "2024-03-14T13:00:00Z",
+    totalVisits: 5
+  },
+  {
+    id: "6",
+    name: "Fiona Green",
+    email: "fiona@example.com",
+    phone: "+1-555-2345",
+    joinDate: "2024-02-15",
+    membershipType: "basic",
+    status: "active",
+    company: "Digital Nomad",
+    address: "3030 Remote Rd",
+    city: "Denver",
+    country: "USA",
+    notes: "Travels frequently, books hot desks",
+    lastVisit: "2024-03-13T10:15:00Z",
+    totalVisits: 12
+  },
+  {
+    id: "7",
+    name: "George Wilson",
+    email: "george@example.com",
+    phone: "+1-555-6789",
+    joinDate: "2024-01-10",
+    membershipType: "enterprise",
+    status: "inactive",
+    company: "Enterprise Solutions",
+    address: "4040 Corporate Dr",
+    city: "Seattle",
+    country: "USA",
+    notes: "Team of 10, on hold until Q2",
+    lastVisit: "2024-02-20T15:45:00Z",
+    totalVisits: 18
+  },
+  {
+    id: "8",
+    name: "Hannah Kim",
+    email: "hannah@example.com",
+    phone: "+1-555-0123",
+    joinDate: "2024-03-10",
+    membershipType: "premium",
+    status: "active",
+    company: "Creative Agency",
+    address: "5050 Design St",
     city: "Portland",
     country: "USA",
-    notes: "Payment issues, needs follow-up",
-    lastVisit: "2024-07-20",
-    totalVisits: 12
+    notes: "Needs meeting room access twice a week",
+    lastVisit: "2024-03-14T16:30:00Z",
+    totalVisits: 2
+  },
+  {
+    id: "9",
+    name: "Ian Taylor",
+    email: "ian@example.com",
+    phone: "+1-555-4567",
+    joinDate: "2024-02-05",
+    membershipType: "basic",
+    status: "suspended",
+    company: "Freelance Developer",
+    address: "6060 Code Ave",
+    city: "Miami",
+    country: "USA",
+    notes: "Account on hold - payment issue",
+    lastVisit: "2024-02-25T14:20:00Z",
+    totalVisits: 7
+  },
+  {
+    id: "10",
+    name: "Julia Martinez",
+    email: "julia@example.com",
+    phone: "+1-555-8901",
+    joinDate: "2024-01-25",
+    membershipType: "enterprise",
+    status: "active",
+    company: "Global Tech",
+    address: "7070 Innovation Way",
+    city: "Atlanta",
+    country: "USA",
+    notes: "Team of 8, requires dedicated desks",
+    lastVisit: "2024-03-14T11:45:00Z",
+    totalVisits: 29
   }
 ]
 // Helper function to safely get array length
@@ -124,49 +207,71 @@ const getSafeLength = (arr: any[] | undefined): number => {
 }
 
 export default function StaffMembersPage() {
-  const [isClient, setIsClient] = useState(false)
-  const [members, setMembers] = useState<Member[] | null>(null)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [typeFilter, setTypeFilter] = useState<string>("all")
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [showEditDialog, setShowEditDialog] = useState(false)
-  const [showViewDialog, setShowViewDialog] = useState(false)
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
-  const [editingMember, setEditingMember] = useState<Member | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  // Form states for create/edit
-  const [formData, setFormData] = useState({
+  // State for client-side rendering
+  const [isClient, setIsClient] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Data state
+  const [members, setMembers] = useState<Member[] | null>(null);
+  
+  // Filter and search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  
+  // Dialog visibility state
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showViewDialog, setShowViewDialog] = useState(false);
+  
+  // Selected data state
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  
+  // Form state with required fields
+  const [formData, setFormData] = useState<Omit<Member, 'id' | 'joinDate' | 'totalVisits' | 'lastVisit'>>({
     name: "",
     email: "",
     phone: "",
-    membershipType: "basic" as Member["membershipType"],
-    status: "active" as Member["status"],
+    membershipType: "basic",
+    status: "active",
     company: "",
     address: "",
     city: "",
     country: "",
     notes: ""
-  })
+  });
+
   // Initialize members on client side to avoid hydration issues
   useEffect(() => {
     setIsClient(true);
-    // Ensure we only set members on the client side
-    if (typeof window !== 'undefined') {
-      setMembers(mockMembers);
+    // Simulate API call with a small delay
+    const timer = setTimeout(() => {
+      // Ensure all required fields are present
+      const validMembers = mockMembers.map(member => ({
+        ...member,
+        company: member.company || '',
+        notes: member.notes || '',
+        address: member.address || '',
+        city: member.city || '',
+        country: member.country || ''
+      })) as Member[];
+      setMembers(validMembers);
       setIsLoading(false);
-    }
+    }, 100);
+    return () => clearTimeout(timer);
   }, [])
   // Only process members on client side
   const filteredMembers = useMemo(() => {
-    if (!isClient || !members) return [];
+    if (!isClient || !Array.isArray(members)) return [];
     return members.filter(member => {
       if (!member) return false;
       const searchLower = searchQuery.toLowerCase();
-      const matchesSearch = member.name?.toLowerCase().includes(searchLower) ||
-                        member.email?.toLowerCase().includes(searchLower) ||
-                        (member.company?.toLowerCase() || '').includes(searchLower) ||
-                        (member.city?.toLowerCase() || '').includes(searchLower);
+      const matchesSearch = 
+        (member.name?.toLowerCase() || '').includes(searchLower) ||
+        (member.email?.toLowerCase() || '').includes(searchLower) ||
+        (member.company?.toLowerCase() || '').includes(searchLower) ||
+        (member.city?.toLowerCase() || '').includes(searchLower);
       const matchesStatus = statusFilter === "all" || member.status === statusFilter;
       const matchesType = typeFilter === "all" || member.membershipType === typeFilter;
       return matchesSearch && matchesStatus && matchesType;
@@ -174,7 +279,7 @@ export default function StaffMembersPage() {
   }, [members, searchQuery, statusFilter, typeFilter, isClient]);
   // Memoize statistics to prevent unnecessary recalculations
   const { totalMembers, activeMembers, inactiveMembers, suspendedMembers, newMembersThisMonth } = useMemo(() => {
-    if (!isClient || !members) { 
+    if (!isClient || !Array.isArray(members)) { 
       return { 
         totalMembers: 0, 
         activeMembers: 0, 
@@ -187,10 +292,10 @@ export default function StaffMembersPage() {
     const now = new Date();
     return {
       totalMembers: members.length,
-      activeMembers: members.filter(m => m?.status === "active").length,
-      inactiveMembers: members.filter(m => m?.status === "inactive").length,
-      suspendedMembers: members.filter(m => m?.status === "suspended").length,
-      newMembersThisMonth: members.filter(m => {
+      activeMembers: members.filter((m: Member) => m?.status === "active").length,
+      inactiveMembers: members.filter((m: Member) => m?.status === "inactive").length,
+      suspendedMembers: members.filter((m: Member) => m?.status === "suspended").length,
+      newMembersThisMonth: members.filter((m: Member) => {
         try {
           if (!m?.joinDate) return false;
           const joinDate = new Date(m.joinDate);
