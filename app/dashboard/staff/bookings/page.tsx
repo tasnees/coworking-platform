@@ -188,6 +188,7 @@ export default function StaffBookingsPage() {
   const router = useRouter()
   const [isClient, setIsClient] = useState(false)
   const [bookings, setBookings] = useState<Booking[] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -201,13 +202,17 @@ export default function StaffBookingsPage() {
     if (isAuthenticated === false) {
       router.push('/auth/login');
     } else if (isAuthenticated === true && bookings === null) {
-      // Initialize with mock data only on client side
-      setBookings(mockBookings);
+      // Simulate API call with a small delay
+      const timer = setTimeout(() => {
+        setBookings([...mockBookings]);
+        setIsLoading(false);
+      }, 100);
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, router, bookings]);
+  }, [isAuthenticated, router]);
 
-  // Show a loading state until authentication status is determined AND the client has mounted
-  if (isAuthenticated === null || !isClient) {
+  // Show loading state until authentication status is determined, client has mounted, and data is loaded
+  if (isAuthenticated === null || !isClient || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -394,7 +399,7 @@ export default function StaffBookingsPage() {
                   <p className="text-muted-foreground">No bookings found matching your criteria.</p>
                 </div>
               ) : (
-                filteredBookings.map((booking) => (
+                filteredBookings.map((booking) => booking ? (
                   <div key={booking.id} className="border rounded-lg p-4 hover:bg-gray-50">
                     <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
                       <div className="flex-1">
@@ -463,7 +468,7 @@ export default function StaffBookingsPage() {
                       </div>
                     </div>
                   </div>
-                ))
+                ) : null)
               )}
             </div>
           </CardContent>
@@ -557,11 +562,11 @@ export default function StaffBookingsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockResources.map(resource => (
-                        <SelectItem key={resource.id} value={resource.name}>
+                      {mockResources.map(resource => resource ? (
+                        <SelectItem key={`resource-${resource.id}`} value={resource.name}>
                           {resource.name} ({formatCurrency(resource.hourlyRate)}/hr)
                         </SelectItem>
-                      ))}
+                      ) : null)}
                     </SelectContent>
                   </Select>
                 </div>
@@ -633,11 +638,11 @@ export default function StaffBookingsPage() {
                     <SelectValue placeholder="Select member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockMembers.map(member => (
-                      <SelectItem key={member.id} value={member.name}>
+                    {mockMembers.map(member => member ? (
+                      <SelectItem key={`member-${member.id}`} value={member.name}>
                         {member.name} ({member.email})
                       </SelectItem>
-                    ))}
+                    ) : null)}
                   </SelectContent>
                 </Select>
               </div>
@@ -648,11 +653,11 @@ export default function StaffBookingsPage() {
                     <SelectValue placeholder="Select resource" />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockResources.map(resource => (
-                      <SelectItem key={resource.id} value={resource.name}>
+                    {mockResources.map(resource => resource ? (
+                      <SelectItem key={`create-resource-${resource.id}`} value={resource.name}>
                         {resource.name} ({formatCurrency(resource.hourlyRate)}/hr)
                       </SelectItem>
-                    ))}
+                    ) : null)}
                   </SelectContent>
                 </Select>
               </div>
