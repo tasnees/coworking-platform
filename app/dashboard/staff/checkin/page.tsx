@@ -245,32 +245,58 @@ export default function StaffCheckinPage() {
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  // Initialize with empty data for SSR
+  const safeMembers = isClient ? members : [];
+  const safeCheckedInToday = isClient ? checkedInToday : [];
+  const safeTotalCheckins = isClient ? totalCheckins : 0;
+  const safeLoading = isClient ? loading : true;
 
   useEffect(() => {
     // Only run on client side
     setIsClient(true);
+    setCurrentTime(new Date());
     
     // This effect runs on the client after the component mounts
     setLoading(true);
     
     // Simulate fetching data
-    setTimeout(() => {
-      if (typeof window !== 'undefined') {
+    const loadData = () => {
+      try {
+        // In a real app, you would fetch this data from an API
         setMembers(mockMembers);
-        const todayCheckins = mockCheckInHistory.filter(item => isToday(new Date(item.timestamp)));
+        
+        // Filter check-ins for today
+        const todayCheckins = mockCheckInHistory.filter(item => {
+          if (!currentTime) return false;
+          const checkInDate = new Date(item.timestamp);
+          return isToday(checkInDate);
+        });
+        
         setCheckedInToday(todayCheckins);
-        setTotalCheckins(getSafeLength(todayCheckins));
+        setTotalCheckins(todayCheckins.length);
+      } catch (error) {
+        console.error("Error loading check-in data:", error);
+      } finally {
         setLoading(false);
       }
-    }, 1000);
-  }, []);
+    };
+
+    // Only load data if we're on the client side
+    if (typeof window !== 'undefined') {
+      loadData();
+    }
+  }, [currentTime]);
   
-  // Show loading state until component is mounted on client
-  if (typeof window === 'undefined' || !isClient) {
+  // Show loading state during SSR or initial client load
+  if (!isClient) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
+      <DashboardLayout userRole="staff">
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
     );
   }
 
@@ -308,9 +334,9 @@ export default function StaffCheckinPage() {
               <Check className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalCheckins}</div>
+              <div className="text-2xl font-bold">{safeTotalCheckins}</div>
               <p className="text-xs text-muted-foreground">
-                {members.filter(m => m.status === 'checkedIn').length} members currently checked-in
+                {safeMembers.filter(m => m.status === 'checkedIn').length} members currently checked-in
               </p>
             </CardContent>
           </Card>
@@ -320,7 +346,7 @@ export default function StaffCheckinPage() {
               <User className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{members.length}</div>
+              <div className="text-2xl font-bold">{safeMembers.length}</div>
               <p className="text-xs text-muted-foreground">
                 Total registered members
               </p>
@@ -359,7 +385,7 @@ export default function StaffCheckinPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {safeLoading ? (
               <p className="text-center text-muted-foreground">Loading...</p>
             ) : (
               <Table>
@@ -372,8 +398,8 @@ export default function StaffCheckinPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {checkedInToday.length > 0 ? (
-                    checkedInToday.map((checkin) => (
+                  {safeCheckedInToday.length > 0 ? (
+                    safeCheckedInToday.map((checkin) => (
                       <TableRow key={checkin.id}>
                         <TableCell>
                           <div className="font-medium">{checkin.memberName}</div>
@@ -406,7 +432,7 @@ export default function StaffCheckinPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {safeLoading ? (
               <p className="text-center text-muted-foreground">Loading...</p>
             ) : (
               <Table>
@@ -421,8 +447,8 @@ export default function StaffCheckinPage() {
                   {members.map((member) => (
                     <TableRow key={member.id}>
                       <TableCell>
-                        <div className="font-medium">{member.name}</div>
-                        <div className="text-sm text-muted-foreground">{member.email}</div>
+                        <div className="font-medium">{member.name || 'Unknown Member'}</div>
+                        <div className="text-sm text-muted-foreground">{member.email || 'No email'}</div>
                       </TableCell>
                       <TableCell>{getStatusBadge(member.status)}</TableCell>
                       <TableCell className="text-right">

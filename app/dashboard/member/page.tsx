@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -59,9 +59,27 @@ export default function MemberDashboard() {
     { label: "Most used amenity", value: "Coffee Machine" },
     { label: "Last visit", value: "Yesterday" },
   ]
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    // Only run on client
+    setIsClient(true)
+  }, [])
+
   const handleLogout = () => {
-    localStorage.removeItem("user")
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("user")
+    }
     router.push("/auth/login")
+  }
+
+  // Show loading state during SSR or initial client load
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
   }
   return (
     <DashboardLayout userRole="member">

@@ -14,28 +14,48 @@ export default function HomePage() {
   const [lastLogin, setLastLogin] = useState<string | null>(null)
   const [lastLoginTime, setLastLoginTime] = useState<string | null>(null)
   const [isClient, setIsClient] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [isRedirecting, setIsRedirecting] = useState(false)
+
   useEffect(() => {
     // Only run on client side
-    if (typeof window !== 'undefined') {
+    const handleClientLoad = () => {
       setIsClient(true)
-      if (status === 'authenticated') {
+      if (status === 'authenticated' && !isRedirecting) {
         try {
           const lastLoginValue = localStorage.getItem("lastLogin") || session?.user?.email || ""
           const lastLoginTimeValue = localStorage.getItem("lastLoginTime") || new Date().toLocaleString()
           setLastLogin(lastLoginValue)
           setLastLoginTime(lastLoginTimeValue)
+          
           // Set a flag to prevent multiple redirects
-          if (!isRedirecting) {
-            setIsRedirecting(true)
-            router.push('/dashboard')
-          }
+          setIsRedirecting(true)
+          router.push('/dashboard')
         } catch (error) {
           console.error('Error accessing localStorage:', error)
+        } finally {
+          setIsLoading(false)
         }
+      } else {
+        setIsLoading(false)
       }
     }
+
+    if (typeof window !== 'undefined') {
+      handleClientLoad()
+    } else {
+      setIsLoading(false)
+    }
   }, [status, session, isRedirecting, router])
+
+  // Show loading state during SSR or initial client load
+  if (!isClient || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       try {

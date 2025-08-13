@@ -7,54 +7,121 @@ import DashboardLayout from "@/components/dashboard-layout"
 import { Users, Calendar, DollarSign, TrendingUp, MapPin, Clock, Wifi, Coffee, BarChart, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+
+interface Stat {
+  title: string;
+  value: string;
+  change: string;
+  changeType: 'positive' | 'negative';
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface Booking {
+  id: number;
+  member: string;
+  resource: string;
+  time: string;
+  status: 'active' | 'upcoming' | 'completed';
+}
+
+interface SpaceStatus {
+  name: string;
+  total: number;
+  occupied: number;
+  available: number;
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
-  const stats = [
-    {
-      title: "Total Members",
-      value: "1,234",
-      change: "+12%",
-      changeType: "positive" as const,
-      icon: Users,
-    },
-    {
-      title: "Active Bookings",
-      value: "89",
-      change: "+5%",
-      changeType: "positive" as const,
-      icon: Calendar,
-    },
-    {
-      title: "Monthly Revenue",
-      value: "$45,231",
-      change: "+18%",
-      changeType: "positive" as const,
-      icon: DollarSign,
-    },
-    {
-      title: "Occupancy Rate",
-      value: "78%",
-      change: "-2%",
-      changeType: "negative" as const,
-      icon: TrendingUp,
-    },
-  ]
-  const recentBookings = [
-    { id: 1, member: "John Doe", resource: "Desk A-12", time: "9:00 AM - 5:00 PM", status: "active" },
-    { id: 2, member: "Jane Smith", resource: "Meeting Room B", time: "2:00 PM - 4:00 PM", status: "upcoming" },
-    { id: 3, member: "Mike Johnson", resource: "Private Office 3", time: "10:00 AM - 6:00 PM", status: "active" },
-    { id: 4, member: "Sarah Wilson", resource: "Desk C-05", time: "1:00 PM - 7:00 PM", status: "upcoming" },
-  ]
-  const spaceStatus = [
-    { name: "Hot Desks", total: 50, occupied: 38, available: 12 },
-    { name: "Meeting Rooms", total: 8, occupied: 3, available: 5 },
-    { name: "Private Offices", total: 12, occupied: 9, available: 3 },
-    { name: "Phone Booths", total: 6, occupied: 2, available: 4 },
-  ]
+  const [isClient, setIsClient] = useState(false)
+  const [stats, setStats] = useState<Stat[]>([])
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([])
+  const [spaceStatus, setSpaceStatus] = useState<SpaceStatus[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Only run on client
+    setIsClient(true)
+    
+    // Simulate data fetching
+    const loadData = async () => {
+      try {
+        // In a real app, you would fetch this data from an API
+        const statsData: Stat[] = [
+          {
+            title: "Total Members",
+            value: "1,234",
+            change: "+12%",
+            changeType: "positive",
+            icon: Users,
+          },
+          {
+            title: "Active Bookings",
+            value: "89",
+            change: "+5%",
+            changeType: "positive",
+            icon: Calendar,
+          },
+          {
+            title: "Monthly Revenue",
+            value: "$45,231",
+            change: "+18%",
+            changeType: "positive",
+            icon: DollarSign,
+          },
+          {
+            title: "Occupancy Rate",
+            value: "78%",
+            change: "-2%",
+            changeType: "negative",
+            icon: TrendingUp,
+          },
+        ]
+
+        const bookingsData: Booking[] = [
+          { id: 1, member: "John Doe", resource: "Desk A-12", time: "9:00 AM - 5:00 PM", status: "active" },
+          { id: 2, member: "Jane Smith", resource: "Meeting Room B", time: "2:00 PM - 4:00 PM", status: "upcoming" },
+          { id: 3, member: "Mike Johnson", resource: "Private Office 3", time: "10:00 AM - 6:00 PM", status: "active" },
+          { id: 4, member: "Sarah Wilson", resource: "Desk C-05", time: "1:00 PM - 7:00 PM", status: "upcoming" },
+        ]
+
+        const spaceStatusData: SpaceStatus[] = [
+          { name: "Hot Desks", total: 50, occupied: 38, available: 12 },
+          { name: "Meeting Rooms", total: 8, occupied: 3, available: 5 },
+          { name: "Private Offices", total: 12, occupied: 9, available: 3 },
+          { name: "Phone Booths", total: 6, occupied: 2, available: 4 },
+        ]
+
+        setStats(statsData)
+        setRecentBookings(bookingsData)
+        setSpaceStatus(spaceStatusData)
+      } catch (error) {
+        console.error("Error loading dashboard data:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
   const handleLogout = () => {
-    localStorage.removeItem("user")
-    router.push("/auth/login")
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("user")
+      router.push("/auth/login")
+    }
   }
+  // Show loading state during initial data load
+  if (!isClient || isLoading) {
+    return (
+      <DashboardLayout userRole="admin">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
@@ -92,17 +159,23 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {recentBookings.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium">{booking.member}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {booking.resource} • {booking.time}
-                      </p>
+                {Array.isArray(recentBookings) && recentBookings.length > 0 ? (
+                  recentBookings.map((booking) => (
+                    <div key={`booking-${booking.id}`} className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{booking.member}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {booking.resource} • {booking.time}
+                        </p>
+                      </div>
+                      <Badge variant={booking.status === "active" ? "default" : "secondary"}>
+                        {booking.status}
+                      </Badge>
                     </div>
-                    <Badge variant={booking.status === "active" ? "default" : "secondary"}>{booking.status}</Badge>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No recent bookings found</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -114,17 +187,21 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {spaceStatus.map((space) => (
-                  <div key={space.name} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{space.name}</span>
-                      <span className="text-muted-foreground">
-                        {space.occupied}/{space.total}
-                      </span>
+                {Array.isArray(spaceStatus) && spaceStatus.length > 0 ? (
+                  spaceStatus.map((space) => (
+                    <div key={`space-${space.name.replace(/\s+/g, '-').toLowerCase()}`} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium">{space.name}</span>
+                        <span className="text-muted-foreground">
+                          {space.occupied}/{space.total}
+                        </span>
+                      </div>
+                      <Progress value={(space.occupied / space.total) * 100} className="h-2" />
                     </div>
-                    <Progress value={(space.occupied / space.total) * 100} className="h-2" />
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No space status data available</p>
+                )}
               </div>
             </CardContent>
           </Card>
