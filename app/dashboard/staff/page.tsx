@@ -106,9 +106,19 @@ function StaffDashboardContent() {
     status: 'active' as 'active' | 'inactive' | 'suspended',
     credits: 0
   })
-  // Set client-side flag
+  // Set client-side flag and initialize state
   useEffect(() => {
-    setIsClient(true)
+    setIsClient(true);
+    // Initialize with empty arrays to prevent undefined errors during SSR
+    if (!recentBookings) {
+      setRecentBookings([]);
+    }
+    if (!members) {
+      setMembers([]);
+    }
+    if (!resources) {
+      setResources([]);
+    }
   }, [])
   // Handlers
   const handleAddMember = () => {
@@ -146,8 +156,15 @@ function StaffDashboardContent() {
     setShowEditMemberDialog(false)
     setSelectedMember(null)
   }
-  // Mock data
-  const recentBookings: Booking[] = [
+  // State for data that might be undefined during SSR
+  const [recentBookings, setRecentBookings] = useState<Booking[] | null>(null);
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const [resources, setResources] = useState<Resource[] | null>(null);
+
+  // Mock data - moved to useEffect to prevent SSR issues
+  useEffect(() => {
+    if (isClient) {
+      const mockBookings: Booking[] = [
     {
       id: "bk-001",
       memberName: "Alice Johnson",
@@ -187,8 +204,10 @@ function StaffDashboardContent() {
       duration: 0.5,
       price: 15
     }
-  ]
-  const members: Member[] = [
+      ];
+      setRecentBookings(mockBookings);
+
+      const mockMembers: Member[] = [
     {
       id: "mem-001",
       name: "Alice Johnson",
@@ -225,8 +244,10 @@ function StaffDashboardContent() {
       totalSpent: 90,
       credits: 5
     }
-  ]
-  const resources: Resource[] = [
+      ];
+      setMembers(mockMembers);
+
+      const mockResources: Resource[] = [
     {
       id: "res-001",
       name: "Conference Room A",
@@ -261,7 +282,11 @@ function StaffDashboardContent() {
       amenities: ["Phone", "WiFi", "Privacy"],
       nextAvailable: "Now"
     }
-  ]
+      ];
+      setResources(mockResources);
+    }
+  }, [isClient]);
+
   const formatCurrency = (amount: number) => {
     if (!isClient) return `$${amount.toFixed(2)}`; // Fallback for SSR
     try {
@@ -306,6 +331,15 @@ function StaffDashboardContent() {
         return <Users className="h-4 w-4" />
     }
   }
+  // Show loading state during client-side initialization or while data is loading
+  if (!isClient || recentBookings === null || members === null || resources === null) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">

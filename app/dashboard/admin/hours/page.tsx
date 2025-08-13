@@ -69,8 +69,8 @@ type MembershipAccess = {
 function HoursContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("regular");
-  const [regularHours, setRegularHours] = useState<Weekday[]>([]);
-  const [specialHours, setSpecialHours] = useState<SpecialDay[]>([]);
+  const [regularHours, setRegularHours] = useState<Weekday[] | null>(null);
+  const [specialHours, setSpecialHours] = useState<SpecialDay[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -121,7 +121,8 @@ function HoursContent() {
     initializeData();
   }, []);
 
-  if (!isMounted || isLoading) {
+  // Show loading state if not mounted, still loading, or data not initialized yet
+  if (!isMounted || isLoading || !regularHours || !specialHours) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -320,7 +321,7 @@ function HoursContent() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {specialHours.map((event) => (
+                {specialHours?.map((event) => (
                   <div key={event.id} className="flex items-center justify-between rounded-lg border p-4">
                     <div>
                       <div className="font-medium">{event.name}</div>
@@ -349,7 +350,7 @@ function HoursContent() {
                     </div>
                   </div>
                 ))}
-                {specialHours.length === 0 && (
+                {(!specialHours || specialHours.length === 0) && (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
                     <h3 className="text-lg font-medium">No special hours</h3>
