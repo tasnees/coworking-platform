@@ -2,25 +2,36 @@
 "use client";
 
 export const dynamic = "force-dynamic";
-import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn, useSession } from 'next-auth/react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { getDashboardPath } from '@/lib/utils/routes';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { toast } = useToast();
+  const { data: session, status } = useSession();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState('/dashboard');
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role) {
+      const dashboardPath = getDashboardPath(session.user.role);
+      router.push(dashboardPath);
+    }
+  }, [status, session, router]);
   
   useEffect(() => {
     setIsMounted(true);
@@ -48,7 +59,7 @@ function LoginForm() {
         redirect: false,
         email,
         password,
-        callbackUrl,
+        callbackUrl: window.location.href,
       });
 
       if (result?.error) {
@@ -56,8 +67,8 @@ function LoginForm() {
       }
 
       // If we get here, login was successful
-      router.push(callbackUrl);
-      router.refresh();
+      // The session will be updated and the useEffect will handle the redirect
+      // to the appropriate dashboard based on the user's role
       
     } catch (error) {
       console.error('Login error:', error);
