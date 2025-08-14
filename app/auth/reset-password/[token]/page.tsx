@@ -21,7 +21,8 @@ export default function ResetPasswordPage() {
   const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   
-  const token = searchParams.get('token');
+  // Safely get the token from search params
+  const token = searchParams?.get('token') || '';
 
   // In a real app, you would validate the token with your API
   useEffect(() => {

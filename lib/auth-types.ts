@@ -19,7 +19,7 @@ export interface CustomUser {
   name?: string | null
   email?: string | null
   image?: string | null
-  role?: UserRole
+  role: UserRole  // Required to match our session type
 }
 
 // Our custom Session type
@@ -29,7 +29,7 @@ export interface CustomSession {
     name?: string | null
     email?: string | null
     image?: string | null
-    role?: UserRole
+    role: UserRole  // Made role required to match NextAuth's expectations
   }
 }
 
