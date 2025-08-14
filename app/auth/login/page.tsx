@@ -10,7 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { RoleSelect } from '@/components/ui/role-select';
 import { getDashboardPath } from '@/lib/utils/routes';
+
+type UserRole = 'member' | 'staff' | 'admin';
 
 function LoginForm() {
   const router = useRouter();
@@ -21,6 +24,7 @@ function LoginForm() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<UserRole>('member');
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState('/dashboard');
@@ -51,6 +55,15 @@ function LoginForm() {
       });
       return;
     }
+    
+    if (!['member', 'staff', 'admin'].includes(role)) {
+      toast({
+        title: 'Error',
+        description: 'Please select a valid role',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -59,6 +72,7 @@ function LoginForm() {
         redirect: false,
         email,
         password,
+        role,
         callbackUrl: window.location.href,
       });
 
@@ -66,7 +80,6 @@ function LoginForm() {
         throw new Error(result.error);
       }
 
-      // If we get here, login was successful
       // The session will be updated and the useEffect will handle the redirect
       // to the appropriate dashboard based on the user's role
       
@@ -120,16 +133,9 @@ function LoginForm() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </Label>
-                <div className="text-sm">
-                  <a href="/auth/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
-                    Forgot your password?
-                  </a>
-                </div>
-              </div>
+              <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </Label>
               <Input
                 id="password"
                 name="password"
@@ -139,6 +145,14 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <RoleSelect
+                value={role}
+                onChange={(value) => setRole(value as UserRole)}
                 disabled={isLoading}
               />
             </div>
@@ -167,7 +181,7 @@ function LoginForm() {
             <div className="w-full border-t border-gray-300" />
           </div>
           <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">New to our platform?</span>
+            <span className="bg-white px-2 text-gray-500">Don't have an account?</span>
           </div>
         </div>
 
@@ -188,7 +202,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
       <LoginForm />
     </Suspense>
   );

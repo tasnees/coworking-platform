@@ -3,18 +3,18 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
+import { RoleSelect } from '@/components/ui/role-select';
 
-type UserRole = 'member' | 'staff';
+type UserRole = 'member' | 'staff' | 'admin';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const [formData, setFormData] = useState({
@@ -34,6 +34,13 @@ export default function RegisterPage() {
     }));
   };
 
+  const handleRoleChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      role: value as UserRole
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -50,6 +57,15 @@ export default function RegisterPage() {
       toast({
         title: 'Error',
         description: 'Password must be at least 8 characters long',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!['member', 'staff', 'admin'].includes(formData.role)) {
+      toast({
+        title: 'Error',
+        description: 'Please select a valid role',
         variant: 'destructive',
       });
       return;
@@ -82,6 +98,7 @@ export default function RegisterPage() {
         redirect: false,
         email: formData.email,
         password: formData.password,
+        role: formData.role,
       });
 
       if (result?.error) {
@@ -96,12 +113,8 @@ export default function RegisterPage() {
           title: 'Success',
           description: 'Registration successful! You are now signed in.',
         });
-        // Redirect to dashboard or profile page based on user role
-        if (formData.role === 'member') {
-          router.push('/member/dashboard');
-        } else if (formData.role === 'staff') {
-          router.push('/staff/dashboard');
-        }
+        // Redirect to the appropriate dashboard based on role
+        router.push(`/dashboard/${formData.role}`);
       }
       
     } catch (error) {
@@ -121,60 +134,68 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-gray-900">Create an account</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Join our platform today
+          </p>
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                Full Name
+              </Label>
               <Input
                 id="name"
                 name="name"
                 type="text"
+                autoComplete="name"
                 required
                 value={formData.name}
                 onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 disabled={isLoading}
               />
             </div>
 
             <div>
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </Label>
               <Input
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="email"
                 required
                 value={formData.email}
                 onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 disabled={isLoading}
               />
             </div>
 
             <div>
-              <Label htmlFor="role">Account Type</Label>
-              <select
-                id="role"
-                name="role"
+              <RoleSelect
                 value={formData.role}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm"
+                onChange={handleRoleChange}
                 disabled={isLoading}
-              >
-                <option value="member">Member</option>
-                <option value="staff">Staff</option>
-              </select>
+              />
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </Label>
               <Input
                 id="password"
                 name="password"
                 type="password"
+                autoComplete="new-password"
                 required
                 value={formData.password}
                 onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 disabled={isLoading}
               />
               <p className="mt-1 text-xs text-gray-500">
@@ -183,21 +204,29 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+                Confirm Password
+              </Label>
               <Input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 required
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 disabled={isLoading}
               />
             </div>
           </div>
 
           <div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full justify-center"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -210,7 +239,7 @@ export default function RegisterPage() {
           </div>
         </form>
 
-        <div className="relative">
+        <div className="relative mt-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300" />
           </div>
@@ -219,14 +248,16 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() => router.push('/auth/login')}
-          disabled={isLoading}
-        >
-          Sign in
-        </Button>
+        <div>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => router.push('/auth/login')}
+            disabled={isLoading}
+          >
+            Sign in to your account
+          </Button>
+        </div>
       </div>
     </div>
   );
