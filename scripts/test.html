@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Environment Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Environment Test</h1>
+    
+    <div id="output">
+        <h2>Test Results</h2>
+        <div id="test-results">
+            <p>Running tests... Please wait.</p>
+        </div>
+    </div>
+
+    <script>
+        const testResults = document.getElementById('test-results');
+        
+        function logTest(message, success = true) {
+            const element = document.createElement('div');
+            element.className = success ? 'success' : 'error';
+            element.textContent = (success ? '✅ ' : '❌ ') + message;
+            testResults.appendChild(element);
+            console.log(message);
+        }
+
+        async function runTests() {
+            // Clear loading message
+            testResults.innerHTML = '';
+            
+            // Test 1: Basic JavaScript execution
+            try {
+                logTest('Test 1: Basic JavaScript execution - PASSED');
+            } catch (error) {
+                logTest('Test 1: Basic JavaScript execution - FAILED', false);
+            }
+
+            // Test 2: Fetch API
+            try {
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                logTest(`Test 2: API Connection - ${data.message}`);
+            } catch (error) {
+                logTest('Test 2: API Connection - FAILED', false);
+                logTest(`Error: ${error.message}`, false);
+            }
+
+            // Test 3: Environment Variables (via API)
+            try {
+                const response = await fetch('/api/env-test');
+                const data = await response.json();
+                logTest('Test 3: Environment Variables - ' + (data.success ? 'PASSED' : 'FAILED'), data.success);
+                if (!data.success) {
+                    logTest(`Error: ${data.error}`, false);
+                }
+            } catch (error) {
+                logTest('Test 3: Environment Variables - FAILED', false);
+                logTest(`Error: ${error.message}`, false);
+            }
+
+            // Test 4: Local Storage
+            try {
+                localStorage.setItem('test', 'test-value');
+                const value = localStorage.getItem('test');
+                logTest('Test 4: Local Storage - ' + (value === 'test-value' ? 'PASSED' : 'FAILED'), value === 'test-value');
+            } catch (error) {
+                logTest('Test 4: Local Storage - FAILED', false);
+                logTest(`Error: ${error.message}`, false);
+            }
+
+            logTest('\nAll tests completed!');
+        }
+
+        // Run tests when the page loads
+        window.onload = runTests;
+    </script>
+</body>
+</html>

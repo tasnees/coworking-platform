@@ -93,29 +93,14 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Sign in the user automatically after registration
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
+      // Show success message and redirect to sign-in page
+      toast({
+        title: 'Registration successful!',
+        description: 'Please sign in with your new account.',
       });
-
-      if (result?.error) {
-        // If auto-signin fails, redirect to login page
-        toast({
-          title: 'Account created',
-          description: 'Please sign in with your new account.',
-        });
-        router.push('/auth/login');
-      } else {
-        toast({
-          title: 'Success',
-          description: 'Registration successful! You are now signed in.',
-        });
-        // Redirect to the appropriate dashboard based on role
-        router.push(`/dashboard/${formData.role}`);
-      }
+      
+      // Redirect to the sign-in page
+      router.push('/auth/login');
       
     } catch (error) {
       console.error('Registration error:', error);

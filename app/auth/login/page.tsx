@@ -68,20 +68,26 @@ function LoginForm() {
     try {
       setIsLoading(true);
       
+      // Get the dashboard path based on the selected role
+      const dashboardPath = getDashboardPath(role);
+      
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
         role,
-        callbackUrl: window.location.href,
+        callbackUrl: dashboardPath, // Use the role-specific dashboard path as callback
       });
 
       if (result?.error) {
         throw new Error(result.error);
       }
 
-      // The session will be updated and the useEffect will handle the redirect
-      // to the appropriate dashboard based on the user's role
+      // If there's no error, the sign-in was successful
+      // The redirect will be handled by NextAuth using the callbackUrl we provided
+      if (result?.url) {
+        router.push(result.url);
+      }
       
     } catch (error) {
       console.error('Login error:', error);
