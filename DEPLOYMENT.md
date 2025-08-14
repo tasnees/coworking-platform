@@ -55,13 +55,13 @@ In your Render dashboard, go to your service and add these environment variables
 ```
 # Next.js
 NODE_ENV=production
-NEXT_PUBLIC_APP_URL=https://your-production-url.com
+NEXT_PUBLIC_APP_URL=https://coworking-platform.onrender.comcom
 NEXT_TELEMETRY_DISABLED=1
 NEXT_SHARP_PATH=/usr/local/lib/node_modules/sharp
 
 # Authentication
-NEXTAUTH_URL=https://your-production-url.com
-NEXTAUTH_SECRET=your_nextauth_secret_here
+NEXTAUTH_URL=https://coworking-platform.onrender.com com
+NEXTAUTH_SECRET=s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=
 
 # Database
 MONGODB_URI=your_mongodb_connection_string
@@ -154,8 +154,8 @@ If a deployment causes issues:
 
 ```
 NODE_ENV=production
-NEXTAUTH_URL=https://your-render-url.onrender.com
-NEXTAUTH_SECRET=your_secure_random_string
+NEXTAUTH_URL=https://coworking-platform.onrender.com 
+NEXTAUTH_SECRET=s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=
 MONGODB_URI=your_mongodb_connection_string
 NEXT_PUBLIC_APP_URL=https://your-render-url.onrender.com
 ```

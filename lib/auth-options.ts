@@ -1,21 +1,17 @@
-import type { DefaultSession, User } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-import Auth0Provider from "next-auth/providers/auth0";
-import { isUserRole, UserRole } from "@/lib/auth-types";
+// lib/auth-options.ts
+import type { NextAuthOptions } from 'next-auth';
+import Auth0Provider from 'next-auth/providers/auth0';
+// Define user roles and type guard locally to avoid import issues
+const userRoles = ['admin', 'staff', 'member'] as const;
+type UserRole = (typeof userRoles)[number];
+const isUserRole = (role: string): role is UserRole => 
+  (userRoles as readonly string[]).includes(role);
 
-// Extend the Profile type to include our custom claim
-declare module "next-auth/providers/auth0" {
-  interface Profile {
-    'https://coworking-platform/roles'?: string[];
-  }
-}
-
-// Create the auth options object with proper types
-export const authOptions = {
+export const authOptions: NextAuthOptions = {
   providers: [
     Auth0Provider({
-      clientId: process.env.AUTH0_CLIENT_ID!,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET!,
+      clientId: process.env.AUTH0_CLIENT_ID || '',
+      clientSecret: process.env.AUTH0_CLIENT_SECRET || '',
       issuer: process.env.AUTH0_ISSUER,
       authorization: {
         params: {
@@ -23,38 +19,41 @@ export const authOptions = {
         },
       },
       profile(profile: any) {
+        const roleStr = profile['https://coworking-platform/roles']?.[0] || 'member';
+        const role = isUserRole(roleStr) ? roleStr : 'member';
+        
         return {
           id: profile.sub,
           name: profile.name || profile.nickname || '',
           email: profile.email || '',
           image: profile.picture,
-          role: (profile['https://coworking-platform/roles']?.[0] || 'member') as UserRole,
+          role,
         };
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: 'jwt' as const,
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: User }) {
-      if (user?.role && isUserRole(user.role)) {
-        token.role = user.role;
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        // Provide a default role of 'member' if role is not set
+        token.role = (user.role as UserRole) || 'member';
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: JWT }) {
-      if (session.user) {
+    async session({ session, token }) {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
         if (token.role && isUserRole(token.role)) {
           session.user.role = token.role;
         }
       }
       return session;
-    },
-  },
-  pages: {
-    signIn: '/auth/login',
-    error: '/auth/error',
+    }    
   },
 };

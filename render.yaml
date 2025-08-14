@@ -51,7 +51,7 @@ services:
       
       # Application URLs
       - key: NEXTAUTH_URL
-        value: https://coworking-platform.onrender.com
+        value: https://coworking-platform.onrender.com 
         sync: false
       - key: NEXT_PUBLIC_APP_URL
         value: https://coworking-platform.onrender.com

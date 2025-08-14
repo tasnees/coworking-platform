@@ -2,6 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 
+// Extend the Window interface to include our custom property
+declare global {
+  interface Window {
+    toastTimeout?: number; // In browsers, setTimeout returns a number
+  }
+}
+
 // The following imports are not available in this environment.
 // They have been replaced with standard HTML elements and Tailwind CSS.
 // import { Button } from './shadcn/Button';
@@ -55,22 +62,24 @@ function CheckInApp() {
   useEffect(() => {
     setIsClient(true);
     
-    // Load saved history from localStorage if available
-    try {
-      const savedHistory = localStorage.getItem('codeHistory');
-      if (savedHistory) {
-        setCodeHistory(JSON.parse(savedHistory));
+    // Load saved history from localStorage if available (client-side only)
+    if (typeof window !== 'undefined') {
+      try {
+        const savedHistory = window.localStorage?.getItem('codeHistory');
+        if (savedHistory) {
+          setCodeHistory(JSON.parse(savedHistory));
+        }
+      } catch (error) {
+        console.error('Error loading history from localStorage:', error);
       }
-    } catch (error) {
-      console.error('Error loading history from localStorage:', error);
     }
   }, []);
   
-  // Save history to localStorage when it changes
+  // Save history to localStorage when it changes (client-side only)
   useEffect(() => {
-    if (codeHistory.length > 0) {
+    if (typeof window !== 'undefined' && codeHistory.length > 0) {
       try {
-        localStorage.setItem('codeHistory', JSON.stringify(codeHistory));
+        window.localStorage?.setItem('codeHistory', JSON.stringify(codeHistory));
       } catch (error) {
         console.error('Error saving history to localStorage:', error);
       }
@@ -79,15 +88,18 @@ function CheckInApp() {
 
   // Simple toast/message box implementation with cleanup
   const showToast = (message: string, type = 'success') => {
+    // Only run on client
+    if (typeof window === 'undefined') return;
+    
     // Clear any existing timeout
-    if ((window as any).toastTimeout) {
-      clearTimeout((window as any).toastTimeout);
+    if (window.toastTimeout) {
+      clearTimeout(window.toastTimeout);
     }
     
     setToastMessage({ visible: true, message, type });
     
     // Set timeout to hide toast
-    (window as any).toastTimeout = setTimeout(() => {
+    window.toastTimeout = window.setTimeout(() => {
       setToastMessage(prev => ({ ...prev, visible: false }));
     }, 3000);
   };
