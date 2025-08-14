@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { MongoClient } from 'mongodb';
 import { hash } from 'bcryptjs';
+import clientPromise from '@/lib/mongodb';
 
 export async function POST(request: Request) {
   try {
@@ -14,37 +14,73 @@ export async function POST(request: Request) {
       );
     }
 
-    // Connect to MongoDB
-    const client = new MongoClient(process.env.MONGODB_URI!);
-    await client.connect();
+    // Connect to MongoDB using the existing client utility
+    const client = await clientPromise;
     const db = client.db(process.env.DATABASE_NAME || 'coworking-platform');
 
-    // Check if user already exists
-    const existingUser = await db.collection('users').findOne({ email });
-    if (existingUser) {
-      await client.close();
-      return NextResponse.json(
-        { error: 'User with this email already exists' },
-        { status: 400 }
-      );
+    // Start a session for transaction
+    const session = client.startSession();
+    let result: any = null;
+    
+    try {
+      await session.withTransaction(async () => {
+        // Check if user already exists
+        const existingUser = await db.collection('users').findOne(
+          { email },
+          { session }
+        );
+
+        if (existingUser) {
+          throw new Error('User with this email already exists');
+        }
+
+        // Hash password
+        const hashedPassword = await hash(password, 12);
+        const now = new Date();
+
+        // Create new user (default role is 'member')
+        result = await db.collection('users').insertOne(
+          {
+            email,
+            password: hashedPassword,
+            name,
+            role: 'member',
+            emailVerified: null,
+            image: null,
+            status: 'active',
+            createdAt: now,
+            updatedAt: now,
+          },
+          { session }
+        );
+
+        // Create a member document for the new user
+        await db.collection('members').insertOne(
+          {
+            userId: result.insertedId,
+            name,
+            email,
+            status: 'active',
+            membershipType: 'basic',
+            joinDate: now,
+            lastVisit: now,
+            totalVisits: 0,
+            createdAt: now,
+            updatedAt: now,
+          },
+          { session }
+        );
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12);
-
-    // Create new user (default role is 'member')
-    const result = await db.collection('users').insertOne({
-      email,
-      password: hashedPassword,
-      name,
-      role: 'member',
-      emailVerified: null,
-      image: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    await client.close();
+    if (!result || !result.insertedId) {
+      throw new Error('Failed to create user');
+    }
 
     return NextResponse.json(
       { message: 'User created successfully', userId: result.insertedId },
