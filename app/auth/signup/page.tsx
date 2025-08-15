@@ -25,50 +25,83 @@ function SignupForm() {
     const urlError = searchParams?.get('error')
     setError(urlError || null)
   }, [searchParams])
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!email || !password || !name || !confirmPassword) {
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    // Get form data
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+    const role = formData.get('role') as 'member' | 'staff' | 'admin';
+
+    // Basic validation
+    if (!name || !email || !password || !confirmPassword || !role) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
         description: "Passwords do not match",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
+
     if (password.length < 6) {
       toast({
         title: "Error",
         description: "Password must be at least 6 characters",
         variant: "destructive",
-      })
-      return
+      });
+      return;
     }
-    setIsLoading(true)
+
+    setIsLoading(true);
+
     try {
-      // TODO: Implement actual signup API endpoint
-      // For now, we'll simulate the signup
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create account');
+      }
+
       toast({
-        title: "Account created",
-        description: "Please check your email to verify your account",
-      })
-      router.push("/auth/login")
-    } catch (error) {
+        title: "Account created successfully!",
+        description: `You have been registered as a ${role}. You can now log in.`,
+      });
+      
+      // Redirect to login page after successful signup
+      router.push("/auth/login");
+    } catch (error: any) {
+      console.error('Signup error:', error);
       toast({
         title: "Error",
-        description: "Failed to create account. Please try again.",
+        description: error.message || "Failed to create account. Please try again.",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
   if (!isMounted) {
@@ -98,42 +131,56 @@ function SignupForm() {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
+                name="name"
+                type="text"
                 placeholder="John Doe"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                placeholder="john@example.com"
-                required
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="m@example.com"
+                required
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                required
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                minLength={6}
+                required
+              />
+              <p className="text-xs text-muted-foreground">Password must be at least 6 characters</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input
-                id="confirm-password"
+              <Label htmlFor="role">Account Type</Label>
+              <select
+                id="role"
+                name="role"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 required
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
+                defaultValue="member"
+              >
+                <option value="member">Member</option>
+                <option value="staff">Staff</option>
+                <option value="admin">Admin</option>
+              </select>
+              <p className="text-xs text-muted-foreground">Select your account type</p>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

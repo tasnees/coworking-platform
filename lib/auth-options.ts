@@ -79,20 +79,32 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Find user by email
+          // Find user by email in any collection
           const client = await clientPromise;
-          const db = client.db(process.env.DATABASE_NAME || 'coworking-platform');
+          const db = client.db('users');
           
-          // Find user document
-          const userDoc = await db.collection('users').findOne<{
-            _id: any;
-            email: string;
-            password: string;
-            name?: string;
-            role?: UserRole;
-          }>({ 
-            email: credentials.email 
-          });
+          // Check each collection for the user
+          const collections = ['admin', 'staff', 'member'];
+          let userDoc = null;
+          let userRole: UserRole = 'member';
+          
+          for (const collection of collections) {
+            const doc = await db.collection(collection).findOne<{
+              _id: any;
+              email: string;
+              password: string;
+              name?: string;
+              role?: UserRole;
+            }>({ 
+              email: credentials.email 
+            });
+            
+            if (doc) {
+              userDoc = doc;
+              userRole = doc.role || (collection as UserRole);
+              break;
+            }
+          }
 
           // Check if user exists
           if (!userDoc) {
@@ -106,11 +118,12 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Return user object without the password
+          // Return user data with role
           return {
             id: userDoc._id.toString(),
             email: userDoc.email,
             name: userDoc.name || null,
-            role: userDoc.role || 'member',
+            role: userRole,
           } as User;
         } catch (error) {
           console.error('Authentication error:', error);
@@ -121,8 +134,10 @@ export const authOptions: NextAuthOptions = {
   ],
   
   // Use MongoDB adapter for sessions
-  adapter: MongoDBAdapter(clientPromise, {
-    databaseName: process.env.DATABASE_NAME || 'coworking-platform',
+  adapter: MongoDBAdapter({
+    ...clientPromise,
+    // Override the database name to 'users' to match your setup
+    databaseName: 'users',
   }) as unknown as Adapter, // Type assertion for MongoDBAdapter
   
   // Configure session settings

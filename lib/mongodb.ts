@@ -18,17 +18,33 @@ if (!process.env.MONGODB_URI) {
 
 const uri = process.env.MONGODB_URI;
 const options: MongoClientOptions = {
-  connectTimeoutMS: 10000,
+  // Connection timeouts
+  connectTimeoutMS: 30000,
   socketTimeoutMS: 45000,
-  serverSelectionTimeoutMS: 10000,
+  serverSelectionTimeoutMS: 30000,
+  
+  // Retry settings
   retryWrites: true,
   retryReads: true,
+  maxPoolSize: 10, // Maximum number of connections in the connection pool
+  minPoolSize: 1,  // Minimum number of connections in the connection pool
+  maxIdleTimeMS: 10000, // How long a connection can be idle before being removed
+  
+  // TLS/SSL configuration for Atlas
+  tls: process.env.MONGODB_URI?.includes('mongodb+srv://'),
+  tlsInsecure: false,
+  
   // Use the new Server API version
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
+  
+  // Authentication
+  authMechanism: 'DEFAULT',
+  authSource: 'admin',
+  
   // Enable command monitoring for debugging
   monitorCommands: DEBUG,
 };
