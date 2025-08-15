@@ -1,23 +1,71 @@
 import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
+
 // Disable static generation for this route
 export const dynamic = 'force-dynamic';
+
 // Cache the MongoDB connection
 let cachedDb: MongoClient | null = null;
+
 async function checkDatabaseConnection() {
   if (!process.env.MONGODB_URI) {
-    return { status: 'error', message: 'MongoDB URI not configured' };
+    return { 
+      status: 'error', 
+      message: 'MongoDB URI not configured',
+      timestamp: new Date().toISOString()
+    };
   }
+  
   try {
+    const startTime = Date.now();
+    let connectionTime = 0;
+    let pingTime = 0;
+    let collectionsInfo = null;
+    
     // Use cached connection if available
     if (!cachedDb) {
-      const client = new MongoClient(process.env.MONGODB_URI);
+      const connectStart = Date.now();
+      const client = new MongoClient(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 5000,
+      });
       await client.connect();
+      connectionTime = Date.now() - connectStart;
       cachedDb = client;
     }
-    // Test the connection
-    await cachedDb.db().admin().ping();
-    return { status: 'ok', message: 'Database connection successful' };
+    
+    // Test the connection with a ping
+    const pingStart = Date.now();
+    await cachedDb.db('users').command({ ping: 1 });
+    pingTime = Date.now() - pingStart;
+    
+    // Get collections info
+    try {
+      const collections = await cachedDb.db('users').listCollections().toArray();
+      collectionsInfo = {
+        count: collections.length,
+        names: collections.map(c => c.name),
+        expected: ['member', 'admin', 'staff']
+      };
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+      collectionsInfo = { error: 'Failed to fetch collections' };
+    }
+    
+    const totalTime = Date.now() - startTime;
+    
+    return { 
+      status: 'ok', 
+      message: 'Database connection successful',
+      timestamp: new Date().toISOString(),
+      metrics: {
+        connectionTime: cachedDb ? connectionTime : 0,
+        pingTime,
+        totalTime,
+        usingCached: !!cachedDb
+      },
+      collections: collectionsInfo
+    };
   } catch (error) {
     console.error('Database connection error:', error);
     // Reset connection on error
@@ -25,7 +73,12 @@ async function checkDatabaseConnection() {
       await cachedDb.close().catch(console.error);
       cachedDb = null;
     }
-    return { status: 'error', message: 'Database connection failed', error: error instanceof Error ? error.message : 'Unknown error' };
+    return { 
+      status: 'error', 
+      message: 'Database connection failed',
+      error: error.message || 'Unknown error',
+      timestamp: new Date().toISOString()
+    };
   }
 }
 export async function GET() {

@@ -1,12 +1,17 @@
 import { MongoClient, MongoClientOptions, ServerApiVersion } from 'mongodb';
 
 // Enable debug logging
-const DEBUG = process.env.NODE_ENV === 'development';
+const DEBUG = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
 
-// Log function
-function debugLog(...args: any[]) {
+// Log function with consistent formatting
+function debugLog(message: string, ...args: any[]) {
   if (DEBUG) {
-    console.log('[MongoDB]', new Date().toISOString(), ...args);
+    const timestamp = new Date().toISOString();
+    if (args.length > 0) {
+      console.log(`[MongoDB][${timestamp}] ${message}`, ...args);
+    } else {
+      console.log(`[MongoDB][${timestamp}] ${message}`);
+    }
   }
 }
 
@@ -22,9 +27,14 @@ const uri = process.env.MONGODB_URI;
 // Log connection details (without sensitive data)
 try {
   const url = new URL(uri);
-  debugLog(`Connecting to MongoDB at ${url.protocol}//${url.hostname}${url.pathname ? ` (database: ${url.pathname.split('/').pop()})` : ''}`);
+  const host = url.hostname;
+  const port = url.port ? `:${url.port}` : '';
+  const dbName = url.pathname ? url.pathname.split('/').filter(Boolean).pop() : 'default';
+  
+  debugLog(`Connecting to MongoDB at ${url.protocol}//${host}${port} (database: ${dbName})`);
 } catch (error) {
-  console.error('Error parsing MONGODB_URI:', error instanceof Error ? error.message : 'Unknown error');
+  console.error('❌ Error parsing MONGODB_URI:', error instanceof Error ? error.message : 'Unknown error');
+  throw error;
 }
 
 // MongoDB client options
@@ -33,6 +43,7 @@ const options: MongoClientOptions = {
   connectTimeoutMS: 30000,
   socketTimeoutMS: 45000,
   serverSelectionTimeoutMS: 30000,
+  heartbeatFrequencyMS: 10000,  // Check server status every 10 seconds
   
   // Retry settings
   retryWrites: true,
@@ -75,10 +86,35 @@ let dbPromise: Promise<any>;
 // Create a new MongoClient instance
 client = new MongoClient(uri, options);
 
+// Add event listeners for connection monitoring
+client.on('serverOpening', () => {
+  debugLog('MongoDB server opening connection');
+});
+
+client.on('serverClosed', () => {
+  console.warn('⚠️ MongoDB server connection closed');
+});
+
+client.on('topologyOpening', () => {
+  debugLog('MongoDB topology opening');
+});
+
+client.on('topologyClosed', () => {
+  console.warn('⚠️ MongoDB topology closed');
+});
+
+client.on('serverHeartbeatSucceeded', (event) => {
+  debugLog(`MongoDB server heartbeat succeeded (${event.awaited}ms)`);
+});
+
+client.on('serverHeartbeatFailed', (event) => {
+  console.error(`❌ MongoDB server heartbeat failed after ${event.failure?.length || 0}ms:`, event.failure?.message || 'Unknown error');
+});
+
 // Add event listeners for debugging
 if (DEBUG) {
   client.on('commandStarted', (event) => {
-    console.log(`[MongoDB] Command started: ${event.commandName}`, {
+    debugLog(`Command started: ${event.commandName}`, {
       database: event.databaseName,
       collection: event.command.collection,
       command: event.command,
@@ -86,15 +122,11 @@ if (DEBUG) {
   });
 
   client.on('commandSucceeded', (event) => {
-    console.log(`[MongoDB] Command succeeded: ${event.commandName}`, {
-      duration: event.duration,
-      reply: event.reply,
-    });
+    debugLog(`Command succeeded: ${event.commandName} (${event.duration}ms)`);
   });
 
   client.on('commandFailed', (event) => {
-    console.error(`[MongoDB] Command failed: ${event.commandName}`, {
-      duration: event.duration,
+    console.error(`❌ Command failed: ${event.commandName} (${event.duration}ms)`, {
       failure: event.failure,
     });
   });
