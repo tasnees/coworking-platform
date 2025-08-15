@@ -5,7 +5,13 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI;
+// Validate environment variables
+const MONGODB_URI = process.env.MONGODB_URI as string;
+
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI is not defined in environment variables');
+  process.exit(1);
+}
 const DB_NAME = 'users';
 
 if (!MONGODB_URI) {
@@ -81,7 +87,8 @@ async function testSignupFlow() {
         
         console.log(`✅ User verified in ${user.role} collection`);
         
-      } catch (error) {
+      } catch (err) {
+        const error = err as Error;
         if (user.role === 'admin') {
           console.log(`✅ Admin registration was restricted as expected`);
         } else {

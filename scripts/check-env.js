@@ -113,10 +113,10 @@ if (allVarsPresent) {
     console.log(`- ${varName}${!process.env[varName] ? ' (MISSING)' : ''}`);
   });
   
-  console.log('\nExample .env.local file:');
-  console.log('MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database');
-  console.log('NEXTAUTH_SECRET=your-secret-here');
-  console.log('NEXTAUTH_URL=http://localhost:3000');
+  console.log('.env.local');
+  console.log('MONGODB_URI=mongodb+srv://grabatassnim:pvsd8mdXyqXKHgiT@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority');
+  console.log('NEXTAUTH_SECRET=s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=');
+  console.log('NEXTAUTH_URL=https://coworking-platform.onrender.com');
 }
 
 console.log('\nCheck completed.');
