@@ -157,8 +157,26 @@ export const authOptions: NextAuthOptions = {
       return {
         // User methods
         async createUser(user: Omit<AdapterUser, 'id'>) {
-          const result = await db.collection('users').insertOne(user);
-          return { ...user, id: result.insertedId.toString() };
+          // Get the role from the user object or default to 'member'
+          const role = (user as any).role || 'member';
+          
+          // Ensure the role is one of the allowed roles
+          const validRole = ['member', 'staff', 'admin'].includes(role) 
+            ? role 
+            : 'member';
+            
+          // Save to the appropriate collection based on role
+          const result = await db.collection(validRole).insertOne({
+            ...user,
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+          
+          return { 
+            ...user, 
+            id: result.insertedId.toString(),
+            role: validRole
+          };
         },
         async getUser(id: string) {
           return await findUserInCollections({ _id: new ObjectId(id) });
