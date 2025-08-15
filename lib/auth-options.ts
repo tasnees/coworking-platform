@@ -4,10 +4,10 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { compare } from 'bcryptjs';
 import { JWT } from 'next-auth/jwt';
-import { Adapter } from 'next-auth/adapters';
 
-// Import the MongoDB client promise
-import { MongoClient } from 'mongodb';
+// Import the MongoDB client and types
+import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
+import { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -133,14 +133,158 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   
-  // Create a new MongoDB client instance
-  adapter: MongoDBAdapter(
-    (async () => {
-      const client = new MongoClient(process.env.MONGODB_URI!);
-      await client.connect();
-      return client;
-    })()
-  ) as Adapter,
+  // Use a custom MongoDB adapter
+  adapter: {
+    async getAdapter() {
+      const client = await clientPromise;
+      const db = client.db('users');
+      
+      return {
+        // User methods
+        async createUser(user: Omit<AdapterUser, 'id'>) {
+          const result = await db.collection('users').insertOne(user);
+          return { ...user, id: result.insertedId.toString() };
+        },
+        async getUser(id: string) {
+          try {
+            const user = await db.collection('users').findOne({ _id: new ObjectId(id) });
+            return user ? { ...user, id: user._id.toString() } : null;
+          } catch (error) {
+            console.error('Error getting user:', error);
+            return null;
+          }
+        },
+        async getUserByEmail(email: string) {
+          const user = await db.collection('users').findOne({ email });
+          return user ? { ...user, id: user._id.toString() } : null;
+        },
+        async getUserByAccount({ providerAccountId, provider }: { providerAccountId: string; provider: string }) {
+          const account = await db.collection('accounts').findOne({
+            providerAccountId,
+            provider,
+          });
+          if (!account) return null;
+          
+          try {
+            const user = await db.collection('users').findOne({ _id: new ObjectId(account.userId) });
+            return user ? { ...user, id: user._id.toString() } : null;
+          } catch (error) {
+            console.error('Error getting user by account:', error);
+            return null;
+          }
+        },
+        async updateUser(user: Partial<AdapterUser> & { id: string }) {
+          const { id, ...update } = user;
+          try {
+            await db.collection('users').updateOne(
+              { _id: new ObjectId(id) },
+              { $set: update }
+            );
+            const updatedUser = await db.collection('users').findOne({ _id: new ObjectId(id) });
+            return updatedUser ? { ...updatedUser, id: updatedUser._id.toString() } : null;
+          } catch (error) {
+            console.error('Error updating user:', error);
+            throw error;
+          }
+        },
+        async deleteUser(userId: string) {
+          try {
+            await Promise.all([
+              db.collection('users').deleteOne({ _id: new ObjectId(userId) }),
+              db.collection('sessions').deleteMany({ userId }),
+              db.collection('accounts').deleteMany({ userId }),
+            ]);
+          } catch (error) {
+            console.error('Error deleting user:', error);
+            throw error;
+          }
+        },
+        
+        // Session methods
+        async createSession(session: { sessionToken: string; userId: string; expires: Date }) {
+          try {
+            await db.collection('sessions').insertOne(session);
+            return session;
+          } catch (error) {
+            console.error('Error creating session:', error);
+            throw error;
+          }
+        },
+        async getSessionAndUser(sessionToken: string) {
+          try {
+            const session = await db.collection('sessions').findOne({ sessionToken });
+            if (!session) return null;
+            
+            const user = await db.collection('users').findOne({ _id: new ObjectId(session.userId) });
+            if (!user) return null;
+            
+            return {
+              session: {
+                ...session,
+                userId: user._id.toString(),
+              },
+              user: {
+                ...user,
+                id: user._id.toString(),
+              },
+            };
+          } catch (error) {
+            console.error('Error getting session and user:', error);
+            return null;
+          }
+        },
+        async updateSession(session: { sessionToken: string }) {
+          try {
+            const result = await db.collection('sessions').findOneAndUpdate(
+              { sessionToken: session.sessionToken },
+              { $set: session },
+              { returnDocument: 'after' }
+            );
+            if (!result || !result.value) {
+              throw new Error('Failed to update session: No result returned');
+            }
+            return result.value;
+          } catch (error) {
+            console.error('Error updating session:', error);
+            throw error;
+          }
+        },
+        async deleteSession(sessionToken: string) {
+          try {
+            await db.collection('sessions').deleteOne({ sessionToken });
+          } catch (error) {
+            console.error('Error deleting session:', error);
+            throw error;
+          }
+        },
+        
+        // Account methods
+        async linkAccount(account: AdapterAccount) {
+          await db.collection('accounts').insertOne(account);
+          return account;
+        },
+        async unlinkAccount({ providerAccountId, provider }: { providerAccountId: string; provider: string }) {
+          await db.collection('accounts').deleteOne({ providerAccountId, provider });
+        },
+        
+        // Verification token methods
+        async createVerificationToken(verificationToken: VerificationToken) {
+          await db.collection('verification_tokens').insertOne(verificationToken);
+          return verificationToken;
+        },
+        async useVerificationToken({ identifier, token }: { identifier: string; token: string }) {
+          const result = await db.collection('verification_tokens').findOneAndDelete({
+            identifier,
+            token,
+          });
+          if (!result) {
+            return null;
+          }
+          return result.value;
+        },
+      };
+    },
+  } as Adapter,
   
   // Configure session settings
   session: {

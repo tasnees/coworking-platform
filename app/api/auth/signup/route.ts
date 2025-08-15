@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import clientPromise from '@/lib/mongodb';
 
+// Enable debug logging
+const debug = (...args: any[]) => {
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[DEBUG]', new Date().toISOString(), ...args);
+  }
+};
+
 interface UserDocument {
   name: string;
   email: string;
@@ -38,12 +45,20 @@ export async function POST(req: Request) {
       );
     }
 
+    debug('Connecting to MongoDB...');
     const client = await clientPromise;
+    debug('Connected to MongoDB');
+    
     const db = client.db('users');
+    debug('Using database:', db.databaseName);
 
+    const collection = db.collection(role);
+    debug(`Checking for existing user in collection: ${role}`);
+    
     // Check if email already exists in that specific collection
-    const existingUser = await db.collection(role).findOne({ email: email.toLowerCase().trim() });
+    const existingUser = await collection.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
+      debug('User already exists:', existingUser.email);
       return NextResponse.json(
         { error: `Email already registered as ${role}` },
         { status: 400 }
@@ -63,12 +78,21 @@ export async function POST(req: Request) {
     };
 
     // Insert into the correct collection based on role
-    await db.collection(role).insertOne(userDoc);
-
-    return NextResponse.json(
-      { message: `${role} registered successfully` },
-      { status: 201 }
-    );
+    debug('Inserting new user:', { ...userDoc, password: '[HASHED]' });
+    const result = await collection.insertOne(userDoc);
+    
+    if (result.acknowledged && result.insertedId) {
+      debug('User created successfully:', result.insertedId);
+      return NextResponse.json(
+        { 
+          message: `${role} registered successfully`,
+          userId: result.insertedId
+        },
+        { status: 201 }
+      );
+    } else {
+      throw new Error('Failed to create user: Insert operation not acknowledged');
+    }
   } catch (error: unknown) {
     console.error('Signup error:', error);
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';

@@ -64,10 +64,13 @@ const options: MongoClientOptions = {
 declare global {
   // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined;
+  // eslint-disable-next-line no-var
+  var _mongoDbPromise: Promise<any> | undefined;
 }
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
+let dbPromise: Promise<any>;
 
 // Create a new MongoClient instance
 client = new MongoClient(uri, options);
@@ -105,8 +108,9 @@ if (DEBUG) {
   });
 }
 
+// In development mode, use a global variable so that the value
+// is preserved across module reloads caused by HMR (Hot Module Replacement).
 if (process.env.NODE_ENV === 'development') {
-  // In development mode, use a global variable to preserve the connection across module reloads
   if (!global._mongoClientPromise) {
     debugLog('Creating new MongoDB client instance (development mode)');
     global._mongoClientPromise = (async () => {
@@ -122,36 +126,33 @@ if (process.env.NODE_ENV === 'development') {
         
         // List all collections for debugging
         const collections = await db.listCollections().toArray();
-        debugLog('Available collections:', collections.map(c => c.name).join(', '));
+        debugLog('Available collections:', collections.map(c => c.name));
         
         return client;
       } catch (error) {
-        console.error('❌ Failed to connect to MongoDB:', error instanceof Error ? error.message : 'Unknown error');
+        console.error('Failed to connect to MongoDB:', error);
         throw error;
       }
     })();
-  } else {
-    debugLog('Using existing MongoDB client from global (development mode)');
+    
+    // Create a database promise
+    global._mongoDbPromise = global._mongoClientPromise.then(client => {
+      return client.db('users');
+    });
   }
   
   clientPromise = global._mongoClientPromise;
+  dbPromise = global._mongoDbPromise!;
 } else {
-  // In production mode, avoid using a global variable
-  debugLog('Creating new MongoDB client instance (production mode)');
-  
+  // In production mode, create new instances
   clientPromise = (async () => {
+    debugLog('Creating new MongoDB client instance (production mode)');
     try {
-      debugLog('Connecting to MongoDB...');
       await client.connect();
       debugLog('Successfully connected to MongoDB');
-      
-      // Verify the connection
-      const db = client.db('users');
-      await db.command({ ping: 1 });
-      debugLog('Database ping successful');
-      
       return client;
     } catch (error) {
+      console.error('Failed to connect to MongoDB:', error);
       console.error('❌ Failed to connect to MongoDB:', error instanceof Error ? error.message : 'Unknown error');
       throw error;
     }
