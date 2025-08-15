@@ -133,12 +133,11 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   
-  // Use MongoDB adapter for sessions
-  adapter: MongoDBAdapter({
-    ...clientPromise,
-    // Override the database name to 'users' to match your setup
-    databaseName: 'users',
-  }) as unknown as Adapter, // Type assertion for MongoDBAdapter
+  // Use MongoDB adapter for sessions with the users database
+  adapter: MongoDBAdapter(
+    // Pass the client promise directly
+    clientPromise as Promise<MongoClient>
+  ) as Adapter,
   
   // Configure session settings
   session: {
