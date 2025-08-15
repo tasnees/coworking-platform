@@ -108,7 +108,9 @@ client.on('serverHeartbeatSucceeded', (event) => {
 });
 
 client.on('serverHeartbeatFailed', (event) => {
-  console.error(`❌ MongoDB server heartbeat failed after ${event.failure?.length || 0}ms:`, event.failure?.message || 'Unknown error');
+  const duration = event.duration || 0;
+  const errorMessage = event.failure?.message || 'Unknown error';
+  console.error(`❌ MongoDB server heartbeat failed after ${duration}ms:`, errorMessage);
 });
 
 // Add event listeners for debugging

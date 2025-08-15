@@ -66,7 +66,8 @@ async function checkDatabaseConnection() {
       },
       collections: collectionsInfo
     };
-  } catch (error) {
+  } catch (err) {
+    const error = err as Error;
     console.error('Database connection error:', error);
     // Reset connection on error
     if (cachedDb) {
@@ -76,7 +77,7 @@ async function checkDatabaseConnection() {
     return { 
       status: 'error', 
       message: 'Database connection failed',
-      error: error.message || 'Unknown error',
+      error: error?.message || 'Unknown error',
       timestamp: new Date().toISOString()
     };
   }
