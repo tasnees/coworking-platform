@@ -86,13 +86,16 @@ function SignupForm() {
         throw new Error(data.error || 'Failed to create account');
       }
 
+      // Show success message
       toast({
         title: "Account created successfully!",
-        description: `You have been registered as a ${role}. You can now log in.`,
+        description: `You have been registered as a ${role}. Redirecting to login...`,
       });
       
-      // Redirect to login page after successful signup
-      router.push("/auth/login");
+      // Redirect to login page after a short delay to show the success message
+      setTimeout(() => {
+        router.push("/auth/login");
+      }, 1500); // 1.5 second delay
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({

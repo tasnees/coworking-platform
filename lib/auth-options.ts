@@ -133,10 +133,13 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   
-  // Use MongoDB adapter for sessions with the users database
+  // Create a new MongoDB client instance
   adapter: MongoDBAdapter(
-    // Pass the client promise directly
-    clientPromise as Promise<MongoClient>
+    (async () => {
+      const client = new MongoClient(process.env.MONGODB_URI!);
+      await client.connect();
+      return client;
+    })()
   ) as Adapter,
   
   // Configure session settings
