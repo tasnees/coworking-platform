@@ -22,7 +22,7 @@ Create a `.env.local` file in the root directory with the following variables:
 ```env
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/coworking-platform
-DATABASE_NAME=coworking-platform
+DATABASE_NAME=users
 
 # NextAuth
 NEXTAUTH_SECRET=your-secret-key-here

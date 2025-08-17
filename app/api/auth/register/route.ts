@@ -108,17 +108,28 @@ export async function POST(request: Request) {
           throw new Error('Database connection failed');
         });
 
-        // Check if user already exists
+        // Check if user already exists in any role collection
         debugLog('Checking for existing user with email:', email);
-        const existingUser = await withDb(async (db) => {
-          return db.collection('users').findOne(
-            { email },
-            { session }
-          );
-        });
+        const collections = ['member', 'staff', 'admin'];
+        let existingUser = null;
+        
+        for (const collectionName of collections) {
+          debugLog(`Checking ${collectionName} collection...`);
+          const user = await withDb(async (db) => {
+            return db.collection(collectionName).findOne(
+              { email },
+              { session }
+            );
+          });
+          
+          if (user) {
+            existingUser = { ...user, collection: collectionName };
+            break;
+          }
+        }
 
         if (existingUser) {
-          debugLog('User already exists:', email);
+          debugLog('User already exists in collection:', existingUser.collection);
           throw new Error(`User with email ${email} already exists`);
         }
         
@@ -146,12 +157,12 @@ export async function POST(request: Request) {
         
         debugLog('Inserting user document');
         
-        // Insert user
+        // Insert user into the appropriate role collection
+        const targetCollection = ALLOWED_ROLES.includes(role) ? role : 'member';
+        debugLog(`Inserting user into ${targetCollection} collection`);
+        
         const userResult = await withDb(async (db) => {
-          return db.collection('users').insertOne(
-            userDoc,
-            { session }
-          );
+          return db.collection(targetCollection).insertOne(userDoc, { session });
         });
         
         userId = userResult.insertedId;

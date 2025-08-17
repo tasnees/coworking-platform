@@ -39,18 +39,39 @@ try {
 
 // MongoDB client options
 const options: MongoClientOptions = {
+  // Connection pool settings
+  maxPoolSize: 10,  // Maximum number of connections in the connection pool
+  minPoolSize: 1,   // Minimum number of connections in the connection pool
+  maxIdleTimeMS: 30000, // Max time a connection can be idle before being removed
+  waitQueueTimeoutMS: 10000, // Max time to wait for a connection to become available
+  
   // Connection timeouts
-  connectTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  serverSelectionTimeoutMS: 30000,
+  connectTimeoutMS: 30000, // Time to wait for a new connection to be established
+  socketTimeoutMS: 45000,  // Time to wait for a response from the server
+  serverSelectionTimeoutMS: 30000, // Time to wait for server selection
   heartbeatFrequencyMS: 10000,  // Check server status every 10 seconds
   
   // Retry settings
   retryWrites: true,
   retryReads: true,
-  maxPoolSize: 10,
-  minPoolSize: 1,
-  maxIdleTimeMS: 10000,
+  maxConnecting: 5, // Maximum number of connections to create in parallel when establishing connections
+  
+  // Replica set and high availability
+  replicaSet: 'atlas-14a9qh-shard-0', // If using a replica set
+  readPreference: 'primaryPreferred',  // Prefer primary, but can read from secondaries
+  w: 'majority', // Write concern: wait for write to propagate to majority of nodes
+  
+  // TLS/SSL
+  ssl: true, // Enable SSL/TLS
+  tlsAllowInvalidCertificates: false, // Don't allow invalid certificates
+  tlsAllowInvalidHostnames: false, // Don't allow invalid hostnames
+  
+  // Monitoring and events
+  monitorCommands: true, // Enable command monitoring for debugging
+  
+  // Authentication and security
+  authMechanism: 'SCRAM-SHA-1', // Default authentication mechanism
+  authSource: 'admin', // Default authentication database
   
   // TLS/SSL configuration for Atlas
   tls: process.env.MONGODB_URI?.includes('mongodb+srv://'),
@@ -61,14 +82,7 @@ const options: MongoClientOptions = {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
-  },
-  
-  // Authentication
-  authMechanism: 'DEFAULT',
-  authSource: 'admin',
-  
-  // Enable command monitoring for debugging
-  monitorCommands: DEBUG,
+  }
 };
 
 // Extend NodeJS global type
@@ -142,6 +156,20 @@ if (DEBUG) {
   });
 }
 
+// Get the database name from the connection string or use a default
+const getDatabaseName = (): string => {
+  try {
+    const url = new URL(process.env.MONGODB_URI || '');
+    return url.pathname.split('/').filter(Boolean).pop() || 'coworking-platform';
+  } catch (error) {
+    return 'coworking-platform';
+  }
+};
+
+const DATABASE_NAME = getDatabaseName();
+
+debugLog(`Using database: ${DATABASE_NAME}`);
+
 // In development mode, use a global variable so that the value
 // is preserved across module reloads caused by HMR (Hot Module Replacement).
 if (process.env.NODE_ENV === 'development') {
@@ -154,7 +182,7 @@ if (process.env.NODE_ENV === 'development') {
         debugLog('Successfully connected to MongoDB');
         
         // Verify the connection
-        const db = client.db('users');
+        const db = client.db(DATABASE_NAME);
         await db.command({ ping: 1 });
         debugLog('Database ping successful');
         
@@ -171,7 +199,7 @@ if (process.env.NODE_ENV === 'development') {
     
     // Create a database promise
     global._mongoDbPromise = global._mongoClientPromise.then(client => {
-      return client.db('users');
+      return client.db(DATABASE_NAME);
     });
   }
   
@@ -183,7 +211,18 @@ if (process.env.NODE_ENV === 'development') {
     debugLog('Creating new MongoDB client instance (production mode)');
     try {
       await client.connect();
-      debugLog('Successfully connected to MongoDB');
+      debugLog(`Successfully connected to MongoDB (${DATABASE_NAME})`);
+      
+      // Verify the connection in production as well
+      const db = client.db(DATABASE_NAME);
+      await db.command({ ping: 1 });
+      debugLog('Database ping successful in production');
+      
+      // List collections in production for debugging
+      const collections = await db.listCollections().toArray();
+      debugLog('Available collections in production:', collections.map(c => c.name));
+      
+      return client;
       return client;
     } catch (error) {
       console.error('Failed to connect to MongoDB:', error);
