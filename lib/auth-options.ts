@@ -8,6 +8,7 @@ import { JWT } from 'next-auth/jwt';
 // Import the MongoDB client and types
 import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 import { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
+import { getDb } from './mongodb';
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -123,7 +124,9 @@ export const authOptions: NextAuthOptions = {
   // Use a custom MongoDB adapter that uses a single 'users' collection
   adapter: {
     async getAdapter() {
-      const db = (await clientPromise).db();
+      const db = await getDb();
+      
+      console.log('Using database for auth:', db.databaseName);
       
       // Helper function to find a user by query in the users collection
       const findUser = async (query: any) => {

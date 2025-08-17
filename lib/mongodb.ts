@@ -37,20 +37,24 @@ try {
   throw error;
 }
 
-// Simple MongoDB client options
+// MongoDB client options optimized for serverless and containerized environments
 const options: MongoClientOptions = {
-  // Connection settings
-  maxPoolSize: 10,
-  minPoolSize: 1,
-  maxIdleTimeMS: 30000,
-  connectTimeoutMS: 30000,
-  socketTimeoutMS: 45000,
-  serverSelectionTimeoutMS: 30000,
-  heartbeatFrequencyMS: 10000,
+  // Connection pooling
+  maxPoolSize: 50, // Increased for better concurrency
+  minPoolSize: 0, // Allow connections to be closed when idle
+  maxIdleTimeMS: 60000, // Close idle connections after 60 seconds
+  waitQueueTimeoutMS: 5000, // Max time to wait for a connection from the pool
   
-  // Retry settings
+  // Timeouts and connection settings
+  connectTimeoutMS: 15000, // 15 seconds to establish initial connection
+  socketTimeoutMS: 45000,  // Close sockets after 45s of inactivity
+  serverSelectionTimeoutMS: 10000, // 10s to select a server
+  heartbeatFrequencyMS: 10000, // Check server status every 10s
+  
+  // Retry settings - important for serverless environments
   retryWrites: true,
   retryReads: true,
+  maxConnecting: 5, // Maximum number of simultaneous connection attempts
   
   // TLS/SSL - simplified for Atlas
   tls: uri.startsWith('mongodb+srv'),
@@ -64,7 +68,11 @@ const options: MongoClientOptions = {
     version: ServerApiVersion.v1,
     strict: false,
     deprecationErrors: true
-  }
+  },
+  
+  // Compression
+  compressors: ['zlib', 'snappy', 'zstd'], // Enable compression for better performance
+  zlibCompressionLevel: 3 // Compression level (1-9, where 9 is highest compression)
 };
 
 // Extend NodeJS global type
@@ -163,6 +171,12 @@ const getDatabaseName = (): string => {
 
 const DATABASE_NAME = getDatabaseName();
 
+// Create a function to get the database with the correct name
+export const getDb = async () => {
+  const client = await clientPromise;
+  return client.db(DATABASE_NAME);
+};
+
 debugLog(`Using database: ${DATABASE_NAME}`);
 
 // Function to establish MongoDB connection with retry logic
@@ -230,19 +244,94 @@ if (process.env.NODE_ENV === 'development') {
   dbPromise = clientPromise.then(client => client.db(DATABASE_NAME));
 }
 
-// Handle process termination
-process.on('SIGINT', async () => {
-  debugLog('SIGINT received - closing MongoDB connection');
+// Handle process termination with platform-aware cleanup
+const cleanup = async (signal?: string) => {
   try {
+    if (signal) {
+      debugLog(`${signal} received - cleaning up MongoDB connection...`);
+    } else {
+      debugLog('Cleaning up MongoDB connection...');
+    }
+    
     const client = await clientPromise;
-    await client.close();
-    debugLog('MongoDB connection closed');
-    process.exit(0);
+    
+    // Only close if we're not in a serverless environment
+    // In serverless, the connection will be automatically cleaned up when the function ends
+    if (process.env.NODE_ENV !== 'production' || !process.env.IS_SERVERLESS) {
+      await client.close();
+      debugLog('MongoDB connection closed');
+    } else {
+      debugLog('Skipping explicit close in serverless environment');
+    }
   } catch (error) {
-    console.error('Error closing MongoDB connection:', error);
+    // In production, don't crash the app if cleanup fails
+    console.error('Error during MongoDB connection cleanup:', error);
+  }
+};
+
+// Handle different termination signals with platform awareness
+const handleShutdown = async (signal: string) => {
+  debugLog(`${signal} received - initiating graceful shutdown...`);
+  
+  // Set a timeout to force exit if cleanup takes too long
+  const forceShutdown = setTimeout(() => {
+    console.warn('Forcing shutdown after timeout');
+    process.exit(1);
+  }, 10000); // 10 second timeout
+  
+  try {
+    await cleanup(signal);
+    clearTimeout(forceShutdown);
+    
+    // Exit with success code for normal termination signals
+    if (['SIGINT', 'SIGTERM'].includes(signal)) {
+      process.exit(0);
+    }
+  } catch (error) {
+    console.error('Error during shutdown:', error);
     process.exit(1);
   }
-});
+};
+
+// Register signal handlers for different environments
+if (!process.env.IS_SERVERLESS) {
+  // Standard process signals
+  ['SIGINT', 'SIGTERM', 'SIGUSR2'].forEach((signal) => {
+    process.on(signal, () => handleShutdown(signal));
+  });
+  
+  // Handle uncaught exceptions and unhandled rejections
+  process.on('uncaughtException', async (error) => {
+    console.error('Uncaught Exception:', error);
+    await cleanup('uncaughtException');
+    process.exit(1);
+  });
+  
+  process.on('unhandledRejection', async (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    await cleanup('unhandledRejection');
+    process.exit(1);
+  });
+  
+  // Handle process exit (for platforms that don't send signals)
+  process.on('exit', (code) => {
+    debugLog(`Process exiting with code ${code}`);
+  });
+  
+  // Handle platform-specific events
+  if (process.env.RENDER) {
+    debugLog('Running on Render platform - enabling platform-specific optimizations');
+    // Render sends SIGTERM on shutdown
+  }
+  
+  // Add a keep-alive interval for platforms that need it
+  if (process.env.ENABLE_KEEP_ALIVE) {
+    debugLog('Enabling keep-alive for platform compatibility');
+    setInterval(() => {
+      debugLog('Keep-alive ping');
+    }, 30000); // 30 seconds
+  }
+}
 
 // Export a module-scoped MongoClient promise to ensure the client is connected only once
 export default clientPromise;

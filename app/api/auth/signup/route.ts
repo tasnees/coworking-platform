@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
-import clientPromise from '@/lib/mongodb';
+import { getDb } from '@/lib/mongodb';
 
 // Enable debug logging
 const debug = (...args: any[]) => {
@@ -46,10 +46,7 @@ export async function POST(req: Request) {
     }
 
     debug('Connecting to MongoDB...');
-    const client = await clientPromise;
-    debug('Connected to MongoDB');
-    
-    const db = client.db('coworking-platform');
+    const db = await getDb();
     debug('Using database:', db.databaseName);
 
     const usersCollection = db.collection('users');
