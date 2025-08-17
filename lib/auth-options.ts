@@ -133,25 +133,23 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   
-  // Use a custom MongoDB adapter that checks all role collections
+  // Use a custom MongoDB adapter that uses a single 'users' collection
   adapter: {
     async getAdapter() {
       const db = (await clientPromise).db();
-      const collections = ['member', 'staff', 'admin'];
       
-      // Helper function to find a user by query in any collection
-      const findUserInCollections = async (query: any) => {
-        for (const collectionName of collections) {
-          try {
-            const user = await db.collection(collectionName).findOne(query);
-            if (user) {
-              return { ...user, id: user._id.toString(), role: collectionName as UserRole };
-            }
-          } catch (error) {
-            console.error(`Error finding user in ${collectionName}:`, error);
+      // Helper function to find a user by query in the users collection
+      const findUser = async (query: any) => {
+        try {
+          const user = await db.collection('users').findOne(query);
+          if (user) {
+            return { ...user, id: user._id.toString() };
           }
+          return null;
+        } catch (error) {
+          console.error('Error finding user:', error);
+          return null;
         }
-        return null;
       };
       
       return {
@@ -165,9 +163,12 @@ export const authOptions: NextAuthOptions = {
             ? role 
             : 'member';
             
-          // Save to the appropriate collection based on role
-          const result = await db.collection(validRole).insertOne({
+          // Save to the users collection
+          const result = await db.collection('users').insertOne({
             ...user,
+            role: validRole,
+            emailVerified: user.emailVerified || null,
+            image: user.image || null,
             createdAt: new Date(),
             updatedAt: new Date()
           });
@@ -179,10 +180,15 @@ export const authOptions: NextAuthOptions = {
           };
         },
         async getUser(id: string) {
-          return await findUserInCollections({ _id: new ObjectId(id) });
+          try {
+            return await findUser({ _id: new ObjectId(id) });
+          } catch (error) {
+            console.error('Error getting user by ID:', error);
+            return null;
+          }
         },
         async getUserByEmail(email: string) {
-          return await findUserInCollections({ email });
+          return await findUser({ email });
         },
         async getUserByAccount({ providerAccountId, provider }: { providerAccountId: string; provider: string }) {
           const account = await db.collection('accounts').findOne({
@@ -191,7 +197,12 @@ export const authOptions: NextAuthOptions = {
           });
           if (!account) return null;
           
-          return await findUserInCollections({ _id: new ObjectId(account.userId) });
+          try {
+            return await findUser({ _id: new ObjectId(account.userId) });
+          } catch (error) {
+            console.error('Error getting user by account:', error);
+            return null;
+          }
         },
         async updateUser(user: Partial<AdapterUser> & { id: string }) {
           const { id, ...update } = user;

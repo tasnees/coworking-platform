@@ -1,17 +1,17 @@
 import { MongoClient, MongoClientOptions, ServerApiVersion } from 'mongodb';
 
 // Enable debug logging
-const DEBUG = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test';
+const DEBUG = true; // Always enable debug logging for now
 
 // Log function with consistent formatting
 function debugLog(message: string, ...args: any[]) {
-  if (DEBUG) {
-    const timestamp = new Date().toISOString();
-    if (args.length > 0) {
-      console.log(`[MongoDB][${timestamp}] ${message}`, ...args);
-    } else {
-      console.log(`[MongoDB][${timestamp}] ${message}`);
-    }
+  const timestamp = new Date().toISOString();
+  const logMessage = `[MongoDB][${timestamp}] ${message}`;
+  
+  if (args.length > 0) {
+    console.log(logMessage, ...args);
+  } else {
+    console.log(logMessage);
   }
 }
 
@@ -37,9 +37,9 @@ try {
   throw error;
 }
 
-// MongoDB client options
+// Simple MongoDB client options
 const options: MongoClientOptions = {
-  // Basic connection settings
+  // Connection settings
   maxPoolSize: 10,
   minPoolSize: 1,
   maxIdleTimeMS: 30000,
@@ -52,20 +52,12 @@ const options: MongoClientOptions = {
   retryWrites: true,
   retryReads: true,
   
-  // Security settings - simplified to avoid conflicts
-  ...(process.env.MONGODB_URI?.startsWith('mongodb+srv') ? {
-    // For Atlas connections (SRV)
-    tls: true,
-    tlsAllowInvalidCertificates: false,
-    tlsAllowInvalidHostnames: false
-  } : {
-    // For local development or non-SRV connections
-    tls: false,
-    ssl: false
-  }),
+  // TLS/SSL - simplified for Atlas
+  tls: uri.startsWith('mongodb+srv'),
+  tlsAllowInvalidCertificates: false,
   
   // Monitoring
-  monitorCommands: process.env.NODE_ENV === 'development',
+  monitorCommands: true,
   
   // Server API version
   serverApi: {
@@ -81,113 +73,145 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
   // eslint-disable-next-line no-var
   var _mongoDbPromise: Promise<any> | undefined;
+  // eslint-disable-next-line no-var
+  var _mongoConnectionAttempts: number;
+}
+
+// Initialize global connection attempts counter
+if (!global._mongoConnectionAttempts) {
+  global._mongoConnectionAttempts = 0;
 }
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 let dbPromise: Promise<any>;
 
-// Create a new MongoClient instance
-client = new MongoClient(uri, options);
+// Create a new MongoClient instance with enhanced error handling
+const createMongoClient = () => {
+  debugLog('Creating new MongoDB client instance');
+  const newClient = new MongoClient(uri, options);
 
-// Add event listeners for connection monitoring
-client.on('serverOpening', () => {
-  debugLog('MongoDB server opening connection');
-});
+  // Add event listeners for connection monitoring
+  newClient.on('serverOpening', () => {
+    debugLog('MongoDB server opening connection');
+  });
 
-client.on('serverClosed', () => {
-  console.warn('⚠️ MongoDB server connection closed');
-});
+  newClient.on('serverClosed', () => {
+    console.warn('⚠️ MongoDB server connection closed');
+  });
 
-client.on('topologyOpening', () => {
-  debugLog('MongoDB topology opening');
-});
+  newClient.on('topologyOpening', () => {
+    debugLog('MongoDB topology opening');
+  });
 
-client.on('topologyClosed', () => {
-  console.warn('⚠️ MongoDB topology closed');
-});
+  newClient.on('topologyClosed', () => {
+    console.warn('⚠️ MongoDB topology closed');
+  });
 
-client.on('serverHeartbeatSucceeded', (event) => {
-  debugLog(`MongoDB server heartbeat succeeded (${event.awaited}ms)`);
-});
+  newClient.on('serverHeartbeatSucceeded', (event) => {
+    debugLog(`MongoDB server heartbeat succeeded (${event.awaited}ms)`);
+  });
 
-client.on('serverHeartbeatFailed', (event) => {
-  const duration = event.duration || 0;
-  const errorMessage = event.failure?.message || 'Unknown error';
-  console.error(`❌ MongoDB server heartbeat failed after ${duration}ms:`, errorMessage);
-});
+  newClient.on('serverHeartbeatFailed', (event) => {
+    const duration = event.duration || 0;
+    const errorMessage = event.failure?.message || 'Unknown error';
+    console.error(`❌ MongoDB server heartbeat failed after ${duration}ms:`, errorMessage);
+    
+    // Attempt to reconnect on heartbeat failure
+    if (global._mongoConnectionAttempts < 3) {
+      global._mongoConnectionAttempts++;
+      debugLog(`Attempting to reconnect (attempt ${global._mongoConnectionAttempts}/3)`);
+      setTimeout(async () => {
+        try {
+          await newClient.connect();
+          debugLog('Successfully reconnected to MongoDB');
+        } catch (err) {
+          console.error('❌ Failed to reconnect to MongoDB:', (err as Error).message);
+        }
+      }, 1000 * global._mongoConnectionAttempts); // Exponential backoff
+    }
+  });
 
-// Add event listeners for debugging
-if (DEBUG) {
-  client.on('commandStarted', (event) => {
+  // Add command monitoring for debugging
+  newClient.on('commandStarted', (event) => {
     debugLog(`Command started: ${event.commandName}`, {
       database: event.databaseName,
       collection: event.command.collection,
-      command: event.command,
     });
   });
 
-  client.on('commandSucceeded', (event) => {
+  newClient.on('commandSucceeded', (event) => {
     debugLog(`Command succeeded: ${event.commandName} (${event.duration}ms)`);
   });
 
-  client.on('commandFailed', (event) => {
+  newClient.on('commandFailed', (event) => {
     console.error(`❌ Command failed: ${event.commandName} (${event.duration}ms)`, {
-      failure: event.failure,
+      failure: event.failure?.message || 'Unknown error',
     });
   });
 
-  client.on('serverOpening', () => {
-    console.log('[MongoDB] Server opening...');
-  });
+  return newClient;
+};
 
-  client.on('serverClosed', () => {
-    console.log('[MongoDB] Server closed');
-  });
-}
+// Initialize the client
+client = createMongoClient();
 
-// Get the database name from the connection string or use a default
+// Always use 'coworking-platform' as the database name
 const getDatabaseName = (): string => {
-  try {
-    const url = new URL(process.env.MONGODB_URI || '');
-    return url.pathname.split('/').filter(Boolean).pop() || 'coworking-platform';
-  } catch (error) {
-    return 'coworking-platform';
-  }
+  return 'coworking-platform';
 };
 
 const DATABASE_NAME = getDatabaseName();
 
 debugLog(`Using database: ${DATABASE_NAME}`);
 
-// In development mode, use a global variable so that the value
-// is preserved across module reloads caused by HMR (Hot Module Replacement).
+// Function to establish MongoDB connection with retry logic
+const connectWithRetry = async (maxRetries = 3, retryDelay = 1000) => {
+  let lastError: Error | null = null;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      debugLog(`Connection attempt ${attempt} of ${maxRetries}`);
+      await client.connect();
+      debugLog('Successfully connected to MongoDB');
+      
+      // Verify the connection
+      const db = client.db(DATABASE_NAME);
+      await db.command({ ping: 1 });
+      debugLog('Database ping successful');
+      
+      // List all collections for debugging
+      const collections = await db.listCollections().toArray();
+      debugLog('Available collections:', collections.map(c => c.name));
+      
+      return client;
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`Connection attempt ${attempt} failed:`, error);
+      
+      if (attempt < maxRetries) {
+        debugLog(`Retrying in ${retryDelay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        // Create a new client for the retry
+        client = createMongoClient();
+      }
+    }
+  }
+  
+  throw new Error(`Failed to connect to MongoDB after ${maxRetries} attempts: ${lastError?.message}`);
+};
+
+// In development mode, use a global variable to preserve the connection across HMR
 if (process.env.NODE_ENV === 'development') {
   if (!global._mongoClientPromise) {
-    debugLog('Creating new MongoDB client instance (development mode)');
-    global._mongoClientPromise = (async () => {
-      try {
-        debugLog('Connecting to MongoDB...');
-        await client.connect();
-        debugLog('Successfully connected to MongoDB');
-        
-        // Verify the connection
-        const db = client.db(DATABASE_NAME);
-        await db.command({ ping: 1 });
-        debugLog('Database ping successful');
-        
-        // List all collections for debugging
-        const collections = await db.listCollections().toArray();
-        debugLog('Available collections:', collections.map(c => c.name));
-        
-        return client;
-      } catch (error) {
-        console.error('Failed to connect to MongoDB:', error);
-        throw error;
-      }
-    })();
+    debugLog('Initializing MongoDB client (development mode)');
+    global._mongoClientPromise = connectWithRetry().catch(error => {
+      console.error('Failed to initialize MongoDB client:', error);
+      console.error('❌ Failed to connect to MongoDB:', error instanceof Error ? error.message : 'Unknown error');
+      throw error;
+    });
     
-    // Create a database promise
+    // Set up database promise
     global._mongoDbPromise = global._mongoClientPromise.then(client => {
       return client.db(DATABASE_NAME);
     });
@@ -196,31 +220,29 @@ if (process.env.NODE_ENV === 'development') {
   clientPromise = global._mongoClientPromise;
   dbPromise = global._mongoDbPromise!;
 } else {
-  // In production mode, create new instances
-  clientPromise = (async () => {
-    debugLog('Creating new MongoDB client instance (production mode)');
-    try {
-      await client.connect();
-      debugLog(`Successfully connected to MongoDB (${DATABASE_NAME})`);
-      
-      // Verify the connection in production as well
-      const db = client.db(DATABASE_NAME);
-      await db.command({ ping: 1 });
-      debugLog('Database ping successful in production');
-      
-      // List collections in production for debugging
-      const collections = await db.listCollections().toArray();
-      debugLog('Available collections in production:', collections.map(c => c.name));
-      
-      return client;
-      return client;
-    } catch (error) {
-      console.error('Failed to connect to MongoDB:', error);
-      console.error('❌ Failed to connect to MongoDB:', error instanceof Error ? error.message : 'Unknown error');
-      throw error;
-    }
-  })();
+  // In production, don't use global variable
+  debugLog('Initializing MongoDB client (production mode)');
+  clientPromise = connectWithRetry().catch(error => {
+    console.error('Failed to initialize MongoDB client:', error);
+    throw error;
+  });
+  
+  dbPromise = clientPromise.then(client => client.db(DATABASE_NAME));
 }
+
+// Handle process termination
+process.on('SIGINT', async () => {
+  debugLog('SIGINT received - closing MongoDB connection');
+  try {
+    const client = await clientPromise;
+    await client.close();
+    debugLog('MongoDB connection closed');
+    process.exit(0);
+  } catch (error) {
+    console.error('Error closing MongoDB connection:', error);
+    process.exit(1);
+  }
+});
 
 // Export a module-scoped MongoClient promise to ensure the client is connected only once
 export default clientPromise;
