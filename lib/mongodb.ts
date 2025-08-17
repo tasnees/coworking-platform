@@ -39,49 +39,39 @@ try {
 
 // MongoDB client options
 const options: MongoClientOptions = {
-  // Connection pool settings
-  maxPoolSize: 10,  // Maximum number of connections in the connection pool
-  minPoolSize: 1,   // Minimum number of connections in the connection pool
-  maxIdleTimeMS: 30000, // Max time a connection can be idle before being removed
-  waitQueueTimeoutMS: 10000, // Max time to wait for a connection to become available
-  
-  // Connection timeouts
-  connectTimeoutMS: 30000, // Time to wait for a new connection to be established
-  socketTimeoutMS: 45000,  // Time to wait for a response from the server
-  serverSelectionTimeoutMS: 30000, // Time to wait for server selection
-  heartbeatFrequencyMS: 10000,  // Check server status every 10 seconds
+  // Basic connection settings
+  maxPoolSize: 10,
+  minPoolSize: 1,
+  maxIdleTimeMS: 30000,
+  connectTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+  serverSelectionTimeoutMS: 30000,
+  heartbeatFrequencyMS: 10000,
   
   // Retry settings
   retryWrites: true,
   retryReads: true,
-  maxConnecting: 5, // Maximum number of connections to create in parallel when establishing connections
   
-  // Replica set and high availability
-  replicaSet: 'atlas-14a9qh-shard-0', // If using a replica set
-  readPreference: 'primaryPreferred',  // Prefer primary, but can read from secondaries
-  w: 'majority', // Write concern: wait for write to propagate to majority of nodes
+  // Security settings - simplified to avoid conflicts
+  ...(process.env.MONGODB_URI?.startsWith('mongodb+srv') ? {
+    // For Atlas connections (SRV)
+    tls: true,
+    tlsAllowInvalidCertificates: false,
+    tlsAllowInvalidHostnames: false
+  } : {
+    // For local development or non-SRV connections
+    tls: false,
+    ssl: false
+  }),
   
-  // TLS/SSL
-  ssl: true, // Enable SSL/TLS
-  tlsAllowInvalidCertificates: false, // Don't allow invalid certificates
-  tlsAllowInvalidHostnames: false, // Don't allow invalid hostnames
+  // Monitoring
+  monitorCommands: process.env.NODE_ENV === 'development',
   
-  // Monitoring and events
-  monitorCommands: true, // Enable command monitoring for debugging
-  
-  // Authentication and security
-  authMechanism: 'SCRAM-SHA-1', // Default authentication mechanism
-  authSource: 'admin', // Default authentication database
-  
-  // TLS/SSL configuration for Atlas
-  tls: process.env.MONGODB_URI?.includes('mongodb+srv://'),
-  tlsInsecure: false,
-  
-  // Use the new Server API version
+  // Server API version
   serverApi: {
     version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
+    strict: false,
+    deprecationErrors: true
   }
 };
 
