@@ -79,34 +79,22 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Find user by email in any collection
+          // Find user by email in the users collection
           const client = await clientPromise;
-          const db = client.db('users');
+          const db = client.db('coworking-platform');
           
-          // Check each collection for the user
-          const collections = ['admin', 'staff', 'member'];
-          let userDoc = null;
-          let userRole: UserRole = 'member';
+          // Find user in the users collection
+          const userDoc = await db.collection('users').findOne<{
+            _id: any;
+            email: string;
+            password: string;
+            name?: string;
+            role?: UserRole;
+          }>({ 
+            email: credentials.email.toLowerCase().trim()
+          });
           
-          for (const collection of collections) {
-            const doc = await db.collection(collection).findOne<{
-              _id: any;
-              email: string;
-              password: string;
-              name?: string;
-              role?: UserRole;
-            }>({ 
-              email: credentials.email 
-            });
-            
-            if (doc) {
-              userDoc = doc;
-              userRole = doc.role || (collection as UserRole);
-              break;
-            }
-          }
-
-          // Check if user exists
+          // If no user found, throw error
           if (!userDoc) {
             throw new Error('No user found with this email');
           }
@@ -118,12 +106,11 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Return user object without the password
-          // Return user data with role
           return {
             id: userDoc._id.toString(),
             email: userDoc.email,
             name: userDoc.name || null,
-            role: userRole,
+            role: userDoc.role || 'member', // Default to 'member' if role is not set
           } as User;
         } catch (error) {
           console.error('Authentication error:', error);

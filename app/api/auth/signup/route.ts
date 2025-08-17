@@ -49,18 +49,18 @@ export async function POST(req: Request) {
     const client = await clientPromise;
     debug('Connected to MongoDB');
     
-    const db = client.db('users');
+    const db = client.db('coworking-platform');
     debug('Using database:', db.databaseName);
 
-    const collection = db.collection(role);
-    debug(`Checking for existing user in collection: ${role}`);
+    const usersCollection = db.collection('users');
+    debug('Checking for existing user in users collection');
     
-    // Check if email already exists in that specific collection
-    const existingUser = await collection.findOne({ email: email.toLowerCase().trim() });
+    // Check if email already exists in the users collection
+    const existingUser = await usersCollection.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       debug('User already exists:', existingUser.email);
       return NextResponse.json(
-        { error: `Email already registered as ${role}` },
+        { error: 'Email already registered' },
         { status: 400 }
       );
     }
@@ -77,9 +77,9 @@ export async function POST(req: Request) {
       createdAt: new Date(),
     };
 
-    // Insert into the correct collection based on role
-    debug('Inserting new user:', { ...userDoc, password: '[HASHED]' });
-    const result = await collection.insertOne(userDoc);
+    // Insert into the users collection
+    debug('Inserting new user into users collection:', { ...userDoc, password: '[HASHED]' });
+    const result = await usersCollection.insertOne(userDoc);
     
     if (result.acknowledged && result.insertedId) {
       debug('User created successfully:', result.insertedId);
