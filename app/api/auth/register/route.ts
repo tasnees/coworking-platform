@@ -20,17 +20,32 @@ const ALLOWED_ROLES: UserRole[] = ['member', 'staff'];
 // Add a delay function for debugging
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Enable debug logging in all environments for now
+console.log = (...args) => {
+  const timestamp = new Date().toISOString();
+  const message = args.map(arg => 
+    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+  ).join(' ');
+  process.stdout.write(`[${timestamp}] ${message}\n`);
+};
+
 export async function POST(request: Request) {
-  debugLog('--- Starting registration request ---');
-  debugLog('Request URL:', request.url);
-  debugLog('Request headers:', JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2));
+  console.log('🚀 --- Starting registration request ---');
+  console.log('🌐 Request URL:', request.url);
+  console.log('📝 Request method:', request.method);
+  console.log('📋 Request headers:', JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2));
   
   try {
     debugLog('Parsing request body...');
+    console.log('📥 Reading request body...');
     const body = await request.json().catch(error => {
-      debugLog('Error parsing request body:', error);
-      throw new Error('Invalid request body');
+      console.error('❌ Error parsing request body:', error);
+      return NextResponse.json(
+        { error: 'Invalid request body', details: error.message },
+        { status: 400 }
+      );
     });
+    console.log('📦 Request body received:', JSON.stringify(body, null, 2));
     
     debugLog('Request body:', JSON.stringify(body, null, 2));
     
@@ -87,44 +102,72 @@ export async function POST(request: Request) {
     
     // Get a single database connection for the entire operation
     const { client, db } = await getDb();
-    const session = client.startSession();
     let userId: ObjectId | null = null;
     
     try {
+      // Ensure collections exist (outside of transaction)
+      console.log('🔍 Ensuring collections exist...');
+      try {
+        await db.collection('users').findOne({}); // This will create the collection if it doesn't exist
+        console.log('✅ Users collection verified');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('❌ Error accessing users collection:', errorMessage);
+        return NextResponse.json(
+          { 
+            error: 'Database error', 
+            message: 'Failed to access users collection',
+            details: errorMessage 
+          },
+          { status: 500 }
+        );
+      }
+
+      // Start a new session for the transaction
+      const session = client.startSession();
       // Check if user already exists before starting the transaction
-      debugLog('Checking for existing user with email:', email);
-      const existingUser = await db.collection('users').findOne(
-        { email }
-      );
-      
-      if (existingUser) {
-        debugLog('User already exists in users collection');
-        throw new Error(`User with email ${email} already exists`);
+      console.log('🔍 Checking for existing user with email:', email);
+      try {
+        const existingUser = await db.collection('users').findOne(
+          { email },
+          { maxTimeMS: 5000 } // 5 second timeout
+        );
+        
+        if (existingUser) {
+          console.log('❌ User already exists in users collection');
+          return NextResponse.json(
+            { 
+              error: 'User already exists',
+              message: `User with email ${email} already exists`,
+              timestamp: new Date().toISOString()
+            },
+            { status: 400 }
+          );
+        }
+        console.log('✅ No existing user found, proceeding with registration');
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('❌ Error checking for existing user:', errorMessage);
+        return NextResponse.json(
+          { 
+            error: 'Database error',
+            message: 'Failed to check for existing user',
+            details: errorMessage,
+            timestamp: new Date().toISOString()
+          },
+          { status: 500 }
+        );
       }
       
+      // Start transaction
+      console.log('🔄 Starting transaction...');
       const result = await session.withTransaction(async () => {
-        debugLog('Transaction started at:', new Date().toISOString());
+        console.log('✅ Transaction started at:', new Date().toISOString());
         
         // Test the connection with a simple ping
-        debugLog('Testing database connection...');
+        console.log('🏓 Testing database connection...');
         await db.command({ ping: 1 }, { session });
-        debugLog('✅ Database connection is active');
-        
-        // Ensure collections exist
-        const collections = await db.listCollections({}, { session }).toArray();
-        const collectionNames = collections.map(c => c.name);
-        
-        if (!collectionNames.includes('users')) {
-          debugLog('Creating users collection...');
-          await db.createCollection('users', { session });
-          debugLog('Created users collection');
-        }
-        
-        if (!collectionNames.includes('members')) {
-          debugLog('Creating members collection...');
-          await db.createCollection('members', { session });
-          debugLog('Created members collection');
-        }
+        console.log('✅ Database connection is active');
         
         debugLog('No existing user found, proceeding with registration');
 
