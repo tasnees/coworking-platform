@@ -110,6 +110,22 @@ export async function POST(request: Request) {
         await db.command({ ping: 1 }, { session });
         debugLog('✅ Database connection is active');
         
+        // Ensure collections exist
+        const collections = await db.listCollections({}, { session }).toArray();
+        const collectionNames = collections.map(c => c.name);
+        
+        if (!collectionNames.includes('users')) {
+          debugLog('Creating users collection...');
+          await db.createCollection('users', { session });
+          debugLog('Created users collection');
+        }
+        
+        if (!collectionNames.includes('members')) {
+          debugLog('Creating members collection...');
+          await db.createCollection('members', { session });
+          debugLog('Created members collection');
+        }
+        
         debugLog('No existing user found, proceeding with registration');
 
         // Hash password
