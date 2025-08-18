@@ -159,26 +159,14 @@ export async function POST(request: Request) {
         );
       }
       
-      // Start transaction
-      console.log('🔄 Starting transaction...');
-      const result = await session.withTransaction(async () => {
-        console.log('✅ Transaction started at:', new Date().toISOString());
-        
-        // Test the connection with a simple ping
-        console.log('🏓 Testing database connection...');
-        await db.command({ ping: 1 }, { session });
-        console.log('✅ Database connection is active');
-        
-        debugLog('No existing user found, proceeding with registration');
-
-        // Hash password
-        debugLog('Hashing password...');
+      console.log('🏗️ Starting user registration process...');
+      const now = new Date();
+      
+      try {
+        // 1. Create user document
+        console.log('🔑 Hashing password...');
         const hashedPassword = await hash(password, 12);
-        const now = new Date();
         
-        debugLog('Creating user document...');
-
-        // Create new user with selected role
         const userDoc = {
           email,
           password: hashedPassword,
@@ -191,16 +179,12 @@ export async function POST(request: Request) {
           updatedAt: now,
         };
         
-        debugLog('Inserting user into users collection');
-        const userResult = await db.collection('users').insertOne(
-          userDoc,
-          { session }
-        );
-        
+        console.log('👤 Inserting user into users collection...');
+        const userResult = await db.collection('users').insertOne(userDoc);
         userId = userResult.insertedId;
-        debugLog('User inserted successfully, ID:', userId);
+        console.log('✅ User inserted successfully, ID:', userId);
         
-        // Create a member document for the new user
+        // 2. Create member document
         const memberDoc = {
           userId: userId,
           name,
@@ -215,22 +199,33 @@ export async function POST(request: Request) {
           updatedAt: now,
         };
         
-        debugLog('Inserting member document');
-        await db.collection('members').insertOne(
-          memberDoc,
-          { session }
+        console.log('👥 Inserting member document...');
+        await db.collection('members').insertOne(memberDoc);
+        console.log('✅ Member inserted successfully');
+        
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('❌ Error during registration:', errorMessage);
+        
+        // Cleanup if user was created but member wasn't
+        if (userId) {
+          try {
+            await db.collection('users').deleteOne({ _id: userId });
+            console.log('🧹 Cleaned up partially created user');
+          } catch (cleanupError) {
+            console.error('❌ Error during cleanup:', cleanupError);
+          }
+        }
+        
+        return NextResponse.json(
+          { 
+            error: 'Registration failed',
+            message: 'Failed to complete registration',
+            details: errorMessage,
+            timestamp: now.toISOString()
+          },
+          { status: 500 }
         );
-        
-        debugLog('Member inserted successfully');
-        debugLog('Transaction completed successfully at:', new Date().toISOString());
-        
-        return { userId };
-      });
-      
-      debugLog('✅ Transaction committed successfully');
-      
-      if (!userId) {
-        throw new Error('User ID was not set during registration');
       }
       
       // Verify the user was actually inserted using the same connection
