@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth-options"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "./providers"
+import { ErrorBoundary } from "@/components/error-boundary"
 
 export const metadata: Metadata = {
   title: "Coworking Platform",
@@ -44,12 +45,15 @@ export default async function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
       <body className="font-sans antialiased min-h-screen bg-background">
-        <Providers session={session}>
-          {children}
-          <Toaster />
-        </Providers>
+        <ErrorBoundary>
+          <Providers session={session}>
+            {children}
+            <Toaster />
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   )

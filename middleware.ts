@@ -5,49 +5,81 @@ import { JWT } from 'next-auth/jwt';
 
 type UserRole = 'admin' | 'staff' | 'member';
 
+// List of public paths that don't require authentication
+const publicPaths = [
+  '/',
+  '/auth/login',
+  '/auth/register',
+  '/auth/error',
+  '/api/auth/register',
+  '/api/auth/session',
+  '/_next/static',
+  '/_next/image',
+  '/favicon.ico',
+];
+
+// List of API routes that don't require authentication
+const publicApiRoutes = [
+  '/api/auth/register',
+  '/api/auth/session',
+  '/api/health',
+];
+
 export default withAuth(
   function middleware(request) {
     const { pathname } = request.nextUrl;
     const token = request.nextauth?.token as (JWT & { role: UserRole }) | undefined;
     const role = token?.role || 'guest';
 
-    // Public routes that don't require authentication
-    const publicRoutes = [
-      '/',
-      '/auth/login',
-      '/auth/register',
-      '/auth/error',
-      '/api/auth/register',
-    ];
-
-    // Redirect to login for protected routes if not authenticated
-    if (!token && !publicRoutes.some(route => pathname.startsWith(route))) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
+    // Skip middleware for public paths
+    if (publicPaths.some(path => pathname.startsWith(path))) {
+      return NextResponse.next();
     }
 
-    // Admin routes
-    if (pathname.startsWith('/dashboard/admin') && role !== 'admin') {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    // Handle API routes
+    if (pathname.startsWith('/api')) {
+      // Allow public API routes
+      if (publicApiRoutes.some(route => pathname.startsWith(route))) {
+        return NextResponse.next();
+      }
+
+      // Protect admin API routes
+      if (pathname.startsWith('/api/admin') && role !== 'admin') {
+        return NextResponse.json(
+          { error: 'Unauthorized' },
+          { status: 403 }
+        );
+      }
+
+      return NextResponse.next();
     }
 
-    // Staff routes (admin can also access)
-    if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role)) {
-      return NextResponse.redirect(new URL('/unauthorized', request.url));
+    // Handle dashboard routes
+    if (pathname.startsWith('/dashboard')) {
+      // Redirect to login if not authenticated
+      if (!token) {
+        const loginUrl = new URL('/auth/login', request.url);
+        loginUrl.searchParams.set('callbackUrl', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+
+      // Admin routes
+      if (pathname.startsWith('/dashboard/admin') && role !== 'admin') {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
+
+      // Staff routes (admin can also access)
+      if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role)) {
+        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      }
+
+      // Member routes (all authenticated users can access)
+      if (pathname.startsWith('/dashboard/member')) {
+        return NextResponse.next();
+      }
     }
 
-    // Member routes (all authenticated users can access)
-    if (pathname.startsWith('/dashboard/member') && !token) {
-      return NextResponse.redirect(new URL('/auth/login', request.url));
-    }
-
-    // API routes protection
-    if (pathname.startsWith('/api/admin') && role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      );
-    }
-
+    // Handle staff API routes
     if (pathname.startsWith('/api/staff') && !['admin', 'staff'].includes(role)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -55,12 +87,13 @@ export default withAuth(
       );
     }
 
+    // For all other routes, continue with the request
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token }) => {
-        // Public routes don't require authentication
+        // This is intentionally kept simple as we handle auth in the middleware
         return true;
       },
     },
@@ -74,9 +107,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
-     * - public files
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };

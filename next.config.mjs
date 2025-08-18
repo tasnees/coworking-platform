@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable strict routing in production
+  trailingSlash: false,
+  
+  // Base path configuration (if app is not at root)
+  // basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  
+  // Asset prefix for CDN support
+  // assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX || '',
+  
   // Disable ESLint and TypeScript checks during build for CI/CD pipelines
   eslint: {
     ignoreDuringBuilds: true,
@@ -10,7 +19,7 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    unoptimized: process.env.NODE_ENV !== 'production', // Enable optimization in production
+    unoptimized: process.env.NODE_ENV !== 'production',
     domains: [], // Add your image domains here
   },
   
@@ -38,14 +47,13 @@ const nextConfig = {
   },
   
   // Output configuration
-  output: 'standalone', // For Docker deployment
+  output: 'standalone',
   
   // Enable React Strict Mode
   reactStrictMode: true,
   
   // Production optimizations
-  productionBrowserSourceMaps: false, // Set to true for debugging in production
-  // SWC minification is now enabled by default in Next.js
+  productionBrowserSourceMaps: false,
   
   // Configure webpack
   webpack: (config, { isServer }) => {
