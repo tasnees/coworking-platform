@@ -10,6 +10,10 @@ import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
 import { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
 import { getDb } from './mongodb';
 
+// Enable debug logging
+const debug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
+const log = (...args: any[]) => debug && console.log('[NextAuth]', ...args);
+
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   throw new Error('Please define the MONGODB_URI environment variable');
@@ -75,7 +79,10 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials) {
+        log('Authorize called with credentials:', { email: credentials?.email });
+        
         if (!credentials?.email || !credentials?.password) {
+          log('Missing credentials');
           throw new Error('Please enter your email and password');
         }
 
@@ -97,6 +104,7 @@ export const authOptions: NextAuthOptions = {
           
           // If no user found, throw error
           if (!userDoc) {
+            log('No user found with email:', credentials.email);
             throw new Error('No user found with this email');
           }
 
@@ -311,6 +319,7 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
   
   // Configure JWT settings
@@ -346,6 +355,32 @@ export const authOptions: NextAuthOptions = {
     },
   },
   
-  // Enable debug mode in development
-  debug: process.env.NODE_ENV === 'development',
+  // Debug configuration
+  debug: debug,
+  logger: {
+    error(code, metadata) {
+      console.error('NextAuth error:', code, JSON.stringify(metadata, null, 2));
+    },
+    warn(code) {
+      console.warn('NextAuth warning:', code);
+    },
+    debug(code, metadata) {
+      if (debug) {
+        console.debug('NextAuth debug:', code, JSON.stringify(metadata, null, 2));
+      }
+    }
+  },
+  
+  // Enable CORS for API routes
+  cookies: {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
 };
