@@ -5,8 +5,21 @@ import { authOptions } from '@/lib/auth-options';
 // Initialize NextAuth with the authentication options
 const handler = NextAuth({
   ...authOptions,
-  // Enable debug logging in development
+  // Enable debug logging
   debug: process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true',
+  // Configure cookies for production
+  cookies: process.env.NODE_ENV === 'production' ? {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.coworking-platform.onrender.com'
+      }
+    }
+  } : undefined,
   logger: {
     error(code, metadata) {
       console.error('NextAuth error:', { code, metadata });

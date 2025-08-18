@@ -14,6 +14,9 @@ import { getDb } from './mongodb';
 const debug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[NextAuth]', ...args);
 
+// Import URL utilities
+import { getBaseUrl } from './url-utils';
+
 // Get environment variables
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -21,8 +24,7 @@ if (!uri) {
 }
 
 // Set up the base URL for NextAuth
-const baseUrl = process.env.NEXTAUTH_URL || 
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+const baseUrl = getBaseUrl();
 
 // Log the base URL for debugging
 log(`Base URL set to: ${baseUrl}`);
