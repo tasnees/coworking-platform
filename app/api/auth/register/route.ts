@@ -91,28 +91,24 @@ export async function POST(request: Request) {
     let userId: ObjectId | null = null;
     
     try {
+      // Check if user already exists before starting the transaction
+      debugLog('Checking for existing user with email:', email);
+      const existingUser = await db.collection('users').findOne(
+        { email }
+      );
+      
+      if (existingUser) {
+        debugLog('User already exists in users collection');
+        throw new Error(`User with email ${email} already exists`);
+      }
+      
       const result = await session.withTransaction(async () => {
         debugLog('Transaction started at:', new Date().toISOString());
         
-        // Test the connection by listing collections
-        debugLog('Successfully connected to database:', db.databaseName);
-        const collections = await db.listCollections({}, { session }).toArray();
-        debugLog(`Found ${collections.length} collections in database`);
-        collections.forEach((col: { name: string }, i: number) => {
-          debugLog(`  ${i + 1}. ${col.name}`);
-        });
-
-        // Check if user already exists in the users collection
-        debugLog('Checking for existing user with email:', email);
-        const existingUser = await db.collection('users').findOne(
-          { email },
-          { session }
-        );
-        
-        if (existingUser) {
-          debugLog('User already exists in users collection');
-          throw new Error(`User with email ${email} already exists`);
-        }
+        // Test the connection with a simple ping
+        debugLog('Testing database connection...');
+        await db.command({ ping: 1 }, { session });
+        debugLog('✅ Database connection is active');
         
         debugLog('No existing user found, proceeding with registration');
 
