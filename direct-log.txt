@@ -1,0 +1,15 @@
+[2025-08-18T15:59:10.524Z] Starting direct log test...
+[2025-08-18T15:59:10.557Z] Current directory: C:\Users\21625\Desktop\coworking-platform
+[2025-08-18T15:59:10.559Z] __dirname: C:\Users\21625\Desktop\coworking-platform
+[2025-08-18T15:59:10.560Z] NODE_ENV: not set
+[2025-08-18T15:59:10.560Z] MONGODB_URI: not set
+[2025-08-18T15:59:10.561Z] 
+Checking for .env.local at: C:\Users\21625\Desktop\coworking-platform\.env.local
+[2025-08-18T15:59:10.562Z] .env.local exists
+[2025-08-18T15:59:10.564Z] File size: 425 bytes
+[2025-08-18T15:59:10.565Z] First 3 lines:
+[2025-08-18T15:59:10.566Z] 1. NEXTAUTH_SECRET=s+JYLbbzVaJoBeaQawj42O1QGAAxMR8VL/W0oee9IEo=
+[2025-08-18T15:59:10.567Z] 2. NEXTAUTH_URL=https://coworking-platform.onrender.com 
+[2025-08-18T15:59:10.568Z] 3. 
+[2025-08-18T15:59:10.569Z] 
+Test complete

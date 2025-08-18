@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
+import { ObjectId } from 'mongodb';
 import { UserRole } from '@/lib/auth-types';
-import { withDb, withTransaction } from '@/lib/db-utils';
+import { withDb, withTransaction, getDb } from '@/lib/db-utils';
 
 // Enable debug logging in development only
 const DEBUG = process.env.NODE_ENV === 'development';
@@ -82,54 +83,34 @@ export async function POST(request: Request) {
       );
     }
 
-    // Start a transaction for the registration process
-    debugLog('Starting registration transaction...');
-    let userId: any = null;
+    debugLog('Starting registration process...');
+    
+    // Get a single database connection for the entire operation
+    const { client, db } = await getDb();
+    const session = client.startSession();
+    let userId: ObjectId | null = null;
     
     try {
-      await withTransaction(async (session) => {
+      const result = await session.withTransaction(async () => {
         debugLog('Transaction started at:', new Date().toISOString());
         
-        // Connect to MongoDB and list collections for debugging
-        await withDb(async (db) => {
-          debugLog('Successfully connected to database:', db.databaseName);
-          
-          // Test the connection by listing collections
-          const collections = await db.listCollections().toArray();
-          debugLog(`Found ${collections.length} collections in database`);
-          collections.forEach((col: { name: string }, i: number) => {
-            debugLog(`  ${i + 1}. ${col.name}`);
-          });
-          
-          return null; // Explicit return to satisfy TypeScript
-        }).catch((error) => {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown database error';
-          debugLog('Failed to connect to database:', errorMessage);
-          throw new Error('Database connection failed');
+        // Test the connection by listing collections
+        debugLog('Successfully connected to database:', db.databaseName);
+        const collections = await db.listCollections({}, { session }).toArray();
+        debugLog(`Found ${collections.length} collections in database`);
+        collections.forEach((col: { name: string }, i: number) => {
+          debugLog(`  ${i + 1}. ${col.name}`);
         });
 
-        // Check if user already exists in any role collection
+        // Check if user already exists in the users collection
         debugLog('Checking for existing user with email:', email);
-        const collections = ['member', 'staff', 'admin'];
-        let existingUser = null;
+        const existingUser = await db.collection('users').findOne(
+          { email },
+          { session }
+        );
         
-        for (const collectionName of collections) {
-          debugLog(`Checking ${collectionName} collection...`);
-          const user = await withDb(async (db) => {
-            return db.collection(collectionName).findOne(
-              { email },
-              { session }
-            );
-          });
-          
-          if (user) {
-            existingUser = { ...user, collection: collectionName };
-            break;
-          }
-        }
-
         if (existingUser) {
-          debugLog('User already exists in collection:', existingUser.collection);
+          debugLog('User already exists in users collection');
           throw new Error(`User with email ${email} already exists`);
         }
         
@@ -155,15 +136,11 @@ export async function POST(request: Request) {
           updatedAt: now,
         };
         
-        debugLog('Inserting user document');
-        
-        // Insert user into the appropriate role collection
-        const targetCollection = ALLOWED_ROLES.includes(role) ? role : 'member';
-        debugLog(`Inserting user into ${targetCollection} collection`);
-        
-        const userResult = await withDb(async (db) => {
-          return db.collection(targetCollection).insertOne(userDoc, { session });
-        });
+        debugLog('Inserting user into users collection');
+        const userResult = await db.collection('users').insertOne(
+          userDoc,
+          { session }
+        );
         
         userId = userResult.insertedId;
         debugLog('User inserted successfully, ID:', userId);
@@ -173,6 +150,7 @@ export async function POST(request: Request) {
           userId: userId,
           name,
           email,
+          role,
           status: 'active',
           membershipType: 'basic',
           joinDate: now,
@@ -183,25 +161,25 @@ export async function POST(request: Request) {
         };
         
         debugLog('Inserting member document');
-        
-        // Insert member
-        await withDb(async (db) => {
-          return db.collection('members').insertOne(
-            memberDoc,
-            { session }
-          );
-        });
+        await db.collection('members').insertOne(
+          memberDoc,
+          { session }
+        );
         
         debugLog('Member inserted successfully');
         debugLog('Transaction completed successfully at:', new Date().toISOString());
+        
+        return { userId };
       });
       
       debugLog('✅ Transaction committed successfully');
       
-      // Verify the user was actually inserted
-      const verifyUser = await withDb(async (db) => {
-        return db.collection('users').findOne({ _id: userId });
-      });
+      if (!userId) {
+        throw new Error('User ID was not set during registration');
+      }
+      
+      // Verify the user was actually inserted using the same connection
+      const verifyUser = await db.collection('users').findOne({ _id: userId });
       
       if (!verifyUser) {
         throw new Error('User was not actually inserted into the database');
@@ -229,10 +207,16 @@ export async function POST(request: Request) {
       if (userId) {
         debugLog('Cleaning up partially created user...');
         try {
-          await withDb(async (db) => {
-            await db.collection('users').deleteOne({ _id: userId });
-            debugLog('Cleaned up partially created user');
-          });
+          if (userId) {
+            // We've already checked that userId is not null, but TypeScript needs help here
+            const userIdToDelete = userId;
+            await withDb(async (db) => {
+              await db.collection('users').deleteOne({ _id: userIdToDelete });
+              debugLog('Cleaned up partially created user');
+            });
+          } else {
+            debugLog('No user ID to clean up');
+          }
         } catch (cleanupError) {
           debugLog('Error during cleanup:', cleanupError);
         }
