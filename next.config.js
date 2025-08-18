@@ -1,39 +1,47 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable App Router (appDir is now stable and no longer needs to be in experimental)
-  // Server Actions configuration
+  // Enable App Router
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Enable server components external packages
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
-  
-  // External packages for server components
-  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // TypeScript configuration
   typescript: {
-    // Enable type checking during build process
     ignoreBuildErrors: false,
   },
   
   // ESLint configuration
   eslint: {
-    // Allow production builds to complete with ESLint warnings
     ignoreDuringBuilds: true,
   },
   
   // Image optimization
   images: {
-    unoptimized: process.env.NODE_ENV !== 'production', // Enable optimization in production
+    unoptimized: process.env.NODE_ENV !== 'production',
     domains: [
       'localhost',
       'coworking-platform.onrender.com',
-      // Add other domains as needed
+      'coworking-platform.onrender.com',
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
   },
+  
+  // Enable trailing slashes for better routing
+  trailingSlash: false,
+  
+  // Configure base path if needed (e.g., if deploying to a subdirectory)
+  // basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  
+  // Configure output for production
+  output: 'standalone',
+  
+  // Enable React strict mode
+  reactStrictMode: true,
 
   // Security headers
   async headers() {

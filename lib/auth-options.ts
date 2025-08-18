@@ -14,10 +14,18 @@ import { getDb } from './mongodb';
 const debug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
 const log = (...args: any[]) => debug && console.log('[NextAuth]', ...args);
 
+// Get environment variables
 const uri = process.env.MONGODB_URI;
 if (!uri) {
   throw new Error('Please define the MONGODB_URI environment variable');
 }
+
+// Set up the base URL for NextAuth
+const baseUrl = process.env.NEXTAUTH_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
+
+// Log the base URL for debugging
+log(`Base URL set to: ${baseUrl}`);
 
 const client = new MongoClient(uri);
 const clientPromise = client.connect();
@@ -70,6 +78,22 @@ interface IUserDocument {
  * Configuration for NextAuth.js with Credentials provider
  */
 export const authOptions: NextAuthOptions = {
+  // Set the base URL for NextAuth
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
+  
+  // Configure cookies for production
+  cookies: process.env.NODE_ENV === 'production' ? {
+    sessionToken: {
+      name: `__Secure-next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true,
+        domain: '.coworking-platform.onrender.com'
+      }
+    }
+  } : undefined,
   // Configure credentials provider
   providers: [
     CredentialsProvider({
@@ -371,16 +395,5 @@ export const authOptions: NextAuthOptions = {
     }
   },
   
-  // Enable CORS for API routes
-  cookies: {
-    sessionToken: {
-      name: `__Secure-next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    },
-  },
+  // Cookie configuration is handled in the main options object
 };

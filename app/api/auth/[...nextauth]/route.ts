@@ -5,7 +5,8 @@ import { authOptions } from '@/lib/auth-options';
 // Initialize NextAuth with the authentication options
 const handler = NextAuth({
   ...authOptions,
-  // Add any additional options here if needed
+  // Enable debug logging in development
+  debug: process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true',
   logger: {
     error(code, metadata) {
       console.error('NextAuth error:', { code, metadata });
