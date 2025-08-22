@@ -29,18 +29,46 @@ export default function ForgotPasswordPage() {
       return;
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid email address',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setIsLoading(true);
       
-      // In a real app, you would call your API to send a password reset email
-      // For now, we'll simulate a successful request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use the correct API endpoint for static exports
+      const apiUrl = process.env.NODE_ENV === 'production'
+        ? 'https://coworking-platform.vercel.app/api/auth/forgot-password'
+        : process.env.NEXT_PUBLIC_API_URL
+          ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`
+          : '/api/auth/forgot-password';
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send password reset email');
+      }
       
       setEmailSent(true);
       
       toast({
         title: 'Email sent',
-        description: 'If an account exists with this email, you will receive a password reset link.',
+        description: data.message || 'If an account exists with this email, you will receive a password reset link.',
       });
       
     } catch (error) {

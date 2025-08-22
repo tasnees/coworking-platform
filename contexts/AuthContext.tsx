@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const user = session?.user ? {
-    id: session.user.id || '',
+    id: session.user.id,
     email: session.user.email || null,
     name: session.user.name || null,
     image: session.user.image || null,

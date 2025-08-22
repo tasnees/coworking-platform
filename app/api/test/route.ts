@@ -1,53 +1,44 @@
 import { NextResponse } from 'next/server';
-import { withDb } from '@/lib/db-utils';
+
+// For static exports, we'll provide a basic test endpoint
+// without database connectivity checks
+export const dynamic = 'force-static';
+
+export const revalidate = 60; // Revalidate every 60 seconds
 
 export async function GET() {
   try {
-    // Test database connection
-    const result = await withDb(async (db) => {
-      // Test database ping
-      const pingResult = await db.command({ ping: 1 });
-      
-      // Get database stats
-      const stats = await db.stats();
-      
-      // List collections
-      const collections = await db.listCollections().toArray();
-      
-      // Count users
-      const userCount = await db.collection('users').countDocuments();
-      
-      return {
-        success: true,
-        ping: pingResult,
-        stats: {
-          db: stats.db,
-          collections: stats.collections,
-          objects: stats.objects,
-          dataSize: stats.dataSize,
-          storageSize: stats.storageSize,
-          fileSize: stats.fileSize,
-        },
-        collections: collections.map(c => c.name),
-        userCount,
-      };
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Database connection successful',
-      data: result
-    });
-    
-  } catch (error) {
-    console.error('Database test failed:', error);
+    // In static export mode, we can't connect to MongoDB directly
+    // Return a response indicating this is a static export
     return NextResponse.json(
       { 
-        success: false, 
-        message: 'Database connection failed',
-        error: error instanceof Error ? error.message : String(error)
+        status: 'static_export',
+        message: 'Database connectivity tests are disabled in static export mode',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'production',
+        // Include any non-sensitive, public environment variables
+        config: {
+          node_env: process.env.NODE_ENV,
+          next_public_api_url: process.env.NEXT_PUBLIC_API_URL,
+        }
       },
-      { status: 500 }
+      { 
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+        }
+      }
+    );
+  } catch (error) {
+    // Fallback response if something goes wrong
+    return NextResponse.json(
+      { 
+        status: 'ok',
+        message: 'Basic test endpoint is working (static export mode)',
+        timestamp: new Date().toISOString()
+      },
+      { status: 200 }
     );
   }
 }

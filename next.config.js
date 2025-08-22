@@ -34,34 +34,14 @@ const nextConfig = {
   // Enable trailing slashes for better routing
   trailingSlash: false,
   
-  // Configure output for production
-  output: 'standalone',
+  // Server-side rendering configuration
+  // Removed 'output: export' to enable server-side features like API routes
   
   // Enable React strict mode
   reactStrictMode: true,
 
-  // Security headers
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-        ],
-      },
-    ];
-  },
+  // Security headers are handled at the hosting/CDN level for static exports
+  // See: https://nextjs.org/docs/messages/export-no-custom-routes
 
   // Output configuration - only enable standalone if needed for deployment
   // output: 'standalone',

@@ -4,7 +4,7 @@
 export const dynamic = "force-dynamic";
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,31 +17,60 @@ type UserRole = 'member' | 'staff' | 'admin';
 
 function LoginForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams = useSearchParams() || new URLSearchParams();
   const pathname = usePathname();
   const { toast } = useToast();
   const { data: session, status } = useSession();
+  
+  // Memoize the callback URL to prevent unnecessary re-renders
+  const callbackUrl = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      return url.searchParams.get('callbackUrl') || '/dashboard';
+    }
+    return '/dashboard';
+  }, []);
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('member');
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const [callbackUrl, setCallbackUrl] = useState('/dashboard');
   
   // Redirect if already authenticated
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.role) {
-      const dashboardPath = getDashboardPath(session.user.role);
-      router.push(dashboardPath);
+      // Get the intended URL from the callbackUrl or use the default dashboard
+      const callbackUrl = searchParams?.get('callbackUrl') || null;
+      const defaultPath = getDashboardPath(session.user.role as UserRole);
+      
+      // If there's a callback URL and it's a valid path for the user's role
+      if (callbackUrl) {
+        const url = new URL(callbackUrl, window.location.origin);
+        // Only allow redirecting to paths the user has access to
+        if (url.pathname.startsWith('/dashboard')) {
+          // Verify the user has access to the requested dashboard
+          const role = session.user.role as UserRole;
+          if (
+            (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
+            (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
+          ) {
+            // Redirect to their default dashboard if unauthorized for the requested path
+            router.push(defaultPath);
+            return;
+          }
+          // If authorized, allow the redirect
+          router.push(callbackUrl);
+          return;
+        }
+      }
+      // Default redirect to role-specific dashboard
+      router.push(defaultPath);
     }
-  }, [status, session, router]);
+  }, [status, session, router, searchParams]);
   
   useEffect(() => {
     setIsMounted(true);
-    const url = new URL(window.location.href);
-    const urlCallback = url.searchParams.get('callbackUrl') || '/dashboard';
-    setCallbackUrl(urlCallback);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

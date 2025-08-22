@@ -10,9 +10,13 @@ const publicPaths = [
   '/',
   '/auth/login',
   '/auth/register',
+  '/auth/forgot-password',
+  '/auth/reset-password',
   '/auth/error',
   '/api/auth/register',
   '/api/auth/session',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
   '/_next/static',
   '/_next/image',
   '/favicon.ico',
@@ -22,6 +26,8 @@ const publicPaths = [
 const publicApiRoutes = [
   '/api/auth/register',
   '/api/auth/session',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
   '/api/health',
 ];
 
@@ -63,20 +69,33 @@ export default withAuth(
         return NextResponse.redirect(loginUrl);
       }
 
-      // Admin routes
-      if (pathname.startsWith('/dashboard/admin') && role !== 'admin') {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      // Get the base dashboard path for the user's role
+      let dashboardPath: string;
+      switch (role) {
+        case 'admin':
+          dashboardPath = '/dashboard/admin';
+          break;
+        case 'staff':
+          dashboardPath = '/dashboard/staff';
+          break;
+        case 'member':
+        default:
+          dashboardPath = '/dashboard/member';
       }
 
-      // Staff routes (admin can also access)
-      if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role)) {
-        return NextResponse.redirect(new URL('/unauthorized', request.url));
+      // If user is trying to access a different dashboard than their role allows
+      if (!pathname.startsWith(dashboardPath)) {
+        // Check if they have permission to access the requested path
+        if (pathname.startsWith('/dashboard/admin') && role !== 'admin') {
+          return NextResponse.redirect(new URL(dashboardPath, request.url));
+        }
+        if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role)) {
+          return NextResponse.redirect(new URL(dashboardPath, request.url));
+        }
       }
 
-      // Member routes (all authenticated users can access)
-      if (pathname.startsWith('/dashboard/member')) {
-        return NextResponse.next();
-      }
+      // Allow access to the requested path
+      return NextResponse.next();
     }
 
     // Handle staff API routes

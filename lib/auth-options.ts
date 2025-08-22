@@ -3,12 +3,19 @@ import { DefaultSession, NextAuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { compare } from 'bcryptjs';
-import { JWT } from 'next-auth/jwt';
 
 // Import the MongoDB client and types
-import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
-import { Adapter, AdapterUser, AdapterAccount, AdapterSession, VerificationToken } from 'next-auth/adapters';
+import { MongoClient } from 'mongodb';
+import { 
+  Adapter, 
+  AdapterUser, 
+  AdapterAccount, 
+  VerificationToken 
+} from 'next-auth/adapters';
 import { getDb } from './mongodb';
+
+// Import UserRole type from our centralized types
+import { UserRole } from '@/types/next-auth';
 
 // Enable debug logging
 const debug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';
@@ -29,8 +36,8 @@ const baseUrl = getBaseUrl();
 // Log the base URL for debugging
 log(`Base URL set to: ${baseUrl}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
-log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'not set'}`);
-log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'not set'}`);
+log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'https://coworking-platform.onrender.com'}`);
+log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'https://coworking-platform.onrender.com'}`);
 
 // Ensure we have a valid NEXTAUTH_URL in production
 if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
@@ -44,40 +51,10 @@ if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
 const client = new MongoClient(uri);
 const clientPromise = client.connect();
 
-// Define user roles and type guard
-type UserRole = 'admin' | 'staff' | 'member';
-
-// Extend the built-in session types
-declare module 'next-auth' {
-  interface Session {
-    user: {
-      id: string;
-      name?: string | null;
-      email?: string | null;
-      image?: string | null;
-      role: UserRole;
-    };
-  }
-
-  interface User {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role?: UserRole;
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string;
-    role: UserRole;
-  }
-}
 
 // Define the shape of the user document in MongoDB
 interface IUserDocument {
-  _id: any;
+  _id: unknown;
   email: string;
   name?: string;
   password: string;
@@ -93,19 +70,19 @@ interface IUserDocument {
  */
 export const authOptions: NextAuthOptions = {
   // Authentication endpoints will be available at /api/auth/* by default
-  // Configure cookies for production
-  cookies: process.env.NODE_ENV === 'production' ? {
+  // Configure cookies for production with CORS support
+  cookies: {
     sessionToken: {
       name: `__Secure-next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         path: '/',
         secure: true,
-        domain: '.coworking-platform.onrender.com'
+        domain: process.env.NODE_ENV === 'production' ? '.onrender.com' : undefined,
       }
     }
-  } : undefined,
+  },
   // Configure credentials provider
   providers: [
     CredentialsProvider({
@@ -363,20 +340,15 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key',
   },
   
-  // Custom pages
-  pages: {
-    signIn: '/auth/login',
-    signOut: '/auth/logout',
-    error: '/auth/error',
-  },
-  
   // Callbacks for JWT and session
   callbacks: {
     async jwt({ token, user }) {
       // Add user role to the JWT token
       if (user) {
-        token.id = user.id;
-        token.role = (user as any).role || 'member';
+        // Cast to any to avoid TypeScript errors with custom properties
+        const typedToken = token as any;
+        typedToken.id = user.id;
+        typedToken.role = (user as any).role || 'member';
       }
       return token;
     },
@@ -384,14 +356,22 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       // Add user role to the session
       if (session.user) {
-        session.user.id = token.id;
-        session.user.role = token.role as UserRole;
+        // Ensure we have the correct type for the session user
+        const sessionUser = session.user as any;
+        sessionUser.role = token.role as UserRole;
+        sessionUser.id = token.sub; // Add user ID to the session
       }
       return session;
     },
   },
   
-  // Debug configuration
+  // Custom pages
+  pages: {
+    signIn: '/auth/login',
+    signOut: '/auth/logout',
+    error: '/auth/error',
+  },
+  
   debug: debug,
   logger: {
     error(code, metadata) {
@@ -406,6 +386,4 @@ export const authOptions: NextAuthOptions = {
       }
     }
   },
-  
-  // Cookie configuration is handled in the main options object
 };

@@ -1,57 +1,38 @@
 // app/api/test-env/route.ts
 import { NextResponse } from 'next/server';
-import { Collection, MongoClient } from 'mongodb';
 
-interface CollectionInfo {
-  name: string;
-  [key: string]: unknown;
-}
+// For static exports, we'll provide a basic environment test
+// without database connectivity checks
+export const dynamic = 'force-static';
+
+export const revalidate = 60; // Revalidate every 60 seconds
 
 export async function GET() {
-  // Check if environment variables are loaded
+  // In static export mode, we can only expose non-sensitive environment variables
   const envVars = {
-    MONGODB_URI: process.env.MONGODB_URI ? '✅ Set' : '❌ Not set',
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? '✅ Set' : '❌ Not set',
+    NODE_ENV: process.env.NODE_ENV || 'production',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '❌ Not set',
     NEXTAUTH_URL: process.env.NEXTAUTH_URL || '❌ Not set',
-    DATABASE_NAME: process.env.DATABASE_NAME || '❌ Not set',
-    NODE_ENV: process.env.NODE_ENV || 'development',
+    // Note: Not exposing sensitive variables like MONGODB_URI, NEXTAUTH_SECRET, etc.
   };
 
-  // Check MongoDB connection
-  let mongoStatus = 'Not tested';
-  let collections: CollectionInfo[] = [];
-  let errorDetails: string | null = null;
-  
-  try {
-    if (process.env.MONGODB_URI) {
-      const client = new MongoClient(process.env.MONGODB_URI);
-      await client.connect();
-      const db = client.db(process.env.DATABASE_NAME || 'coworking-platform');
-      collections = await db.listCollections().toArray();
-      await client.close();
-      mongoStatus = '✅ Connected successfully';
-    } else {
-      mongoStatus = '❌ MONGODB_URI not set';
+  return NextResponse.json(
+    {
+      status: 'static_export',
+      message: 'Environment test in static export mode',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'production',
+      environmentVariables: envVars,
+      mongoDB: {
+        status: 'static_export',
+        message: 'Database connectivity checks are disabled in static export mode'
+      }
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      }
     }
-  } catch (error: unknown) {
-    mongoStatus = '❌ Connection failed';
-    errorDetails = error instanceof Error ? error.message : String(error);
-    console.error('MongoDB connection error:', error);
-  }
-
-  return NextResponse.json({
-    status: 'success',
-    environment: process.env.NODE_ENV,
-    environmentVariables: envVars,
-    mongoDB: {
-      status: mongoStatus,
-      error: errorDetails || null,
-      collections: collections.map((c: CollectionInfo) => c.name),
-      collectionCount: collections.length,
-      collectionsDetails: collections.map(({ name, ...rest }) => ({
-        name,
-        ...rest
-      }))
-    }
-  });
+  );
 }

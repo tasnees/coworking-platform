@@ -14,23 +14,17 @@ export const isUserRole = (role: unknown): role is UserRole =>
   typeof role === 'string' && (userRoles as readonly string[]).includes(role)
 
 // Our custom User type that extends NextAuth's User
-export interface CustomUser {
+export interface CustomUser extends DefaultUser {
   id: string
-  name?: string | null
-  email?: string | null
-  image?: string | null
-  role: UserRole  // Required to match our session type
+  role: UserRole
 }
 
 // Our custom Session type
 export interface CustomSession {
   user: {
     id: string
-    name?: string | null
-    email?: string | null
-    image?: string | null
-    role: UserRole  // Made role required to match NextAuth's expectations
-  }
+    role: UserRole
+  } & DefaultSession['user']
 }
 
 // Our custom JWT type

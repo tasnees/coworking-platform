@@ -6,6 +6,51 @@ import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "./providers"
 import { ErrorBoundary } from "@/components/error-boundary"
 
+// Generate static params for all routes
+export function generateStaticParams() {
+  return [
+    // Public routes
+    { path: [''] },
+    { path: ['login'] },
+    { path: ['register'] },
+    { path: ['forgot-password'] },
+    
+    // Dashboard routes
+    { path: ['dashboard'] },
+    
+    // Admin routes
+    { path: ['dashboard', 'admin'] },
+    { path: ['dashboard', 'admin', 'amenities'] },
+    { path: ['dashboard', 'admin', 'analytics'] },
+    { path: ['dashboard', 'admin', 'bookings'] },
+    { path: ['dashboard', 'admin', 'checkin'] },
+    { path: ['dashboard', 'admin', 'floorplan'] },
+    { path: ['dashboard', 'admin', 'hours'] },
+    { path: ['dashboard', 'admin', 'members'] },
+    { path: ['dashboard', 'admin', 'memberships'] },
+    { path: ['dashboard', 'admin', 'settings'] },
+    { path: ['dashboard', 'admin', 'wifi'] },
+    
+    // Member routes
+    { path: ['dashboard', 'member'] },
+    { path: ['dashboard', 'member', 'amenities'] },
+    { path: ['dashboard', 'member', 'bookings'] },
+    { path: ['dashboard', 'member', 'checkin'] },
+    { path: ['dashboard', 'member', 'floorplan'] },
+    { path: ['dashboard', 'member', 'memberships'] },
+    { path: ['dashboard', 'member', 'settings'] },
+    { path: ['dashboard', 'member', 'wifi'] },
+    
+    // Staff routes
+    { path: ['dashboard', 'staff'] },
+    { path: ['dashboard', 'staff', 'bookings'] },
+    { path: ['dashboard', 'staff', 'checkin'] },
+    { path: ['dashboard', 'staff', 'members'] },
+    { path: ['dashboard', 'staff', 'memberships'] },
+    { path: ['dashboard', 'staff', 'settings'] },
+  ];
+}
+
 export const metadata: Metadata = {
   title: "Coworking Platform",
   description: "Professional coworking space management system",

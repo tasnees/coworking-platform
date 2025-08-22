@@ -3,6 +3,12 @@ import { NextResponse } from 'next/server';
 import { MongoClient } from 'mongodb';
 import { hash } from 'bcryptjs';
 
+// For static exports, we need to handle API routes differently
+if (process.env.NODE_ENV === 'production') {
+  // These configurations are only needed for server-side rendering
+  // For static exports, we'll handle the API routes through API routes
+}
+
 export async function POST(request: Request) {
   try {
     const { token, password } = await request.json();

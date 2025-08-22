@@ -1,21 +1,22 @@
 import { NextResponse } from 'next/server';
 
+// For static exports, we'll create a simplified version that can work client-side
+export const dynamic = 'force-static';
+
 export async function GET() {
-  // Get all environment variables (filter out sensitive info in production)
+  // In a static export, we can't access process.env on the server
+  // So we'll only return basic information that doesn't require environment variables
+  // In a static export, we can only expose public environment variables
   const env = {
-    NODE_ENV: process.env.NODE_ENV,
-    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    RENDER_EXTERNAL_URL: process.env.RENDER_EXTERNAL_URL,
-    MONGODB_URI: process.env.MONGODB_URI ? '***set***' : 'not set',
-    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET ? '***set***' : 'not set',
-    // Add any other environment variables you want to check
+    NODE_ENV: process.env.NODE_ENV || 'production',
+    // Only include public environment variables
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'not set',
   };
 
-  // Get request headers (simplified to avoid iteration issues)
-  const headers: Record<string, string> = {};
-  new Headers().forEach((_, key) => {
-    headers[key] = '***';
-  });
+  // Simplified headers for static export
+  const headers = {
+    'Content-Type': 'application/json',
+  };
 
   return NextResponse.json({
     success: true,
@@ -34,13 +35,5 @@ export async function GET() {
   });
 }
 
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  });
-}
+// For static exports, we don't need the OPTIONS handler
+// as CORS is handled by the hosting platform

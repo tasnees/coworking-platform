@@ -3,11 +3,14 @@ const nextConfig = {
   // Enable strict routing in production
   trailingSlash: false,
   
-  // Base path configuration (if app is not at root)
-  // basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  // Disable static exports for API routes
+  output: process.env.NODE_ENV === 'production' ? 'export' : 'standalone',
   
-  // Asset prefix for CDN support
-  // assetPrefix: process.env.NEXT_PUBLIC_ASSET_PREFIX || '',
+  // Disable image optimization for static exports
+  images: {
+    unoptimized: true,
+    domains: [],
+  },
   
   // Disable ESLint and TypeScript checks during build for CI/CD pipelines
   eslint: {
@@ -15,12 +18,6 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true, // Consider removing this in production
-  },
-  
-  // Image optimization
-  images: {
-    unoptimized: process.env.NODE_ENV !== 'production',
-    domains: [], // Add your image domains here
   },
   
   // Security headers
@@ -46,8 +43,17 @@ const nextConfig = {
     ];
   },
   
-  // Output configuration
-  output: 'standalone',
+  // Skip API routes during static export
+  exportPathMap: async function() {
+    return {
+      '/': { page: '/' },
+      '/auth/login': { page: '/auth/login' },
+      '/auth/register': { page: '/auth/register' },
+      '/auth/forgot-password': { page: '/auth/forgot-password' },
+      '/auth/reset-password/[token]': { page: '/auth/reset-password/[token]' },
+      // Add other static pages here
+    };
+  },
   
   // Enable React Strict Mode
   reactStrictMode: true,
