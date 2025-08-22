@@ -38,7 +38,7 @@ const connectDB = async () => {
     try {
       console.log(`🔌 Attempting to connect to MongoDB (attempt ${i + 1}/${maxRetries})...`);
       
-      await mongoose.connect(process.env.MONGODB_URI, {
+      const mongoOptions = {
         useNewUrlParser: true,
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 10000,
@@ -48,10 +48,15 @@ const connectDB = async () => {
         heartbeatFrequencyMS: 10000,
         retryWrites: true,
         retryReads: true,
-        w: 'majority',
-        ssl: true,
-        sslValidate: true,
-      });
+        w: 'majority'
+      };
+
+      // For MongoDB Atlas (which uses SSL), we don't need to set ssl options explicitly
+      if (process.env.MONGODB_URI.includes('mongodb+srv')) {
+        mongoOptions.ssl = true;
+      }
+
+      await mongoose.connect(process.env.MONGODB_URI, mongoOptions);
       
       console.log('✅ MongoDB connected successfully');
       return;

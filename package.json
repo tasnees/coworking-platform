@@ -5,12 +5,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node server.js",
-    "start:next": "next start -p $PORT",
+    "start": "node .next/standalone/server.js",
+    "start:dev": "next start -p $PORT",
     "export": "next build && next export",
     "lint": "next lint",
     "prepare": "[ -z \"$CI\" ] && husky install || echo 'Skipping husky install in CI'",
-    "render-build": "npm run build && npm run build:backend",
+    "render-build": "npm run build",
     "build:backend": "cd backend && npm install"
   },
   "husky": {

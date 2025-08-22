@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable App Router
+  // Experimental features
   experimental: {
     serverActions: {
       bodySizeLimit: '4mb',
@@ -18,10 +18,10 @@ const nextConfig = {
       },
     ],
     // Enable optimized images in production
-    unoptimized: false,
+    unoptimized: process.env.NODE_ENV === 'development',
   },
   
-  // Server external packages
+  // External packages
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // TypeScript configuration
@@ -34,16 +34,10 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Enable trailing slashes for better routing
-  trailingSlash: false,
-  
   // Enable React strict mode
   reactStrictMode: true,
   
-  // Disable production source maps for better performance
-  productionBrowserSourceMaps: false,
-  
-  // Output standalone for better Docker support
+  // Output configuration
   output: 'standalone',
   
   // Disable powered by header for security
