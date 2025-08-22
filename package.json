@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/setup-standalone.js",
+    "build": "next build",
     "start": "node .next/standalone/server.js",
     "start:dev": "next start -p $PORT",
     "lint": "next lint",
     "prepare": "[ -z \"$CI\" ] && husky install || echo 'Skipping husky install in CI'",
-    "render-build": "npm install && npm run build",
+    "render-build": "chmod +x render-build.sh && ./render-build.sh",
     "build:backend": "cd backend && npm install"
   },
   "husky": {

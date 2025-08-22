@@ -37,19 +37,21 @@ try {
   throw error;
 }
 
-// MongoDB client options optimized for serverless and containerized environments
+// MongoDB client options optimized for production
 const options: MongoClientOptions = {
   // Connection pooling
-  maxPoolSize: 10, // Reduced for Render's free tier
-  minPoolSize: 1, // Keep at least 1 connection alive
-  maxIdleTimeMS: 30000, // Close idle connections after 30 seconds
+  maxPoolSize: 5, // Reduced for Render's free tier
+  minPoolSize: 0, // Allow connection pool to empty when not in use
+  maxIdleTimeMS: 60000, // Close idle connections after 60 seconds
   waitQueueTimeoutMS: 10000, // Max time to wait for a connection from the pool
   
   // Timeouts and connection settings
   connectTimeoutMS: 10000, // 10 seconds to establish initial connection
-  socketTimeoutMS: 30000,  // Close sockets after 30s of inactivity
-  heartbeatFrequencyMS: 10000, // Send a heartbeat every 10 seconds
-  serverSelectionTimeoutMS: 10000, // Time to select a server for operations
+  socketTimeoutMS: 45000,  // Close sockets after 45s of inactivity
+  
+  // Server selection and monitoring
+  serverSelectionTimeoutMS: 10000, // 10 seconds to select a server
+  heartbeatFrequencyMS: 10000, // Check server status every 10 seconds
   
   // Retry settings - important for serverless environments
   retryWrites: true,
@@ -58,21 +60,19 @@ const options: MongoClientOptions = {
   
   // TLS/SSL - simplified for Atlas
   tls: uri.startsWith('mongodb+srv'),
+  
+  // Compression and TLS
+  compressors: ['zlib', 'snappy', 'zstd'], // Compression algorithms in order of preference
+  zlibCompressionLevel: 3, // Compression level (1-9, where 9 is highest compression)
   tlsAllowInvalidCertificates: false,
   
-  // Monitoring
+  // Monitoring and API
   monitorCommands: true,
-  
-  // Server API version
   serverApi: {
     version: ServerApiVersion.v1,
     strict: false,
     deprecationErrors: true
-  },
-  
-  // Compression
-  compressors: ['zlib', 'snappy', 'zstd'], // Enable compression for better performance
-  zlibCompressionLevel: 3 // Compression level (1-9, where 9 is highest compression)
+  }
 };
 
 // Extend NodeJS global type

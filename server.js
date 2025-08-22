@@ -33,6 +33,7 @@ const connectDB = async () => {
 
   const maxRetries = 5;
   const retryDelay = 5000; // 5 seconds
+  const isAtlas = process.env.MONGODB_URI.includes('mongodb+srv');
   
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -43,11 +44,18 @@ const connectDB = async () => {
         useUnifiedTopology: true,
         serverSelectionTimeoutMS: 10000,
         socketTimeoutMS: 45000,
-        maxPoolSize: 10,
-        minPoolSize: 1,
-        heartbeatFrequencyMS: 10000,
+        maxPoolSize: 5, // Reduced for Render's free tier
+        minPoolSize: 0, // Allow connection pool to empty when not in use
+        maxIdleTimeMS: 60000, // Close idle connections after 60 seconds
+        connectTimeoutMS: 10000, // 10 seconds to establish initial connection
+        heartbeatFrequencyMS: 10000, // Check server status every 10 seconds
         retryWrites: true,
         retryReads: true,
+        maxConnecting: 5, // Maximum number of simultaneous connection attempts
+        tls: isAtlas, // Enable TLS for Atlas connections
+        tlsAllowInvalidCertificates: false, // Strict certificate validation
+        compressors: ['zstd', 'snappy', 'zlib'], // Compression algorithms
+        zlibCompressionLevel: 7, // Compression level (1-9)
         w: 'majority'
       };
 
@@ -100,11 +108,36 @@ const gracefulShutdown = async (signal) => {
   }
 };
 
+// Configure request logging
+const logFormat = isProduction ? 'combined' : 'dev';
+const logStream = isProduction
+  ? rfs.createStream('access.log', {
+      interval: '1d',
+      path: path.join(__dirname, 'logs')
+    })
+  : process.stdout;
+
+// Configure middleware
+app.use(helmet()); // Security headers
+app.use(cors()); // Enable CORS
+app.use(express.json({ limit: '10kb' })); // Body parser
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(mongoSanitize()); // Sanitize data against NoSQL injection
+app.use(xss()); // Sanitize data against XSS
+app.use(hpp()); // Protect against HTTP Parameter Pollution
+app.use(compression()); // Compress responses
+
+// Logging middleware
+app.use(morgan(logFormat, { stream: logStream }));
+
 // Start server
 const startServer = async () => {
   try {
+    // Connect to MongoDB
+    await connectDB();
+    
     // In production, we use the standalone output
-    if (process.env.NODE_ENV === 'production') {
+    if (isProduction) {
       // Serve static files from .next/static
       app.use(
         '/_next/static',
@@ -115,28 +148,62 @@ const startServer = async () => {
       );
       
       // Serve other static files
-      app.use(express.static(path.join(__dirname, 'public')));
+      app.use(express.static(path.join(__dirname, 'public'), {
+        maxAge: '1y',
+        immutable: true
+      }));
       
       // Handle Next.js page requests
-      app.all('*', (req, res) => {
-        return handle(req, res);
-      });
+      app.get('*', (req, res) => handle(req, res));
     } else {
       // In development, let Next.js handle everything
       await nextApp.prepare();
-      app.all('*', (req, res) => handle(req, res));
+      app.get('*', (req, res) => handle(req, res));
     }
+    
+    // Error handling middleware
+    app.use((err, req, res, next) => {
+      console.error('❌ Server Error:', err);
+      res.status(500).json({
+        status: 'error',
+        message: 'Internal Server Error',
+        ...(process.env.NODE_ENV === 'development' && { error: err.message })
+      });
+    });
+    
+    // 404 handler
+    app.use((req, res) => {
+      res.status(404).json({
+        status: 'error',
+        message: 'Not Found'
+      });
+    });
     
     // Start the server
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
-      console.log(`🔗 Health check available at http://localhost:${PORT}/api/health`);
+      console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`🌐 Open: http://localhost:${PORT}`);
     });
     
     // Handle unhandled promise rejections
     process.on('unhandledRejection', (err) => {
       console.error('🔥 Unhandled Rejection:', err);
       server.close(() => process.exit(1));
+    });
+    
+    // Handle uncaught exceptions
+    process.on('uncaughtException', (err) => {
+      console.error('💥 Uncaught Exception:', err);
+      server.close(() => process.exit(1));
+    });
+    
+    // Handle SIGTERM for graceful shutdown
+    process.on('SIGTERM', () => {
+      console.info('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        console.log('Process terminated');
+      });
     });
     
     return server;

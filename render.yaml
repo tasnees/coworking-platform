@@ -10,31 +10,14 @@ services:
     
     # Build configuration
     buildCommand: |
-      # Install dependencies
-      npm ci
-      
-      # Build the application
-      npm run build
-      
-      # Create necessary directories
-      mkdir -p .next/standalone/.next
-      
-      # Copy required files for standalone mode
-      cp -r .next/static .next/standalone/.next/
-      cp -r public .next/standalone/
-      cp next.config.js .next/standalone/
-      
-      echo "Build completed successfully"
+      # Make the build script executable and run it
+      chmod +x render-build.sh
+      ./render-build.sh
     
     # Start command for the application
     startCommand: >-
-      if [ -f ".next/standalone/server.js" ]; then
-        echo "Starting in standalone mode"
-        cd .next/standalone && NODE_ENV=production node server.js
-      else
-        echo "Starting in normal mode"
-        NODE_ENV=production npm start
-      fi
+      echo "Starting application..."
+      cd .next/standalone && NODE_ENV=production node server.js
     
     # Health check path
     healthCheckPath: /api/health
@@ -47,6 +30,26 @@ services:
         value: production
       - key: NODE_OPTIONS
         value: --max_old_space_size=1024
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_SHARP_PATH
+        value: "/tmp/node_modules/sharp"
+    
+    # Build environment variables
+    build:
+      NODE_ENV: production
+      NODE_OPTIONS: --max_old_space_size=4096
+      
+    # Auto-deploy settings
+    autoDeploy: true
+    
+    # Build cache settings
+    buildCachePolicy: "DEFAULT"
+    
+    # Build timeout (in minutes)
+    buildTimeout: 30
     
     # Auto-deploy from Git
     autoDeploy: true
