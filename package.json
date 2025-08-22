@@ -5,10 +5,13 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
+    "start:next": "next start -p $PORT",
     "export": "next build && next export",
     "lint": "next lint",
-    "prepare": "[ -z \"$CI\" ] && husky install || echo 'Skipping husky install in CI'"
+    "prepare": "[ -z \"$CI\" ] && husky install || echo 'Skipping husky install in CI'",
+    "render-build": "npm run build && npm run build:backend",
+    "build:backend": "cd backend && npm install"
   },
   "husky": {
     "skipCI": true

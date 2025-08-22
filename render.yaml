@@ -31,28 +31,31 @@ services:
       # Database configuration
       - key: MONGODB_URI
         fromDatabase:
-          name: mongodb
+          name: mongodb-atlas
           property: connectionString
           
       # NextAuth configuration
-      - key: NEXTAUTH_URL
-        generateValue: true
-        pattern: "https://{{name}}.onrender.com"
       - key: NEXTAUTH_SECRET
         generateValue: true
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXTAUTH_URL_INTERNAL
+        sync: false
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
         
       # Optional: Add your Google OAuth credentials if using Google Auth
-      # - key: GOOGLE_CLIENT_ID
-      #   sync: false
-      # - key: GOOGLE_CLIENT_SECRET
-      #   sync: false
-      
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+        
       # Optional: Add your GitHub OAuth credentials if using GitHub Auth
-      # - key: GITHUB_ID
-      #   sync: false
-      # - key: GITHUB_SECRET
-      #   sync: false
-      
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+        
       # Security headers (handled by Next.js)
       - key: SECURITY_HEADERS
         value: "true"

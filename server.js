@@ -14,25 +14,126 @@ const compression = require('compression');
 const morgan = require('morgan');
 const fs = require('fs');
 const rfs = require('rotating-file-stream');
+const next = require('next');
+
+const dev = process.env.NODE_ENV !== 'production';
+const nextApp = next({ dev });
+const handle = nextApp.getRequestHandler();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 
-// Database connection
+// Database connection with retry logic
 const connectDB = async () => {
+  if (!process.env.MONGODB_URI) {
+    console.error('❌ MONGODB_URI is not defined in environment variables');
+    process.exit(1);
+  }
+
+  const maxRetries = 5;
+  const retryDelay = 5000; // 5 seconds
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      console.log(`🔌 Attempting to connect to MongoDB (attempt ${i + 1}/${maxRetries})...`);
+      
+      await mongoose.connect(process.env.MONGODB_URI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        maxPoolSize: 10,
+        minPoolSize: 1,
+        heartbeatFrequencyMS: 10000,
+        retryWrites: true,
+        retryReads: true,
+        w: 'majority',
+        ssl: true,
+        sslValidate: true,
+      });
+      
+      console.log('✅ MongoDB connected successfully');
+      return;
+    } catch (err) {
+      console.error(`❌ MongoDB connection error (attempt ${i + 1}/${maxRetries}):`, err.message);
+      
+      if (i === maxRetries - 1) {
+        console.error('❌ Failed to connect to MongoDB after maximum retries');
+        process.exit(1);
+      }
+      
+      console.log(`Retrying in ${retryDelay / 1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
+  }
+};
+
+// Handle MongoDB connection events
+mongoose.connection.on('connected', () => {
+  console.log('MongoDB connection established');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB connection disconnected');
+});
+
+// Graceful shutdown
+const gracefulShutdown = async (signal) => {
+  console.log(`\n${signal} signal received: closing MongoDB connection`);
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log('MongoDB connected successfully');
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed');
+    process.exit(0);
   } catch (err) {
-    console.error('MongoDB connection error:', err);
+    console.error('Error during MongoDB disconnection:', err);
     process.exit(1);
   }
 };
+
+// Start server
+const startServer = async () => {
+  try {
+    await Promise.all([
+      nextApp.prepare(),
+      connectDB()
+    ]);
+    
+    // Handle Next.js requests
+    app.all('*', (req, res) => {
+      return handle(req, res);
+    });
+    
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+    });
+    
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (err) => {
+      console.error('🔥 Unhandled Rejection:', err);
+      server.close(() => process.exit(1));
+    });
+    
+    return server;
+  } catch (err) {
+    console.error('❌ Failed to start server:', err);
+    process.exit(1);
+  }
+};
+
+// Start the server
+if (require.main === module) {
+  startServer().catch(err => {
+    console.error('Fatal error during startup:', err);
+    process.exit(1);
+  });
+}
+
+module.exports = app;
 
 // Security middleware
 app.use(helmet()); // Set security HTTP headers
