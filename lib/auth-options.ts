@@ -349,30 +349,6 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key',
   },
   
-  // Callbacks for JWT and session
-  callbacks: {
-    async jwt({ token, user }) {
-      // Add user role to the JWT token
-      if (user) {
-        // Cast to any to avoid TypeScript errors with custom properties
-        const typedToken = token as any;
-        typedToken.id = user.id;
-        typedToken.role = (user as any).role || 'member';
-      }
-      return token;
-    },
-    
-    async session({ session, token }) {
-      // Add user role to the session
-      if (session.user) {
-        // Ensure we have the correct type for the session user
-        const sessionUser = session.user as any;
-        sessionUser.role = token.role as UserRole;
-        sessionUser.id = token.sub; // Add user ID to the session
-      }
-      return session;
-    },
-  },
   
   // Custom pages
   pages: {
