@@ -33,18 +33,27 @@ if (!uri) {
 // Set up the base URL for NextAuth
 const baseUrl = getBaseUrl();
 
+// Set default NEXTAUTH_URL for Vercel deployment
+const vercelUrl = 'https://coworking-platform-smoky.vercel.app';
+
 // Log the base URL for debugging
 log(`Base URL set to: ${baseUrl}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
-log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'https://coworking-platform.onrender.com'}`);
-log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'https://coworking-platform.onrender.com'}`);
+log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || vercelUrl}`);
+log(`VERCEL_URL: ${process.env.VERCEL_URL || 'Not set'}`);
+log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'Not set'}`);
 
 // Ensure we have a valid NEXTAUTH_URL in production
-if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
-  console.warn('⚠️ NEXTAUTH_URL is not set in production. This may cause authentication issues.');
-  if (process.env.RENDER_EXTERNAL_URL) {
-    process.env.NEXTAUTH_URL = `https://${process.env.RENDER_EXTERNAL_URL}`;
-    console.log(`ℹ️ Set NEXTAUTH_URL to ${process.env.NEXTAUTH_URL} from RENDER_EXTERNAL_URL`);
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.NEXTAUTH_URL) {
+    // If NEXTAUTH_URL is not set, use the Vercel URL
+    process.env.NEXTAUTH_URL = vercelUrl;
+    console.log(`ℹ️ Set NEXTAUTH_URL to ${process.env.NEXTAUTH_URL} (Vercel deployment)`);
+  } else if (process.env.NEXTAUTH_URL.includes('render.com') || 
+             process.env.NEXTAUTH_URL.includes('localhost')) {
+    // If NEXTAUTH_URL points to Render or localhost, update to Vercel
+    process.env.NEXTAUTH_URL = vercelUrl;
+    console.log(`ℹ️ Updated NEXTAUTH_URL to Vercel deployment: ${process.env.NEXTAUTH_URL}`);
   }
 }
 

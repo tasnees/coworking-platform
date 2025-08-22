@@ -7,6 +7,20 @@ const nextConfig = {
     },
   },
   
+  // Remove static export for API routes to work
+  // output: 'export', // Commented out to enable API routes
+  
+  // Image optimization configuration
+  images: {
+    domains: [
+      'localhost',
+      'coworking-platform-smoky.vercel.app',
+      'coworking-platform.onrender.com',
+    ],
+    // Disable image optimization during export if needed
+    unoptimized: process.env.NODE_ENV === 'production',
+  },
+  
   // Server external packages
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
@@ -20,31 +34,11 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   
-  // Image optimization
-  images: {
-    unoptimized: process.env.NODE_ENV !== 'production',
-    domains: [
-      'localhost',
-      'coworking-platform.onrender.com',
-    ],
-    formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
-  },
-  
   // Enable trailing slashes for better routing
   trailingSlash: false,
   
-  // Server-side rendering configuration
-  // Removed 'output: export' to enable server-side features like API routes
-  
   // Enable React strict mode
   reactStrictMode: true,
-
-  // Security headers are handled at the hosting/CDN level for static exports
-  // See: https://nextjs.org/docs/messages/export-no-custom-routes
-
-  // Output configuration - only enable standalone if needed for deployment
-  // output: 'standalone',
   
   // Enable production source maps
   productionBrowserSourceMaps: false, // Set to true for debugging in production
