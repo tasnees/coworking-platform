@@ -1,22 +1,57 @@
 import { NextResponse } from 'next/server';
 
-// For static exports, we'll provide a basic health check
-// without database connectivity checks
-export const dynamic = 'force-static';
-
-export const revalidate = 60; // Revalidate every 60 seconds
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getHealthStatus() {
-  // Return basic health status for static exports
-  return {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'production',
-    database: {
-      status: 'static_export',
-      message: 'Database connectivity checks disabled in static export mode'
+  try {
+    // Check database connection if MONGODB_URI is set
+    let dbStatus = { status: 'unknown', message: 'Database check not performed' };
+    
+    if (process.env.MONGODB_URI) {
+      try {
+        const { MongoClient } = await import('mongodb');
+        const client = new MongoClient(process.env.MONGODB_URI, {
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 10000,
+        });
+        
+        await client.connect();
+        await client.db().command({ ping: 1 });
+        dbStatus = { status: 'connected', message: 'Database connection successful' };
+        await client.close();
+      } catch (dbError) {
+        dbStatus = { 
+          status: 'error', 
+          message: dbError instanceof Error ? dbError.message : 'Unknown database error',
+          stack: process.env.NODE_ENV === 'development' ? (dbError as Error).stack : undefined
+        };
+      }
     }
-  };
+
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'production',
+      nodeVersion: process.version,
+      memoryUsage: process.memoryUsage(),
+      uptime: process.uptime(),
+      database: dbStatus,
+      env: {
+        NODE_ENV: process.env.NODE_ENV,
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+        MONGODB_URI: process.env.MONGODB_URI ? '*** (set)' : 'not set',
+      },
+    };
+  } catch (error) {
+    return {
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+    };
+  }
 }
 
 export async function GET() {

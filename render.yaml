@@ -11,13 +11,42 @@ services:
     # Build configuration
     buildCommand: |
       # Install dependencies
-      npm ci --ignore-scripts
+      npm ci
       
       # Build the application
       npm run build
+      
+      # Create necessary directories
+      mkdir -p .next/standalone/.next
+      
+      # Copy required files for standalone mode
+      cp -r .next/static .next/standalone/.next/
+      cp -r public .next/standalone/
+      cp next.config.js .next/standalone/
+      
+      echo "Build completed successfully"
     
     # Start command for the application
-    startCommand: npm start
+    startCommand: >-
+      if [ -f ".next/standalone/server.js" ]; then
+        echo "Starting in standalone mode"
+        cd .next/standalone && NODE_ENV=production node server.js
+      else
+        echo "Starting in normal mode"
+        NODE_ENV=production npm start
+      fi
+    
+    # Health check path
+    healthCheckPath: /api/health
+    
+    # Set the port
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max_old_space_size=1024
     
     # Auto-deploy from Git
     autoDeploy: true

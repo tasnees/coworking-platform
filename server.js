@@ -103,18 +103,34 @@ const gracefulShutdown = async (signal) => {
 // Start server
 const startServer = async () => {
   try {
-    await Promise.all([
-      nextApp.prepare(),
-      connectDB()
-    ]);
+    // In production, we use the standalone output
+    if (process.env.NODE_ENV === 'production') {
+      // Serve static files from .next/static
+      app.use(
+        '/_next/static',
+        express.static(path.join(__dirname, '.next/static'), {
+          maxAge: '1y',
+          immutable: true,
+        })
+      );
+      
+      // Serve other static files
+      app.use(express.static(path.join(__dirname, 'public')));
+      
+      // Handle Next.js page requests
+      app.all('*', (req, res) => {
+        return handle(req, res);
+      });
+    } else {
+      // In development, let Next.js handle everything
+      await nextApp.prepare();
+      app.all('*', (req, res) => handle(req, res));
+    }
     
-    // Handle Next.js requests
-    app.all('*', (req, res) => {
-      return handle(req, res);
-    });
-    
-    const server = app.listen(PORT, () => {
+    // Start the server
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+      console.log(`🔗 Health check available at http://localhost:${PORT}/api/health`);
     });
     
     // Handle unhandled promise rejections
