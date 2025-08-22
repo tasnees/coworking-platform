@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
       
       // Use the correct API endpoint for static exports
       const apiUrl = process.env.NODE_ENV === 'production'
-        ? 'https://coworking-platform.vercel.app/api/auth/forgot-password'
+        ? 'https://coworking-platform.onrender.com/api/auth/forgot-password'
         : process.env.NEXT_PUBLIC_API_URL
           ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/forgot-password`
           : '/api/auth/forgot-password';

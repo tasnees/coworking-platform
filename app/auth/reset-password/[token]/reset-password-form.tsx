@@ -67,9 +67,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     setIsLoading(true);
     
     try {
-      // Use the correct API endpoint for the Vercel deployment
+      // Use the correct API endpoint for the Render deployment
       const apiUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://coworking-platform.vercel.app/api/auth/reset-password' 
+        ? 'https://coworking-platform.onrender.com/api/auth/reset-password' 
         : process.env.NEXT_PUBLIC_API_URL 
           ? `${process.env.NEXT_PUBLIC_API_URL}/api/auth/reset-password`
           : '/api/auth/reset-password';

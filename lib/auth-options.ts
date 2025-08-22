@@ -33,27 +33,27 @@ if (!uri) {
 // Set up the base URL for NextAuth
 const baseUrl = getBaseUrl();
 
-// Set default NEXTAUTH_URL for Vercel deployment
-const vercelUrl = 'https://coworking-platform-smoky.vercel.app';
+// Set default NEXTAUTH_URL for production
+const renderUrl = 'https://coworking-platform.onrender.com';
 
 // Log the base URL for debugging
 log(`Base URL set to: ${baseUrl}`);
 log(`NODE_ENV: ${process.env.NODE_ENV}`);
-log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || vercelUrl}`);
-log(`VERCEL_URL: ${process.env.VERCEL_URL || 'Not set'}`);
-log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'Not set'}`);
+log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || renderUrl}`);
+log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'https://coworking-platform.onrender.com'}`);
 
 // Ensure we have a valid NEXTAUTH_URL in production
 if (process.env.NODE_ENV === 'production') {
   if (!process.env.NEXTAUTH_URL) {
-    // If NEXTAUTH_URL is not set, use the Vercel URL
-    process.env.NEXTAUTH_URL = vercelUrl;
-    console.log(`ℹ️ Set NEXTAUTH_URL to ${process.env.NEXTAUTH_URL} (Vercel deployment)`);
-  } else if (process.env.NEXTAUTH_URL.includes('render.com') || 
-             process.env.NEXTAUTH_URL.includes('localhost')) {
-    // If NEXTAUTH_URL points to Render or localhost, update to Vercel
-    process.env.NEXTAUTH_URL = vercelUrl;
-    console.log(`ℹ️ Updated NEXTAUTH_URL to Vercel deployment: ${process.env.NEXTAUTH_URL}`);
+    // If NEXTAUTH_URL is not set, use the Render URL
+    process.env.NEXTAUTH_URL = process.env.RENDER_EXTERNAL_URL 
+      ? `https://${process.env.RENDER_EXTERNAL_URL}`
+      : renderUrl;
+    console.log(`ℹ️ Set NEXTAUTH_URL to ${process.env.NEXTAUTH_URL} (Render deployment)`);
+  } else if (process.env.NEXTAUTH_URL.includes('localhost')) {
+    // If NEXTAUTH_URL points to localhost, update to Render URL
+    process.env.NEXTAUTH_URL = renderUrl;
+    console.log(`ℹ️ Updated NEXTAUTH_URL to Render deployment: ${process.env.NEXTAUTH_URL}`);
   }
 }
 

@@ -3,22 +3,22 @@ const nextConfig = {
   // Enable App Router
   experimental: {
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '4mb',
     },
+    // Enable server components external packages
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
-  
-  // Remove static export for API routes to work
-  // output: 'export', // Commented out to enable API routes
   
   // Image optimization configuration
   images: {
-    domains: [
-      'localhost',
-      'coworking-platform-smoky.vercel.app',
-      'coworking-platform.onrender.com',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**', // Allow all external images
+      },
     ],
-    // Disable image optimization during export if needed
-    unoptimized: process.env.NODE_ENV === 'production',
+    // Enable optimized images in production
+    unoptimized: false,
   },
   
   // Server external packages
@@ -40,14 +40,17 @@ const nextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
   
-  // Enable production source maps
-  productionBrowserSourceMaps: false, // Set to true for debugging in production
+  // Disable production source maps for better performance
+  productionBrowserSourceMaps: false,
   
-  // React and build configurations
-  reactStrictMode: true,
+  // Output standalone for better Docker support
+  output: 'standalone',
   
-  // Minification is now handled automatically in production
-  // Remove swcMinify as it's now the default
+  // Disable powered by header for security
+  poweredByHeader: false,
+  
+  // Enable compression
+  compress: true,
   
   // Enable etags for better caching
   generateEtags: true,

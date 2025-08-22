@@ -1,21 +1,17 @@
-# Render Configuration File
-# Docs: https://render.com/docs/deploy-next-js#deploy-nextjs-with-render
+# Render Configuration File for Next.js Application
+# Docs: https://render.com/docs/deploy-next-js
 
 services:
   - type: web
     name: coworking-platform
     env: node
     region: singapore  # Choose the region closest to your users
+    plan: free  # or 'standard' for production
     
     # Build configuration
     buildCommand: |
-      # Install dependencies (ignore scripts to avoid husky issues)
+      # Install dependencies
       npm ci --ignore-scripts
-      
-      # Install husky only if not in CI
-      if [ -z "$CI" ]; then
-        npx husky install
-      fi
       
       # Build the application
       npm run build
@@ -23,31 +19,47 @@ services:
     # Start command for the application
     startCommand: npm start
     
-    # Static site configuration
-    staticPublishPath: ./out
-    routes:
-      - type: rewrite
-        source: "/*"
-        destination: "/index.html"
-    
-    # Security headers for static exports
-    headers:
-      - key: X-Content-Type-Options
-        value: nosniff
-      - key: X-Frame-Options
-        value: DENY
-      - key: X-XSS-Protection
-        value: 1; mode=block
-      - key: Content-Security-Policy
-        value: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;
+    # Auto-deploy from Git
+    autoDeploy: true
     
     # Environment variables
     envVars:
-      # CI/CD configuration
-      - key: CI
-        value: "true"
+      # Required for Next.js
+      - key: NODE_ENV
+        value: production
+        
+      # Database configuration
+      - key: MONGODB_URI
+        fromDatabase:
+          name: mongodb
+          property: connectionString
+          
+      # NextAuth configuration
+      - key: NEXTAUTH_URL
+        generateValue: true
+        pattern: "https://{{name}}.onrender.com"
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+        
+      # Optional: Add your Google OAuth credentials if using Google Auth
+      # - key: GOOGLE_CLIENT_ID
+      #   sync: false
+      # - key: GOOGLE_CLIENT_SECRET
+      #   sync: false
       
-      # Node.js configuration
+      # Optional: Add your GitHub OAuth credentials if using GitHub Auth
+      # - key: GITHUB_ID
+      #   sync: false
+      # - key: GITHUB_SECRET
+      #   sync: false
+      
+      # Security headers (handled by Next.js)
+      - key: SECURITY_HEADERS
+        value: "true"
+        
+      # Performance optimizations
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"
       - key: NODE_ENV
         value: production
       - key: NODE_VERSION
