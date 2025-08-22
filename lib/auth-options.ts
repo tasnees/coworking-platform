@@ -28,6 +28,18 @@ const baseUrl = getBaseUrl();
 
 // Log the base URL for debugging
 log(`Base URL set to: ${baseUrl}`);
+log(`NODE_ENV: ${process.env.NODE_ENV}`);
+log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL || 'not set'}`);
+log(`RENDER_EXTERNAL_URL: ${process.env.RENDER_EXTERNAL_URL || 'not set'}`);
+
+// Ensure we have a valid NEXTAUTH_URL in production
+if (process.env.NODE_ENV === 'production' && !process.env.NEXTAUTH_URL) {
+  console.warn('⚠️ NEXTAUTH_URL is not set in production. This may cause authentication issues.');
+  if (process.env.RENDER_EXTERNAL_URL) {
+    process.env.NEXTAUTH_URL = `https://${process.env.RENDER_EXTERNAL_URL}`;
+    console.log(`ℹ️ Set NEXTAUTH_URL to ${process.env.NEXTAUTH_URL} from RENDER_EXTERNAL_URL`);
+  }
+}
 
 const client = new MongoClient(uri);
 const clientPromise = client.connect();
@@ -80,9 +92,7 @@ interface IUserDocument {
  * Configuration for NextAuth.js with Credentials provider
  */
 export const authOptions: NextAuthOptions = {
-  // Set the base URL for NextAuth
-  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
-  
+  // Authentication endpoints will be available at /api/auth/* by default
   // Configure cookies for production
   cookies: process.env.NODE_ENV === 'production' ? {
     sessionToken: {

@@ -5,9 +5,10 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // Enable server components external packages
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
+  
+  // Server external packages
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // TypeScript configuration
   typescript: {
@@ -25,7 +26,6 @@ const nextConfig = {
     domains: [
       'localhost',
       'coworking-platform.onrender.com',
-      'coworking-platform.onrender.com',
     ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days
@@ -33,9 +33,6 @@ const nextConfig = {
   
   // Enable trailing slashes for better routing
   trailingSlash: false,
-  
-  // Configure base path if needed (e.g., if deploying to a subdirectory)
-  // basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
   
   // Configure output for production
   output: 'standalone',
