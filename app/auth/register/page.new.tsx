@@ -8,20 +8,26 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { RoleSelect } from '@/components/RoleSelect';
+import { RoleSelect, type Role, ROLES } from '@/components/RoleSelect';
 
-type UserRole = 'member' | 'staff';
+type FormData = {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: Role;
+};
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'member' as UserRole,
+    role: 'member',
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -33,7 +39,11 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleRoleChange = (role: UserRole) => {
+  const handleRoleChange = (role: Role) => {
+    if (!ROLES.includes(role)) {
+      console.error('Invalid role selected:', role);
+      return;
+    }
     setFormData(prev => ({
       ...prev,
       role

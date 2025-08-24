@@ -9,11 +9,12 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
-type UserRole = 'member' | 'staff';
+export type Role = 'member' | 'staff';
+export const ROLES = ['member', 'staff'] as const;
 
 interface RoleSelectProps {
-  value: UserRole;
-  onChange: (value: UserRole) => void;
+  value: Role;
+  onChange: (value: Role) => void;
   disabled?: boolean;
   className?: string;
 }
@@ -24,6 +25,12 @@ export function RoleSelect({
   disabled = false,
   className = "",
 }: RoleSelectProps) {
+  const handleValueChange = (newValue: string) => {
+    if (ROLES.includes(newValue as Role)) {
+      onChange(newValue as Role);
+    }
+  };
+
   return (
     <div className={className}>
       <Label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
@@ -31,7 +38,7 @@ export function RoleSelect({
       </Label>
       <Select
         value={value}
-        onValueChange={(val) => onChange(val as UserRole)}
+        onValueChange={handleValueChange}
         disabled={disabled}
       >
         <SelectTrigger className="w-full">
@@ -48,5 +55,3 @@ export function RoleSelect({
     </div>
   );
 }
-
-export default RoleSelect;

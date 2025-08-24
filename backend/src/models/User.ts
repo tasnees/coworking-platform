@@ -1,5 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 export interface IUser extends Document {
   firstName: string;
@@ -10,32 +12,39 @@ export interface IUser extends Document {
   avatar?: string;
   role: 'member' | 'staff' | 'admin';
   membershipType?: string;
-  membershipStatus: 'active' | 'inactive' | 'suspended';
-  joinDate: Date;
+  membershipStatus?: 'active' | 'inactive' | 'suspended';
+  tokenVersion: number;
+  isActive: boolean;
   lastLogin?: Date;
-  isEmailVerified: boolean;
   emailVerificationToken?: string;
+  emailVerificationExpire?: Date;
   passwordResetToken?: string;
   passwordResetExpires?: Date;
-  approvalStatus: 'pending' | 'approved' | 'rejected';
-  approvedBy?: string;
+  isEmailVerified: boolean;
+  permissions?: string[];
+  joinDate?: Date;
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string | mongoose.Types.ObjectId;
   approvedAt?: Date;
-  permissions: string[];
-  preferences: {
+  preferences?: {
     emailNotifications: boolean;
     securityAlerts: boolean;
     systemAlerts: boolean;
     twoFactorEnabled: boolean;
   };
   address?: {
-    street: string;
-    city: string;
-    state: string;
-    zipCode: string;
+    street?: string;
+    city?: string;
+    state?: string;
+    zipCode?: string;
   };
   comparePassword(candidatePassword: string): Promise<boolean>;
+  matchPassword(candidatePassword: string): Promise<boolean>;
+  getSignedJwtToken(): string;
+  getResetPasswordToken(): string;
 }
 
+// Define the user schema
 const userSchema = new Schema<IUser>({
   firstName: {
     type: String,
@@ -84,34 +93,42 @@ const userSchema = new Schema<IUser>({
     enum: ['active', 'inactive', 'suspended'],
     default: 'active'
   },
-  joinDate: {
-    type: Date,
-    default: Date.now
+  tokenVersion: { 
+    type: Number, 
+    default: 0 
+  },
+  isActive: { 
+    type: Boolean, 
+    default: true 
   },
   lastLogin: {
     type: Date
   },
+  emailVerificationToken: String,
+  emailVerificationExpire: Date,
+  passwordResetToken: String,
+  passwordResetExpires: Date,
   isEmailVerified: {
     type: Boolean,
     default: false
   },
-  emailVerificationToken: String,
-  passwordResetToken: String,
-  passwordResetExpires: Date,
+  permissions: [{
+    type: String
+  }],
+  joinDate: {
+    type: Date,
+    default: Date.now
+  },
   approvalStatus: {
     type: String,
     enum: ['pending', 'approved', 'rejected'],
     default: 'pending'
   },
   approvedBy: {
-    type: String,
+    type: Schema.Types.ObjectId,
     ref: 'User'
   },
   approvedAt: Date,
-  permissions: [{
-    type: String,
-    default: []
-  }],
   preferences: {
     emailNotifications: { type: Boolean, default: true },
     securityAlerts: { type: Boolean, default: true },
@@ -137,9 +154,42 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
-// Compare password method
+// Compare password method (alias: matchPassword)
 userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
   return await bcrypt.compare(candidatePassword, this.password);
+};
+
+// Alias for comparePassword
+userSchema.methods.matchPassword = userSchema.methods.comparePassword;
+
+// Sign JWT and return
+userSchema.methods.getSignedJwtToken = function(): string {
+  const payload = { id: this._id, tokenVersion: this.tokenVersion };
+  const secret = process.env.JWT_SECRET || 'your-secret-key';
+  const options: jwt.SignOptions = { expiresIn: '1d' }; // Default to 1 day
+  
+  if (process.env.JWT_EXPIRE) {
+    options.expiresIn = parseInt(process.env.JWT_EXPIRE, 10) || '1d';
+  }
+  
+  return jwt.sign(payload, secret, options);
+};
+
+// Generate and hash password reset token
+userSchema.methods.getResetPasswordToken = function(): string {
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString('hex');
+
+  // Hash token and set to passwordResetToken field
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  // Set expire (10 minutes)
+  this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+  return resetToken;
 };
 
 // Virtual for full name
@@ -156,4 +206,14 @@ userSchema.set('toJSON', {
   }
 });
 
-export default mongoose.model<IUser>('User', userSchema);
+// Create and export the User model
+export const User = mongoose.model<IUser>('User', userSchema);
+
+// Export the IUserDocument type for use in other files
+export type IUserDocument = Document<unknown, Record<string, unknown>, IUser> & 
+  Omit<IUser, keyof Document> & {
+    comparePassword(candidatePassword: string): Promise<boolean>;
+    matchPassword(candidatePassword: string): Promise<boolean>;
+    getSignedJwtToken(): string;
+    getResetPasswordToken(): string;
+  };

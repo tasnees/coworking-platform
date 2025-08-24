@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { ObjectId } from 'mongodb';
-import { UserRole } from '@/lib/auth-types';
+import { Role } from '@/components/RoleSelect';
 import { withDb, withTransaction, getDb } from '@/lib/db-utils';
 
 // Enable debug logging in development only
@@ -15,7 +15,14 @@ function debugLog(...args: any[]) {
 }
 
 // Allowed roles for self-registration
-const ALLOWED_ROLES: UserRole[] = ['member', 'staff'];
+const ALLOWED_ROLES: Role[] = ['member', 'staff'];
+
+type RegisterRequest = {
+  name: string;
+  email: string;
+  password: string;
+  role: Role;
+};
 
 // Add a delay function for debugging
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -49,7 +56,7 @@ export async function POST(request: Request) {
     
     debugLog('Request body:', JSON.stringify(body, null, 2));
     
-    const { email, password, name, role = 'member' } = body;
+    const { name, email, password, role = 'member' as Role } = body as RegisterRequest;
     
     // Log the extracted values
     debugLog('Extracted values:', { 

@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User';
+import { User } from '../models/User';
 import Settings from '../models/Settings';
 
 const router = express.Router();
@@ -31,7 +31,7 @@ router.post('/register', async (req: express.Request, res: express.Response) => 
     }
 
     // Get system settings
-    const settings = await (Settings as any).getSettings();
+    const settings = await Settings.findOne();
     if (!settings) {
       res.status(500).json({
         success: false,

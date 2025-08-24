@@ -1,0 +1,119 @@
+import { Router } from 'express';
+import { body, param } from 'express-validator';
+import { validateRequest } from '../middleware/validateRequest';
+import { authMiddleware } from '../middleware/auth';
+import { 
+  getCurrentUser,
+  updateProfile,
+  updatePassword,
+  deactivateAccount,
+  updateUserRole,
+  getAllUsers,
+  getUserById,
+  deleteUser
+} from '../controllers/user.controller';
+import { isAdmin } from '../middleware/roles';
+
+const router = Router();
+
+// Apply auth middleware to all routes
+router.use(authMiddleware);
+
+// @route   GET /api/users/me
+// @desc    Get current user's profile
+// @access  Private
+router.get('/me', getCurrentUser);
+
+// @route   GET /api/users
+// @desc    Get all users (Admin only)
+// @access  Private/Admin
+router.get('/', isAdmin, getAllUsers);
+
+// @route   GET /api/users/:id
+// @desc    Get user by ID
+// @access  Private/Admin
+router.get(
+  '/:id',
+  [
+    param('id').isMongoId().withMessage('Invalid user ID'),
+  ],
+  validateRequest,
+  isAdmin,
+  getUserById
+);
+
+// @route   PUT /api/users/me
+// @desc    Update current user's profile
+// @access  Private
+router.put(
+  '/me',
+  [
+    body('name').optional().not().isEmpty().withMessage('Name is required'),
+    body('email').optional().isEmail().withMessage('Please include a valid email'),
+    body('phone').optional().isMobilePhone('any').withMessage('Please include a valid phone number'),
+  ],
+  validateRequest,
+  updateProfile
+);
+
+// @route   PUT /api/users/update-password
+// @desc    Update current user's password
+// @access  Private
+router.put(
+  '/update-password',
+  [
+    body('currentPassword').not().isEmpty().withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters long')
+      .matches(/[a-z]/)
+      .withMessage('Password must contain at least one lowercase letter')
+      .matches(/[A-Z]/)
+      .withMessage('Password must contain at least one uppercase letter')
+      .matches(/[0-9]/)
+      .withMessage('Password must contain at least one number'),
+  ],
+  validateRequest,
+  updatePassword
+);
+
+// @route   PUT /api/users/:id/role
+// @desc    Update user role (Admin only)
+// @access  Private/Admin
+router.put(
+  '/:id/role',
+  [
+    param('id').isMongoId().withMessage('Invalid user ID'),
+    body('role').isIn(['user', 'admin', 'manager']).withMessage('Invalid role'),
+  ],
+  validateRequest,
+  isAdmin,
+  updateUserRole
+);
+
+// @route   PUT /api/users/deactivate
+// @desc    Deactivate current user's account
+// @access  Private
+router.put(
+  '/deactivate',
+  [
+    body('password').not().isEmpty().withMessage('Password is required for account deactivation'),
+  ],
+  validateRequest,
+  deactivateAccount
+);
+
+// @route   DELETE /api/users/:id
+// @desc    Delete user (Admin only)
+// @access  Private/Admin
+router.delete(
+  '/:id',
+  [
+    param('id').isMongoId().withMessage('Invalid user ID'),
+  ],
+  validateRequest,
+  isAdmin,
+  deleteUser
+);
+
+export default router;

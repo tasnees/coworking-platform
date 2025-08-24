@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import Resource from '../models/Resource';
+import { Resource } from '../models/Resource';
 
 const router = Router();
 
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
   try {
     const { type, isAvailable } = req.query as QueryParams;
     
-    let query: any = {};
+    const query: { [key: string]: unknown } = {};
     if (type) query.type = type;
     if (isAvailable !== undefined) query.isAvailable = isAvailable === 'true';
     
@@ -23,11 +23,11 @@ router.get('/', async (req, res) => {
       success: true,
       data: resources
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       message: 'Error fetching resources',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -48,11 +48,11 @@ router.get('/:id', async (req, res) => {
       success: true,
       data: resource
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       message: 'Error fetching resource',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -67,11 +67,11 @@ router.post('/', async (req, res) => {
       success: true,
       data: resource
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(400).json({
       success: false,
       message: 'Error creating resource',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -96,11 +96,11 @@ router.put('/:id', async (req, res) => {
       success: true,
       data: resource
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(400).json({
       success: false,
       message: 'Error updating resource',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });
@@ -121,11 +121,11 @@ router.delete('/:id', async (req, res) => {
       success: true,
       message: 'Resource deleted successfully'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       message: 'Error deleting resource',
-      error: error.message
+      error: error instanceof Error ? error.message : String(error)
     });
   }
 });

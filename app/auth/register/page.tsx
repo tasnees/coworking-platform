@@ -9,21 +9,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { RoleSelect } from '@/components/ui/role-select';
+import { RoleSelect } from '@/components/RoleSelect';
+import type { Role } from '@/components/RoleSelect';
 
-type UserRole = 'member' | 'staff' | 'admin';
+interface FormData {
+  name: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  role: Role;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'member' as UserRole,
+    role: 'member',
   });
+  
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -34,10 +42,10 @@ export default function RegisterPage() {
     }));
   };
 
-  const handleRoleChange = (value: string) => {
+  const handleRoleChange = (value: Role) => {
     setFormData(prev => ({
       ...prev,
-      role: value as UserRole
+      role: value
     }));
   };
 
@@ -62,10 +70,10 @@ export default function RegisterPage() {
       return;
     }
 
-    if (!['member', 'staff', 'admin'].includes(formData.role)) {
+    if (!['member', 'staff'].includes(formData.role)) {
       toast({
         title: 'Error',
-        description: 'Please select a valid role',
+        description: 'Please select a valid role (member or staff)',
         variant: 'destructive',
       });
       return;
@@ -99,14 +107,16 @@ export default function RegisterPage() {
         description: 'Please sign in with your new account.',
       });
       
-      // Redirect to the sign-in page
-      router.push('/auth/login');
+      // Redirect to sign-in page after a short delay
+      setTimeout(() => {
+        router.push('/auth/login');
+      }, 2000);
       
     } catch (error) {
       console.error('Registration error:', error);
       toast({
-        title: 'Registration failed',
-        description: error instanceof Error ? error.message : 'An error occurred during registration',
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Registration failed',
         variant: 'destructive',
       });
     } finally {
@@ -115,17 +125,15 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-md space-y-8 rounded-lg bg-white p-8 shadow-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Create an account</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Join our platform today
-          </p>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create an account
+          </h2>
         </div>
-        
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4">
+          <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <Label htmlFor="name" className="block text-sm font-medium text-gray-700">
                 Full Name
@@ -134,7 +142,6 @@ export default function RegisterPage() {
                 id="name"
                 name="name"
                 type="text"
-                autoComplete="name"
                 required
                 value={formData.name}
                 onChange={handleChange}
@@ -143,7 +150,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
+            <div className="mt-4">
               <Label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 Email address
               </Label>
@@ -160,7 +167,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
+            <div className="mt-4">
               <RoleSelect
                 value={formData.role}
                 onChange={handleRoleChange}
@@ -168,7 +175,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            <div>
+            <div className="mt-4">
               <Label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 Password
               </Label>
@@ -183,12 +190,9 @@ export default function RegisterPage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 disabled={isLoading}
               />
-              <p className="mt-1 text-xs text-gray-500">
-                Password must be at least 8 characters long
-              </p>
             </div>
 
-            <div>
+            <div className="mt-4">
               <Label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
                 Confirm Password
               </Label>
@@ -209,12 +213,12 @@ export default function RegisterPage() {
           <div>
             <Button
               type="submit"
-              className="w-full justify-center"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
                   Creating account...
                 </>
               ) : (
@@ -223,25 +227,13 @@ export default function RegisterPage() {
             </Button>
           </div>
         </form>
-
-        <div className="relative mt-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="bg-white px-2 text-gray-500">Already have an account?</span>
-          </div>
-        </div>
-
-        <div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push('/auth/login')}
-            disabled={isLoading}
-          >
-            Sign in to your account
-          </Button>
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Already have an account?{' '}
+            <a href="/auth/login" className="font-medium text-primary-600 hover:text-primary-500">
+              Sign in
+            </a>
+          </p>
         </div>
       </div>
     </div>

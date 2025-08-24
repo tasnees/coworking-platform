@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema, Model } from 'mongoose';
 
 export interface ISettings extends Document {
   requireAdminApproval: boolean;
@@ -10,7 +10,12 @@ export interface ISettings extends Document {
   updatedAt: Date;
 }
 
-const settingsSchema = new Schema<ISettings>({
+// Interface for static methods
+export interface ISettingsModel extends Model<ISettings> {
+  getSettings(): Promise<ISettings>;
+}
+
+const settingsSchema = new Schema<ISettings, ISettingsModel>({
   requireAdminApproval: {
     type: Boolean,
     default: false
@@ -41,15 +46,6 @@ const settingsSchema = new Schema<ISettings>({
   }
 });
 
-// Create or update settings
-settingsSchema.statics.getSettings = async function() {
-  let settings = await this.findOne();
-  if (!settings) {
-    settings = await this.create({});
-  }
-  return settings;
-};
-
 // Add static method
 settingsSchema.statics.getSettings = async function() {
   let settings = await this.findOne();
@@ -59,5 +55,7 @@ settingsSchema.statics.getSettings = async function() {
   return settings;
 };
 
-const Settings = mongoose.model<ISettings>('Settings', settingsSchema);
+// Use the extended interface with both ISettings and ISettingsModel
+const Settings = mongoose.model<ISettings, ISettingsModel>('Settings', settingsSchema);
+
 export default Settings;

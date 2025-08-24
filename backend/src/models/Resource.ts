@@ -1,6 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IResource extends Document {
+// Extend the base IResource interface with Resource-specific fields
+export interface IResource  {
   name: string;
   type: 'desk' | 'meeting_room' | 'phone_booth' | 'event_space';
   description?: string;
@@ -15,23 +16,22 @@ export interface IResource extends Document {
   availability: {
     monday: { start: string; end: string; available: boolean };
     tuesday: { start: string; end: string; available: boolean };
-    wednesday: { start: string; end: string; available: boolean };
-    thursday: { start: string; end: string; available: boolean };
-    friday: { start: string; end: string; available: boolean };
-    saturday: { start: string; end: string; available: boolean };
-    sunday: { start: string; end: string; available: boolean };
   };
   bookingRules: {
-    minDuration: number; // in minutes
-    maxDuration: number; // in minutes
-    advanceBooking: number; // in days
-    cancellationNotice: number; // in hours
+    minDuration: number;
+    maxDuration: number;
+    advanceBooking: number;
+    cancellationNotice: number;
   };
-  createdAt: Date;
-  updatedAt: Date;
 }
 
-const resourceSchema = new Schema<IResource>({
+export interface IResourceDocument extends IResource, Document {
+  // You can add document-specific methods here
+  isAvailableAt(date: Date, duration: number): boolean;
+}
+
+
+const resourceSchema = new Schema<IResourceDocument>({
   name: {
     type: String,
     required: [true, 'Resource name is required'],
@@ -152,4 +152,5 @@ resourceSchema.set('toJSON', {
   virtuals: true
 });
 
-export default mongoose.model<IResource>('Resource', resourceSchema);
+export const Resource = mongoose.model<IResourceDocument>('Resource', resourceSchema);
+

@@ -1,0 +1,51 @@
+# Auto detect text files and perform LF normalization
+* text=auto eol=lf
+
+# Force CRLF line endings for Windows-specific files
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+*.ps1xml text eol=crlf
+*.psc1 text eol=crlf
+*.psc2 text eol=crlf
+*.pssc text eol=crlf
+*.cdxml text eol=crlf
+*.csproj text eol=crlf
+*.sln text eol=crlf
+*.vcxproj* text eol=crlf
+*.vcxitems* text eol=crlf
+*.filters text eol=crlf
+*.user text eol=crlf
+*.resx text eol=crlf
+*.settings text eol=crlf
+*.rdlc text eol=crlf
+*.rdl text eol=crlf
+*.rptproj text eol=crlf
+
+# Force LF line endings for shell scripts
+*.sh text eol=lf
+
+# Binary files should not be modified
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.dll binary
+*.exe binary
+*.so binary
+*.dylib binary
+*.a binary
+*.lib binary
+*.o binary
+*.obj binary
+*.pyc binary
+*.pyo binary
+*.pyd binary
+*.class binary
