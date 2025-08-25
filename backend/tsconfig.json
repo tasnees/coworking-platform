@@ -14,11 +14,15 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "typeRoots": [
-      "./node_modules/@types",
-      "./types"
-    ]
+    "typeRoots": ["./node_modules/@types"],
+    "types": ["node", "express"],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*",
+    "seed.js",
+    "seed-all.js"
+  ],
+  "exclude": ["node_modules", "dist", "seed-*.js"]
 }

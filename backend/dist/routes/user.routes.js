@@ -8,7 +8,7 @@ const user_controller_1 = require("../controllers/user.controller");
 const roles_1 = require("../middleware/roles");
 const router = (0, express_1.Router)();
 // Apply auth middleware to all routes
-router.use(auth_1.auth);
+router.use(auth_1.authMiddleware);
 // @route   GET /api/users/me
 // @desc    Get current user's profile
 // @access  Private

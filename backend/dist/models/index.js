@@ -18,4 +18,3 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./User"), exports);
 __exportStar(require("./Resource"), exports);
 __exportStar(require("./Workspace"), exports);
-__exportStar(require("./types"), exports);

@@ -12,95 +12,113 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sendTestEmail = exports.sendEmail = void 0;
+exports.sendTestEmail = exports.sendSimpleEmail = exports.sendEmail = exports.testConnection = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const logger_1 = require("./logger");
 const path_1 = __importDefault(require("path"));
-const fs_1 = __importDefault(require("fs"));
-const handlebars_1 = __importDefault(require("handlebars"));
-const util_1 = require("util");
-const readFile = (0, util_1.promisify)(fs_1.default.readFile);
+const promises_1 = __importDefault(require("fs/promises"));
+// Simple logger fallback if you don't have one
+const logger = {
+    info: (msg, ...args) => console.log('[INFO]', msg, ...args),
+    error: (msg, ...args) => console.error('[ERROR]', msg, ...args),
+};
 // Email template path
-const TEMPLATES_DIR = path_1.default.join(__dirname, '../../email-templates');
-// Create reusable transporter object using the default SMTP transport
-const transporter = nodemailer_1.default.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    // Disable TLS when not using secure connection
-    tls: {
-        rejectUnauthorized: process.env.NODE_ENV === 'production',
-    },
-});
-// Verify connection configuration
-transporter.verify((error) => {
-    if (error) {
-        logger_1.logger.error('SMTP connection error:', error);
-    }
-    else {
-        logger_1.logger.info('SMTP server is ready to take our messages');
-    }
-});
-// Compile email template
-const compileTemplate = (templateName, context) => __awaiter(void 0, void 0, void 0, function* () {
+const TEMPLATES_DIR = path_1.default.resolve(process.cwd(), 'email-templates');
+// SMTP Configuration
+const smtpConfig = {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: false, // true for 465, false for other ports
+    auth: process.env.SMTP_USER && process.env.SMTP_PASS
+        ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+        }
+        : undefined,
+};
+// Create transporter
+const transporter = nodemailer_1.default.createTransport(smtpConfig);
+// Optional: Test connection function (call manually if needed)
+const testConnection = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const templatePath = path_1.default.join(TEMPLATES_DIR, `${templateName}.hbs`);
-        const source = yield readFile(templatePath, 'utf8');
-        const template = handlebars_1.default.compile(source);
-        return template(context);
+        yield transporter.sendMail({
+            from: process.env.EMAIL_FROM_ADDRESS || 'test@example.com',
+            to: process.env.EMAIL_FROM_ADDRESS || 'test@example.com',
+            subject: 'Connection Test',
+            html: '<p>Connection test</p>',
+        });
+        logger.info('SMTP server ready');
     }
     catch (error) {
-        logger_1.logger.error(`Error compiling email template ${templateName}:`, error);
-        throw new Error(`Failed to compile email template: ${templateName}`);
+        logger.error('SMTP connection failed:', error);
+        throw error;
     }
 });
-// Send email with template
+exports.testConnection = testConnection;
+// Simple template replacement (no Handlebars dependency)
+const compileTemplate = (template, context) => {
+    return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
+        var _a;
+        return ((_a = context[key]) === null || _a === void 0 ? void 0 : _a.toString()) || match;
+    });
+};
+// Email sending function
 const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
-    const { to, subject, template, context, attachments = [] } = options;
+    const { to, subject, template, html, context = {}, attachments = [] } = options;
+    let emailHtml = html;
+    // If template is provided, try to load it
+    if (template && !html) {
+        try {
+            const templatePath = path_1.default.join(TEMPLATES_DIR, `${template}.html`);
+            const templateContent = yield promises_1.default.readFile(templatePath, 'utf8');
+            const emailContext = Object.assign(Object.assign({}, context), { appName: process.env.APP_NAME || 'Coworking Platform', appUrl: process.env.CLIENT_URL || 'http://localhost:3000', year: new Date().getFullYear() });
+            emailHtml = compileTemplate(templateContent, emailContext);
+        }
+        catch (error) {
+            logger.error('Template loading failed:', error);
+            throw new Error(`Failed to load email template: ${template}`);
+        }
+    }
+    if (!emailHtml) {
+        throw new Error('Either template or html must be provided');
+    }
+    const from = `"${process.env.EMAIL_FROM_NAME || 'Coworking Platform'}" <${process.env.EMAIL_FROM_ADDRESS || 'noreply@coworking.com'}>`;
     try {
-        // Add common context variables
-        const emailContext = Object.assign(Object.assign({}, context), { appName: process.env.APP_NAME || 'Coworking Platform', appUrl: process.env.CLIENT_URL || 'http://localhost:3000', year: new Date().getFullYear() });
-        // Compile HTML from template
-        const html = yield compileTemplate(template, emailContext);
-        // Setup email data
-        const mailOptions = {
-            from: `"${process.env.EMAIL_FROM_NAME || 'Coworking Platform'}" <${process.env.EMAIL_FROM_ADDRESS || 'noreply@coworking.com'}>`,
+        yield transporter.sendMail({
+            from,
             to,
             subject,
-            html,
+            html: emailHtml,
             attachments,
-        };
-        // Send email
-        const info = yield transporter.sendMail(mailOptions);
-        logger_1.logger.info(`Email sent to ${to} with message ID: ${info.messageId}`);
+        });
+        logger.info(`Email sent to ${to}`);
     }
     catch (error) {
-        logger_1.logger.error('Error sending email:', error);
-        throw error; // Re-throw to be handled by the caller
+        logger.error('Error sending email:', error);
+        throw error;
     }
 });
 exports.sendEmail = sendEmail;
-// Send test email
+// Send simple email without template
+const sendSimpleEmail = (to, subject, html) => __awaiter(void 0, void 0, void 0, function* () {
+    yield (0, exports.sendEmail)({ to, subject, html });
+});
+exports.sendSimpleEmail = sendSimpleEmail;
+// Test email function
 const sendTestEmail = (to) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield (0, exports.sendEmail)({
-            to,
-            subject: 'Test Email',
-            template: 'test-email',
-            context: {
-                name: 'Test User',
-                message: 'This is a test email from Coworking Platform.',
-            },
-        });
+        const testHtml = `
+      <h1>Test Email</h1>
+      <p>Hello Test User,</p>
+      <p>This is a test email from Coworking Platform.</p>
+      <p>Current time: ${new Date().toISOString()}</p>
+    `;
+        yield (0, exports.sendSimpleEmail)(to, 'Test Email', testHtml);
         return { success: true, message: 'Test email sent successfully.' };
     }
     catch (error) {
-        logger_1.logger.error('Error sending test email:', error);
-        return { success: false, message: 'Failed to send test email.' };
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        logger.error('Test email failed:', errorMessage);
+        return { success: false, message: `Failed to send test email: ${errorMessage}` };
     }
 });
 exports.sendTestEmail = sendTestEmail;

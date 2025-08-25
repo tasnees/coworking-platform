@@ -12,15 +12,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateMemberRole = exports.removeMember = exports.addMember = exports.deleteWorkspace = exports.updateWorkspace = exports.getWorkspace = exports.getWorkspaces = exports.createWorkspace = void 0;
+exports.updateMemberRole = exports.removeMember = exports.addMember = exports.getWorkspaceMembers = exports.deleteWorkspace = exports.updateWorkspace = exports.getWorkspace = exports.getWorkspaces = exports.createWorkspace = void 0;
 const mongoose_1 = require("mongoose");
 const logger_1 = require("../utils/logger");
-const Workspace_1 = __importDefault(require("../models/Workspace"));
-const User_1 = __importDefault(require("../models/User"));
+const Workspace_1 = require("../models/Workspace");
+const User_1 = require("../models/User");
 const Booking_1 = __importDefault(require("../models/Booking"));
 const email_1 = require("../utils/email");
 /**
- * @desc    Create a new workspace
+ * @desc    Create a workspace
  * @route   POST /api/workspaces
  * @access  Private
  */
@@ -29,23 +29,24 @@ const createWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
     try {
         const { name, description, type, capacity, amenities, location } = req.body;
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-        // Create workspace
-        const workspace = yield Workspace_1.default.create({
+        // Create a new workspace
+        const workspace = new Workspace_1.WorkspaceModel({
             name,
             description,
             type,
             capacity,
             amenities,
             location,
-            owner: userId,
-            admins: [userId],
-            members: [userId]
+            owner: userId
         });
+        yield workspace.save();
         // Add workspace to user's workspaces
-        yield User_1.default.findByIdAndUpdate(userId, {
-            $addToSet: { workspaces: workspace._id }
-        });
-        res.status(201).json({
+        if (userId) {
+            yield User_1.User.findByIdAndUpdate(userId, {
+                $addToSet: { workspaces: workspace._id }
+            });
+        }
+        return res.status(201).json({
             success: true,
             data: workspace,
             message: 'Workspace created successfully.'
@@ -62,13 +63,12 @@ const createWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
 });
 exports.createWorkspace = createWorkspace;
 /**
- * @desc    Get all workspaces
+ * @desc    Get workspaces
  * @route   GET /api/workspaces
  * @access  Private
  */
 const getWorkspaces = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Pagination
         const page = parseInt(req.query.page, 10) || 1;
         const limit = parseInt(req.query.limit, 10) || 10;
         const skip = (page - 1) * limit;
@@ -77,28 +77,36 @@ const getWorkspaces = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         // Apply filters based on query params
         if (req.query.type)
             filter.type = req.query.type;
-        if (req.query.capacity)
-            filter.capacity = { $gte: parseInt(req.query.capacity, 10) };
+        if (req.query.capacity) {
+            const capacityValue = parseInt(req.query.capacity, 10);
+            if (!isNaN(capacityValue)) {
+                filter.capacity = { $gte: capacityValue };
+            }
+        }
         if (req.query.amenities) {
-            filter.amenities = { $all: req.query.amenities.split(',') };
+            const amenitiesList = req.query.amenities.split(',').filter(Boolean);
+            if (amenitiesList.length > 0) {
+                filter.amenities = { $all: amenitiesList };
+            }
         }
         // Search
         if (req.query.search) {
+            const searchQuery = req.query.search;
             filter.$or = [
-                { name: { $regex: req.query.search, $options: 'i' } },
-                { description: { $regex: req.query.search, $options: 'i' } },
-                { 'location.address': { $regex: req.query.search, $options: 'i' } }
+                { name: { $regex: searchQuery, $options: 'i' } },
+                { description: { $regex: searchQuery, $options: 'i' } },
+                { 'location.address': { $regex: searchQuery, $options: 'i' } }
             ];
         }
         // Execute query with pagination
         const [workspaces, total] = yield Promise.all([
-            Workspace_1.default.find(filter)
+            Workspace_1.WorkspaceModel.find(filter)
                 .populate('owner', 'name email')
                 .populate('members', 'name email')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
-            Workspace_1.default.countDocuments(filter)
+            Workspace_1.WorkspaceModel.countDocuments(filter)
         ]);
         // Calculate pagination metadata
         const totalPages = Math.ceil(total / limit);
@@ -136,7 +144,8 @@ exports.getWorkspaces = getWorkspaces;
  */
 const getWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const workspace = yield Workspace_1.default.findById(req.params.id)
+        const workspaceId = req.params.id;
+        const workspace = yield Workspace_1.WorkspaceModel.findById(workspaceId)
             .populate('owner', 'name email')
             .populate('admins', 'name email')
             .populate('members', 'name email');
@@ -173,8 +182,16 @@ const updateWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
         const { name, description, type, capacity, amenities, location, isActive } = req.body;
         const workspaceId = req.params.id;
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+        // Input validation
+        if (!userId) {
+            return res.status(401).json({
+                success: false,
+                code: 'UNAUTHORIZED',
+                message: 'User not authenticated.'
+            });
+        }
         // Check if workspace exists and user is admin/owner
-        const workspace = yield Workspace_1.default.findOne({
+        const workspace = yield Workspace_1.WorkspaceModel.findOne({
             _id: workspaceId,
             $or: [
                 { owner: userId },
@@ -188,31 +205,45 @@ const updateWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
                 message: 'Workspace not found or you do not have permission to update it.'
             });
         }
-        // Update fields
+        // Prepare update data
+        const updateData = {};
         if (name)
-            workspace.name = name;
+            updateData.name = name;
         if (description)
-            workspace.description = description;
+            updateData.description = description;
         if (type)
-            workspace.type = type;
-        if (capacity)
-            workspace.capacity = capacity;
-        if (amenities)
-            workspace.amenities = amenities;
-        if (location)
-            workspace.location = location;
-        if (isActive !== undefined)
-            workspace.isActive = isActive;
-        yield workspace.save();
-        res.status(200).json({
+            updateData.type = type;
+        if (typeof capacity === 'number' && capacity > 0)
+            updateData.capacity = capacity;
+        if (typeof isActive === 'boolean')
+            updateData.isActive = isActive;
+        if (location && location.address)
+            updateData.location = location;
+        // Handle amenities safely - merge existing with new ones if provided
+        if (Array.isArray(amenities)) {
+            updateData.amenities = [...new Set([...(workspace.get('amenities') || []), ...amenities])];
+        }
+        // Update the workspace
+        const updatedWorkspace = yield Workspace_1.WorkspaceModel.findByIdAndUpdate(workspaceId, { $set: updateData }, { new: true, runValidators: true })
+            .populate('owner', 'name email')
+            .populate('admins', 'name email')
+            .populate('members', 'name email');
+        if (!updatedWorkspace) {
+            return res.status(404).json({
+                success: false,
+                code: 'UPDATE_FAILED',
+                message: 'Failed to update workspace.'
+            });
+        }
+        return res.status(200).json({
             success: true,
-            data: workspace,
+            data: updatedWorkspace,
             message: 'Workspace updated successfully.'
         });
     }
     catch (error) {
         logger_1.logger.error('Update workspace error:', error);
-        res.status(500).json({
+        return res.status(500).json({
             success: false,
             code: 'SERVER_ERROR',
             message: 'Error updating workspace.'
@@ -231,7 +262,7 @@ const deleteWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
         const workspaceId = req.params.id;
         const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         // Check if workspace exists and user is owner
-        const workspace = yield Workspace_1.default.findOne({
+        const workspace = yield Workspace_1.WorkspaceModel.findOne({
             _id: workspaceId,
             owner: userId
         });
@@ -244,9 +275,9 @@ const deleteWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
         }
         // TODO: Add cleanup for related data (bookings, resources, etc.)
         // Use deleteOne instead of remove
-        yield Workspace_1.default.deleteOne({ _id: workspace._id });
+        yield Workspace_1.WorkspaceModel.deleteOne({ _id: workspace._id });
         // Remove workspace from users' workspaces
-        yield User_1.default.updateMany({ workspaces: workspace._id }, { $pull: { workspaces: workspace._id } });
+        yield User_1.User.updateMany({ workspaces: workspace._id }, { $pull: { workspaces: workspace._id } });
         res.status(200).json({
             success: true,
             data: {},
@@ -263,6 +294,37 @@ const deleteWorkspace = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.deleteWorkspace = deleteWorkspace;
+const getWorkspaceMembers = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const workspace = yield Workspace_1.WorkspaceModel.findById(id)
+            .populate('members.user', 'name email avatar role')
+            .populate('members.invitedBy', 'name email');
+        if (!workspace) {
+            return res.status(404).json({
+                success: false,
+                message: 'Workspace not found'
+            });
+        }
+        // Check if user has permission to view members
+        // (optional - your isWorkspaceMember middleware might handle this)
+        res.status(200).json({
+            success: true,
+            data: {
+                members: workspace.members,
+                totalMembers: workspace.members.length
+            }
+        });
+    }
+    catch (error) {
+        console.error('Get workspace members error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error retrieving workspace members'
+        });
+    }
+});
+exports.getWorkspaceMembers = getWorkspaceMembers;
 /**
  * @desc    Add member to workspace
  * @route   POST /api/workspaces/:id/members
@@ -275,7 +337,7 @@ const addMember = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         const workspaceId = req.params.id;
         const currentUserId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
         // Check if workspace exists and current user is admin/owner
-        const workspace = yield Workspace_1.default.findOne({
+        const workspace = yield Workspace_1.WorkspaceModel.findOne({
             _id: workspaceId,
             $or: [
                 { owner: currentUserId },
@@ -290,7 +352,7 @@ const addMember = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             });
         }
         // Check if user exists
-        const user = yield User_1.default.findById(userId);
+        const user = yield User_1.User.findById(userId);
         if (!user) {
             return res.status(404).json({
                 success: false,
@@ -313,7 +375,7 @@ const addMember = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         yield workspace.save();
         // Add workspace to user's workspaces
-        yield User_1.default.findByIdAndUpdate(userId, {
+        yield User_1.User.findByIdAndUpdate(userId, {
             $addToSet: { workspaces: workspaceId }
         });
         // Send invitation email
@@ -364,7 +426,7 @@ const removeMember = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             });
         }
         // Check if workspace exists and current user is admin/owner
-        const workspace = yield Workspace_1.default.findOne({
+        const workspace = yield Workspace_1.WorkspaceModel.findOne({
             _id: workspaceId,
             $or: [
                 { owner: currentUserId },
@@ -399,7 +461,7 @@ const removeMember = (req, res) => __awaiter(void 0, void 0, void 0, function* (
         workspace.admins = workspace.admins.filter((adminId) => adminId.toString() !== userId);
         yield workspace.save();
         // Remove workspace from user's workspaces
-        yield User_1.default.findByIdAndUpdate(userId, {
+        yield User_1.User.findByIdAndUpdate(userId, {
             $pull: { workspaces: workspaceId }
         });
         // Cancel user's upcoming bookings for this workspace
@@ -408,7 +470,7 @@ const removeMember = (req, res) => __awaiter(void 0, void 0, void 0, function* (
             user: userId,
             startDate: { $gt: new Date() }
         });
-        yield Promise.all(bookings.map((booking) => booking.remove()));
+        yield Promise.all(bookings.map((booking) => Booking_1.default.findByIdAndDelete(booking._id)));
         res.status(200).json({
             success: true,
             data: {},
@@ -430,11 +492,6 @@ exports.removeMember = removeMember;
  * @route   PUT /api/workspaces/:id/members/:userId/role
  * @access  Private
  */
-/**
- * @desc    Update member role
- * @route   PUT /api/workspaces/:id/members/:userId/role
- * @access  Private
- */
 const updateMemberRole = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
@@ -450,7 +507,7 @@ const updateMemberRole = (req, res) => __awaiter(void 0, void 0, void 0, functio
             });
         }
         // Check if workspace exists and current user is admin/owner
-        const workspace = yield Workspace_1.default.findOne({
+        const workspace = yield Workspace_1.WorkspaceModel.findOne({
             _id: workspaceId,
             $or: [
                 { owner: currentUserId },

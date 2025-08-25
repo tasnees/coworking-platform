@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Workspace = void 0;
+exports.WorkspaceModel = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 // Define the schema
 const WorkspaceSchema = new mongoose_1.Schema({
@@ -116,6 +116,4 @@ WorkspaceSchema.pre('save', function (next) {
     next();
 });
 // Create and export the model
-// Create and export the model
-exports.Workspace = mongoose_1.default.models.Workspace ||
-    mongoose_1.default.model('Workspace', WorkspaceSchema);
+exports.WorkspaceModel = mongoose_1.default.model('Workspace', WorkspaceSchema);

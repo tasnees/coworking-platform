@@ -14,36 +14,73 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authMiddleware = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const User_1 = __importDefault(require("../models/User"));
-const authMiddleware = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    try {
-        const token = (_a = req.header('Authorization')) === null || _a === void 0 ? void 0 : _a.replace('Bearer ', '');
-        if (!token) {
-            res.status(401).json({
-                success: false,
-                message: 'No token provided'
-            });
-            return;
-        }
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-        const user = yield User_1.default.findById(decoded.userId).select('-password');
-        if (!user) {
-            res.status(401).json({
-                success: false,
-                message: 'User not found'
-            });
-            return;
-        }
-        req.user = user;
-        next();
+const User_1 = require("../models/User");
+const authMiddleware = (req, res, next) => {
+    // Get token from header
+    let token;
+    // Try different ways to get the authorization header
+    if (req.get) {
+        token = req.get('Authorization') || req.get('authorization');
     }
-    catch (error) {
+    else if (req.headers) {
+        const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+        // Handle both string and string[] cases
+        if (Array.isArray(authHeader)) {
+            token = authHeader[0];
+        }
+        else {
+            token = authHeader;
+        }
+    }
+    // Extract token from "Bearer TOKEN"
+    if (token && token.startsWith('Bearer ')) {
+        token = token.slice(7);
+    }
+    else {
+        token = undefined;
+    }
+    if (!token) {
         res.status(401).json({
             success: false,
-            message: 'Invalid token'
+            message: 'No token provided'
         });
         return;
     }
-});
+    // Verify token and get user
+    const processToken = () => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const secret = process.env.JWT_SECRET;
+            if (!secret) {
+                res.status(500).json({
+                    success: false,
+                    message: 'Server configuration error'
+                });
+                return;
+            }
+            const decoded = jsonwebtoken_1.default.verify(token, secret);
+            const user = yield User_1.User.findById(decoded.userId).select('-password');
+            if (!user) {
+                res.status(401).json({
+                    success: false,
+                    message: 'User not found'
+                });
+                return;
+            }
+            req.user = user;
+            next();
+        }
+        catch (error) {
+            res.status(401).json({
+                success: false,
+                message: 'Invalid token'
+            });
+        }
+    });
+    processToken().catch(() => {
+        res.status(500).json({
+            success: false,
+            message: 'Server error'
+        });
+    });
+};
 exports.authMiddleware = authMiddleware;

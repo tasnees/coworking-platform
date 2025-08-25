@@ -73,16 +73,6 @@ const settingsSchema = new mongoose_1.Schema({
         default: Date.now
     }
 });
-// Create or update settings
-settingsSchema.statics.getSettings = function () {
-    return __awaiter(this, void 0, void 0, function* () {
-        let settings = yield this.findOne();
-        if (!settings) {
-            settings = yield this.create({});
-        }
-        return settings;
-    });
-};
 // Add static method
 settingsSchema.statics.getSettings = function () {
     return __awaiter(this, void 0, void 0, function* () {
@@ -93,5 +83,6 @@ settingsSchema.statics.getSettings = function () {
         return settings;
     });
 };
+// Use the extended interface with both ISettings and ISettingsModel
 const Settings = mongoose_1.default.model('Settings', settingsSchema);
 exports.default = Settings;

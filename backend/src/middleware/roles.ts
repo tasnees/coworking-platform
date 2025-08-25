@@ -1,132 +1,97 @@
-import { Response, NextFunction } from 'express';
+import { Model, Document, Types } from 'mongoose';
 import { logger } from '../utils/logger';
-import { AuthRequest } from './auth';
+import { AuthRequest, RequestHandler, Response, NextFunction } from '../@types/express';
 
-/**
- * Middleware to check if user has admin role
- */
-export const isAdmin = (req: AuthRequest, res: Response, next: NextFunction): Response | void => {
-  if (!req.user) {
-    logger.warn('Unauthorized access attempt - no user in request');
-    return res.status(401).json({
-      success: false,
-      code: 'UNAUTHORIZED',
-      message: 'Authentication required.'
-    });
-  }
+interface ExtendedRequest extends AuthRequest {
+  resource?: Document & {
+    user?: string | Types.ObjectId | { _id: string | Types.ObjectId };
+  };
+}
 
-  if (req.user.role !== 'admin') {
-    logger.warn(`Forbidden access attempt - user ${req.user._id} is not an admin`);
-    return res.status(403).json({
-      success: false,
-      code: 'FORBIDDEN',
-      message: 'Admin access required.'
-    });
-  }
+// Combined request type
+type AuthenticatedRequest = AuthRequest & ExtendedRequest;
 
-  next();
-};
+export type Role = 'member' | 'staff' | 'admin';
 
-/**
- * Middleware to check if user has manager role
- */
-export const isManager = (req: AuthRequest, res: Response, next: NextFunction): Response | void => {
-  if (!req.user) {
-    return res.status(401).json({
-      success: false,
-      code: 'UNAUTHORIZED',
-      message: 'Authentication required.'
-    });
-  }
-
-  if (req.user.role !== 'admin' ) {
-    return res.status(403).json({
-      success: false,
-      code: 'FORBIDDEN',
-      message: 'Manager or admin access required.'
-    });
-  }
-
-  next();
-};
-
-/**
- * Middleware to check if user has a specific role
- * @param roles Array of allowed roles
- */
-export const hasRole = (roles: string[]): ((req: AuthRequest, res: Response, next: NextFunction) => Response | void) => {
-  return (req: AuthRequest, res: Response, next: NextFunction): Response | void => {
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required.'
-      });
+// Role check helper function
+const checkRole = (requiredRole: Role) => {
+  return (req: AuthRequest, res: Response, next: NextFunction): void => {
+    if (req.user?.role === requiredRole) {
+      next();
+      return;
     }
 
-    if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        code: 'FORBIDDEN',
-        message: `Required roles: ${roles.join(', ')}`
-      });
-    }
-
-    next();
+    logger.warn(`Unauthorized access attempt: not ${requiredRole}`);
+    res.status(403).json({ 
+      message: `Forbidden: ${requiredRole} role required` 
+    });
   };
 };
 
-/**
- * Middleware to check if user is the owner of the resource
- * @param model Mongoose model to check ownership against
- * @param paramName Name of the URL parameter containing the resource ID
- * @param userField Field in the model that references the user (default: 'user')
- */
-import { Model, Document } from 'mongoose';
+// Role-based middleware
+export const isAdmin = checkRole('admin');
+export const isStaff = checkRole('staff');
 
-export const isOwner = (model: Model<Document>, paramName = 'id', userField = 'user'): ((req: AuthRequest, res: Response, next: NextFunction) => Promise<Response | void>) => {
-  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<Response | void> => {
+// Ownership middleware
+interface ResourceWithUser extends Document {
+  user?: string | Types.ObjectId | { _id: string | Types.ObjectId };
+}
+
+export const isOwner = <T extends ResourceWithUser>(
+  model: Model<T>,
+  paramName = 'id',
+  userField = 'user'
+): RequestHandler => {
+  return async (
+    req: AuthenticatedRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const resource = await model.findById(req.params[paramName]);
-      
+      const resourceId = req.params[paramName];
+      if (!resourceId) {
+        res.status(400).json({ message: 'Missing resource ID' });
+        return;
+      }
+
+      const resource = await model.findById(resourceId);
       if (!resource) {
-        return res.status(404).json({
-          success: false,
-          code: 'NOT_FOUND',
-          message: 'Resource not found.'
-        });
+        res.status(404).json({ message: 'Resource not found' });
+        return;
       }
 
-      // Check if the resource has the user field
-      if (!((resource as unknown) as Record<string, unknown>)[userField]) {
-        return res.status(500).json({
-          success: false,
-          code: 'SERVER_ERROR',
-          message: 'Invalid resource structure.'
-        });
+      const resourceUser = resource[userField as keyof T];
+
+      let resourceUserId: string | undefined;
+      if (typeof resourceUser === 'string') resourceUserId = resourceUser;
+      else if (resourceUser instanceof Types.ObjectId)
+        resourceUserId = resourceUser.toString();
+      else if (resourceUser && typeof resourceUser === 'object') {
+        const userObj = resourceUser as { _id?: string | Types.ObjectId };
+        if (userObj._id)
+          resourceUserId =
+            typeof userObj._id === 'string'
+              ? userObj._id
+              : userObj._id.toString();
       }
 
-      // Check if user is the owner
-      const ownerId = ((resource as unknown) as Record<string, unknown>)[userField];
-      const user = req.user as { _id: string | { toString(): string } };
-      if (!ownerId || ownerId.toString() !== user._id.toString()) {
-        return res.status(403).json({
-          success: false,
-          code: 'FORBIDDEN',
-          message: 'You do not have permission to access this resource.'
-        });
+      const userId = req.user?._id;
+      const userIdString =
+        userId && typeof userId !== 'string' ? userId.toString() : userId;
+
+      if (resourceUserId && userIdString && resourceUserId === userIdString) {
+        req.resource = resource as Document & {
+          user?: string | Types.ObjectId | { _id: string | Types.ObjectId };
+        };
+        next();
+        return;
       }
 
-      // Attach the resource to the request for later use
-      (req as AuthRequest & { resource?: Document }).resource = resource;
-      next();
-    } catch (error) {
-      logger.error('Ownership check error:', error);
-      return res.status(500).json({
-        success: false,
-        code: 'SERVER_ERROR',
-        message: 'Error checking resource ownership.'
-      });
+      logger.warn('Unauthorized access attempt: not owner');
+      res.status(401).json({ message: 'Unauthorized: Not the owner' });
+    } catch (err) {
+      logger.error('Error in ownership check', err instanceof Error ? err : { error: err });
+      res.status(500).json({ message: 'Server error' });
     }
   };
 };

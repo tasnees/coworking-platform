@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.workspaceRoutes = void 0;
 const express_1 = require("express");
 const express_validator_1 = require("express-validator");
 const validateRequest_1 = require("../middleware/validateRequest");
@@ -7,8 +8,9 @@ const auth_1 = require("../middleware/auth");
 const workspace_controller_1 = require("../controllers/workspace.controller");
 const workspace_1 = require("../middleware/workspace");
 const router = (0, express_1.Router)();
+exports.workspaceRoutes = router;
 // Apply auth middleware to all routes
-router.use(auth_1.auth);
+router.use(auth_1.authMiddleware);
 // @route   POST /api/workspaces
 // @desc    Create a new workspace
 // @access  Private
@@ -28,7 +30,7 @@ router.get('/', [
     (0, express_validator_1.query)('search').optional().trim(),
     (0, express_validator_1.query)('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
     (0, express_validator_1.query)('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
-], validateRequest_1.validateRequest, workspace_controller_1.listWorkspaces);
+], validateRequest_1.validateRequest, workspace_controller_1.getWorkspaces);
 // @route   GET /api/workspaces/:id
 // @desc    Get workspace by ID
 // @access  Private
@@ -60,13 +62,13 @@ router.get('/:id/members', [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid workspace ID'),
 ], validateRequest_1.validateRequest, workspace_1.isWorkspaceMember, workspace_controller_1.getWorkspaceMembers);
 // @route   POST /api/workspaces/:id/members
-// @desc    Add member to workspace
-// @access  Private/Workspace Admin
+// @desc    Add a member to a workspace
+// @access  Private (Workspace Admin/Owner)
 router.post('/:id/members', [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid workspace ID'),
-    (0, express_validator_1.body)('userId').isMongoId().withMessage('Invalid user ID'),
-    (0, express_validator_1.body)('role').isIn(['member', 'admin']).withMessage('Invalid role'),
-], validateRequest_1.validateRequest, workspace_1.isWorkspaceAdmin, workspace_controller_1.addWorkspaceMember);
+    (0, express_validator_1.body)('userId').isMongoId().withMessage('Valid user ID is required'),
+    (0, express_validator_1.body)('role').optional().isIn(['member', 'admin']).withMessage('Invalid role')
+], validateRequest_1.validateRequest, workspace_1.isWorkspaceAdmin, workspace_controller_1.addMember);
 // @route   PUT /api/workspaces/:id/members/:userId/role
 // @desc    Update member role
 // @access  Private/Workspace Admin
@@ -76,22 +78,21 @@ router.put('/:id/members/:userId/role', [
     (0, express_validator_1.body)('role').isIn(['member', 'admin']).withMessage('Invalid role'),
 ], validateRequest_1.validateRequest, workspace_1.isWorkspaceAdmin, workspace_controller_1.updateMemberRole);
 // @route   DELETE /api/workspaces/:id/members/:userId
-// @desc    Remove member from workspace
-// @access  Private/Workspace Admin
+// @desc    Remove a member from a workspace
+// @access  Private (Workspace Admin/Owner or self)
 router.delete('/:id/members/:userId', [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid workspace ID'),
-    (0, express_validator_1.param)('userId').isMongoId().withMessage('Invalid user ID'),
-], validateRequest_1.validateRequest, workspace_1.isWorkspaceAdmin, workspace_controller_1.removeWorkspaceMember);
+    (0, express_validator_1.param)('userId').isMongoId().withMessage('Invalid user ID')
+], validateRequest_1.validateRequest, workspace_1.isWorkspaceAdmin, workspace_controller_1.removeMember);
 // @route   POST /api/workspaces/:id/join
 // @desc    Join a public workspace
 // @access  Private
 router.post('/:id/join', [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid workspace ID'),
-], validateRequest_1.validateRequest, workspace_controller_1.joinWorkspace);
+], validateRequest_1.validateRequest, workspace_controller_1.addMember);
 // @route   POST /api/workspaces/:id/leave
 // @desc    Leave a workspace
-// @access  Private/Workspace Member
+// @access  Private
 router.post('/:id/leave', [
     (0, express_validator_1.param)('id').isMongoId().withMessage('Invalid workspace ID'),
-], validateRequest_1.validateRequest, workspace_1.isWorkspaceMember, workspace_controller_1.leaveWorkspace);
-exports.default = router;
+], validateRequest_1.validateRequest, workspace_controller_1.removeMember);

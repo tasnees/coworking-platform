@@ -9,121 +9,67 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isOwner = exports.hasRole = exports.isManager = exports.isAdmin = void 0;
+exports.isOwner = exports.isStaff = exports.isAdmin = void 0;
 const logger_1 = require("../utils/logger");
-/**
- * Middleware to check if user has admin role
- */
+const mongoose_1 = require("mongoose");
+// ----- Role-based middleware -----
 const isAdmin = (req, res, next) => {
-    if (!req.user) {
-        logger_1.logger.warn('Unauthorized access attempt - no user in request');
-        return res.status(401).json({
-            success: false,
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required.'
-        });
-    }
-    if (req.user.role !== 'admin') {
-        logger_1.logger.warn(`Forbidden access attempt - user ${req.user._id} is not an admin`);
-        return res.status(403).json({
-            success: false,
-            code: 'FORBIDDEN',
-            message: 'Admin access required.'
-        });
-    }
-    next();
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === 'admin')
+        return next();
+    logger_1.logger.warn('Unauthorized access attempt: not admin');
+    res.status(401).json({ message: 'Unauthorized: Admin only' });
 };
 exports.isAdmin = isAdmin;
-/**
- * Middleware to check if user has manager role
- */
-const isManager = (req, res, next) => {
-    if (!req.user) {
-        return res.status(401).json({
-            success: false,
-            code: 'UNAUTHORIZED',
-            message: 'Authentication required.'
-        });
-    }
-    if (req.user.role !== 'manager' && req.user.role !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            code: 'FORBIDDEN',
-            message: 'Manager or admin access required.'
-        });
-    }
-    next();
+const isStaff = (req, res, next) => {
+    var _a;
+    if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === 'staff')
+        return next();
+    logger_1.logger.warn('Unauthorized access attempt: not staff');
+    res.status(401).json({ message: 'Unauthorized: Staff only' });
 };
-exports.isManager = isManager;
-/**
- * Middleware to check if user has a specific role
- * @param roles Array of allowed roles
- */
-const hasRole = (roles) => {
-    return (req, res, next) => {
-        if (!req.user) {
-            return res.status(401).json({
-                success: false,
-                code: 'UNAUTHORIZED',
-                message: 'Authentication required.'
-            });
-        }
-        if (!roles.includes(req.user.role)) {
-            return res.status(403).json({
-                success: false,
-                code: 'FORBIDDEN',
-                message: `Required roles: ${roles.join(', ')}`
-            });
-        }
-        next();
-    };
-};
-exports.hasRole = hasRole;
-/**
- * Middleware to check if user is the owner of the resource
- * @param model Mongoose model to check ownership against
- * @param paramName Name of the URL parameter containing the resource ID
- * @param userField Field in the model that references the user (default: 'user')
- */
+exports.isStaff = isStaff;
 const isOwner = (model, paramName = 'id', userField = 'user') => {
     return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
         var _a;
         try {
-            const resource = yield model.findById(req.params[paramName]);
+            const resourceId = req.params[paramName];
+            if (!resourceId) {
+                res.status(400).json({ message: 'Missing resource ID' });
+                return;
+            }
+            const resource = yield model.findById(resourceId);
             if (!resource) {
-                return res.status(404).json({
-                    success: false,
-                    code: 'NOT_FOUND',
-                    message: 'Resource not found.'
-                });
+                res.status(404).json({ message: 'Resource not found' });
+                return;
             }
-            // Check if the resource has the user field
-            if (!resource[userField]) {
-                return res.status(500).json({
-                    success: false,
-                    code: 'SERVER_ERROR',
-                    message: 'Invalid resource structure.'
-                });
+            const resourceUser = resource[userField];
+            let resourceUserId;
+            if (typeof resourceUser === 'string')
+                resourceUserId = resourceUser;
+            else if (resourceUser instanceof mongoose_1.Types.ObjectId)
+                resourceUserId = resourceUser.toString();
+            else if (resourceUser && typeof resourceUser === 'object') {
+                const userObj = resourceUser;
+                if (userObj._id)
+                    resourceUserId =
+                        typeof userObj._id === 'string'
+                            ? userObj._id
+                            : userObj._id.toString();
             }
-            // Check if user is the owner
-            if (resource[userField].toString() !== ((_a = req.user) === null || _a === void 0 ? void 0 : _a._id.toString())) {
-                return res.status(403).json({
-                    success: false,
-                    code: 'FORBIDDEN',
-                    message: 'You do not have permission to access this resource.'
-                });
+            const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+            const userIdString = userId && typeof userId !== 'string' ? userId.toString() : userId;
+            if (resourceUserId && userIdString && resourceUserId === userIdString) {
+                req.resource = resource;
+                next();
+                return;
             }
-            // Attach the resource to the request for later use
-            req.resource = resource;
-            next();
+            logger_1.logger.warn('Unauthorized access attempt: not owner');
+            res.status(401).json({ message: 'Unauthorized: Not the owner' });
         }
-        catch (error) {
-            logger_1.logger.error('Ownership check error:', error);
-            return res.status(500).json({
-                success: false,
-                code: 'SERVER_ERROR',
-                message: 'Error checking resource ownership.'
-            });
+        catch (err) {
+            logger_1.logger.error('Error in ownership check', err instanceof Error ? err : { error: err });
+            res.status(500).json({ message: 'Server error' });
         }
     });
 };

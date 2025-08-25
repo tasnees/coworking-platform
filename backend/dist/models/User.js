@@ -50,7 +50,7 @@ const mongoose_1 = __importStar(require("mongoose"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
-// Import IUser from types/user.types
+// Define the user schema
 const userSchema = new mongoose_1.Schema({
     firstName: {
         type: String,
@@ -99,34 +99,42 @@ const userSchema = new mongoose_1.Schema({
         enum: ['active', 'inactive', 'suspended'],
         default: 'active'
     },
-    joinDate: {
-        type: Date,
-        default: Date.now
+    tokenVersion: {
+        type: Number,
+        default: 0
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     },
     lastLogin: {
         type: Date
     },
+    emailVerificationToken: String,
+    emailVerificationExpire: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
     isEmailVerified: {
         type: Boolean,
         default: false
     },
-    emailVerificationToken: String,
-    passwordResetToken: String,
-    passwordResetExpires: Date,
+    permissions: [{
+            type: String
+        }],
+    joinDate: {
+        type: Date,
+        default: Date.now
+    },
     approvalStatus: {
         type: String,
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
     approvedBy: {
-        type: String,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: 'User'
     },
     approvedAt: Date,
-    permissions: [{
-            type: String,
-            default: []
-        }],
     preferences: {
         emailNotifications: { type: Boolean, default: true },
         securityAlerts: { type: Boolean, default: true },
@@ -174,13 +182,13 @@ userSchema.methods.getSignedJwtToken = function () {
 userSchema.methods.getResetPasswordToken = function () {
     // Generate token
     const resetToken = crypto_1.default.randomBytes(20).toString('hex');
-    // Hash token and set to resetPasswordToken field
-    this.resetPasswordToken = crypto_1.default
+    // Hash token and set to passwordResetToken field
+    this.passwordResetToken = crypto_1.default
         .createHash('sha256')
         .update(resetToken)
         .digest('hex');
     // Set expire (10 minutes)
-    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+    this.passwordResetExpires = new Date(Date.now() + 10 * 60 * 1000);
     return resetToken;
 };
 // Virtual for full name
@@ -195,4 +203,5 @@ userSchema.set('toJSON', {
         return ret;
     }
 });
+// Create and export the User model
 exports.User = mongoose_1.default.model('User', userSchema);

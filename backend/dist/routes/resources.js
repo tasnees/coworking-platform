@@ -8,23 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const Resource_1 = __importDefault(require("../models/Resource"));
+const Resource_1 = require("../models/Resource");
 const router = (0, express_1.Router)();
 // GET /api/resources - Get all resources
 router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { type, isAvailable } = req.query;
-        let query = {};
+        const query = {};
         if (type)
             query.type = type;
         if (isAvailable !== undefined)
             query.isAvailable = isAvailable === 'true';
-        const resources = yield Resource_1.default.find(query).sort({ name: 1 });
+        const resources = yield Resource_1.Resource.find(query).sort({ name: 1 });
         return res.json({
             success: true,
             data: resources
@@ -34,14 +31,14 @@ router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(500).json({
             success: false,
             message: 'Error fetching resources',
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
         });
     }
 }));
 // GET /api/resources/:id - Get single resource
 router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const resource = yield Resource_1.default.findById(req.params.id);
+        const resource = yield Resource_1.Resource.findById(req.params.id);
         if (!resource) {
             return res.status(404).json({
                 success: false,
@@ -57,14 +54,14 @@ router.get('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(500).json({
             success: false,
             message: 'Error fetching resource',
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
         });
     }
 }));
 // POST /api/resources - Create new resource
 router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const resource = new Resource_1.default(req.body);
+        const resource = new Resource_1.Resource(req.body);
         yield resource.save();
         return res.status(201).json({
             success: true,
@@ -75,14 +72,14 @@ router.post('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         return res.status(400).json({
             success: false,
             message: 'Error creating resource',
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
         });
     }
 }));
 // PUT /api/resources/:id - Update resource
 router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const resource = yield Resource_1.default.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        const resource = yield Resource_1.Resource.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
         if (!resource) {
             return res.status(404).json({
                 success: false,
@@ -98,14 +95,14 @@ router.put('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         return res.status(400).json({
             success: false,
             message: 'Error updating resource',
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
         });
     }
 }));
 // DELETE /api/resources/:id - Delete resource
 router.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const resource = yield Resource_1.default.findByIdAndDelete(req.params.id);
+        const resource = yield Resource_1.Resource.findByIdAndDelete(req.params.id);
         if (!resource) {
             return res.status(404).json({
                 success: false,
@@ -121,7 +118,7 @@ router.delete('/:id', (req, res) => __awaiter(void 0, void 0, void 0, function* 
         return res.status(500).json({
             success: false,
             message: 'Error deleting resource',
-            error: error.message
+            error: error instanceof Error ? error.message : String(error)
         });
     }
 }));

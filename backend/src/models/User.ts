@@ -7,10 +7,12 @@ export interface IUser extends Document {
   firstName: string;
   lastName: string;
   email: string;
+  // Optional full name (virtual or stored)
+  name?: string;
   password: string;
   phone?: string;
   avatar?: string;
-  role: 'member' | 'staff' | 'admin';
+  role: 'member' | 'staff' | 'admin' | 'user' | 'manager';
   membershipType?: string;
   membershipStatus?: 'active' | 'inactive' | 'suspended';
   tokenVersion: number;

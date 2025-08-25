@@ -12,32 +12,27 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// src/routes/settings.ts
 const express_1 = __importDefault(require("express"));
 const Settings_1 = __importDefault(require("../models/Settings"));
 const auth_1 = require("../middleware/auth");
 const admin_1 = require("../middleware/admin");
 const router = express_1.default.Router();
 // Get current settings
-router.get('/', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+router.get('/', (_req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const settings = yield Settings_1.default.getSettings();
-        res.json({
-            success: true,
-            data: settings
-        });
+        res.json({ success: true, data: settings });
     }
     catch (error) {
         console.error('Error fetching settings:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }));
 // Update settings (admin only)
 router.patch('/', auth_1.authMiddleware, admin_1.adminMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { requireAdminApproval, siteName, maintenanceMode, maxUsers, sessionTimeout } = req.body;
+        const { requireAdminApproval, siteName, maintenanceMode, maxUsers, sessionTimeout, } = req.body;
         const settings = yield Settings_1.default.getSettings();
         if (requireAdminApproval !== undefined)
             settings.requireAdminApproval = requireAdminApproval;
@@ -49,21 +44,19 @@ router.patch('/', auth_1.authMiddleware, admin_1.adminMiddleware, (req, res) => 
             settings.maxUsers = maxUsers;
         if (sessionTimeout !== undefined)
             settings.sessionTimeout = sessionTimeout;
-        settings.updatedBy = req.user.userId;
+        // At this point req.user exists thanks to auth + admin middleware
+        settings.updatedBy = req.user ? req.user._id.toString() : 'system';
         settings.updatedAt = new Date();
         yield settings.save();
         res.json({
             success: true,
             message: 'Settings updated successfully',
-            data: settings
+            data: settings,
         });
     }
     catch (error) {
         console.error('Error updating settings:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error'
-        });
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 }));
 exports.default = router;

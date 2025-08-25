@@ -8,44 +8,156 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isWorkspacePublic = exports.isWorkspaceOwner = exports.isWorkspaceAdmin = exports.isWorkspaceMember = void 0;
-const Workspace_1 = __importDefault(require("../models/Workspace"));
+exports.hasWorkspacePermission = exports.isWorkspacePublic = exports.isWorkspaceOwner = exports.isWorkspaceAdmin = exports.isWorkspaceMember = void 0;
+const mongoose_1 = require("mongoose");
 const logger_1 = require("../utils/logger");
+const Workspace_1 = require("../models/Workspace");
+const WORKSPACE_PERMISSIONS = {
+    admin: [
+        'manage_members',
+        'manage_staff',
+        'manage_workspace',
+        'delete_workspace',
+        'view_analytics',
+        'manage_bookings',
+        'manage_amenities',
+        'view_all',
+    ],
+    staff: [
+        'manage_bookings',
+        'view_members',
+        'manage_amenities',
+        'view_analytics',
+        'view_all',
+    ],
+    member: [
+        'view_workspace',
+        'create_bookings',
+        'view_amenities',
+        'view_own',
+    ],
+};
 /**
- * Middleware to validate workspace membership and attach workspace to request
+ * Middleware to validate and attach workspace to request
+ * This is a base middleware that other workspace middlewares will use
  */
-const isWorkspaceMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+const attachWorkspace = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const workspace = yield Workspace_1.default.findOne({
-            _id: req.params.workspaceId || req.params.id,
-            $or: [
-                { members: (_a = req.user) === null || _a === void 0 ? void 0 : _a._id },
-                { admins: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id },
-                { owner: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id }
-            ]
-        });
-        if (!workspace) {
+        const workspaceId = req.params.id;
+        if (!workspaceId || !mongoose_1.Types.ObjectId.isValid(workspaceId)) {
+            return res.status(400).json({
+                success: false,
+                code: 'INVALID_WORKSPACE_ID',
+                message: 'Invalid workspace ID provided.'
+            });
+        }
+        const workspaceData = yield Workspace_1.WorkspaceModel.findById(workspaceId)
+            .populate('owner', '_id name email')
+            .populate({
+            path: 'members',
+            populate: {
+                path: 'user',
+                select: '_id name email'
+            }
+        })
+            .populate({
+            path: 'staffMembers',
+            populate: {
+                path: 'user',
+                select: '_id name email'
+            }
+        })
+            .populate({
+            path: 'admins',
+            populate: {
+                path: 'user',
+                select: '_id name email'
+            }
+        })
+            .lean();
+        if (!workspaceData) {
             return res.status(404).json({
                 success: false,
                 code: 'WORKSPACE_NOT_FOUND',
-                message: 'Workspace not found or you do not have access to it.'
+                message: 'Workspace not found.'
             });
         }
-        // Attach workspace to request for use in subsequent middleware/controllers
-        req.workspace = workspace;
+        // Build the roles map and ensure proper typing
+        const roles = {};
+        const workspace = workspaceData;
+        // Map all member roles
+        workspace.members.forEach((member) => {
+            if (member.user._id) {
+                roles[member.user._id.toString()] = 'member';
+            }
+        });
+        // Map all staff roles
+        workspace.staffMembers.forEach((staff) => {
+            if (staff.user._id) {
+                roles[staff.user._id.toString()] = 'staff';
+            }
+        });
+        // Map all admin roles
+        workspace.admins.forEach((admin) => {
+            if (admin.user._id) {
+                roles[admin.user._id.toString()] = 'admin';
+            }
+        });
+        // Owner is always admin
+        roles[workspace.owner._id.toString()] = 'admin';
+        req.workspace = Object.assign(Object.assign({}, workspace), { roles });
         next();
     }
     catch (error) {
-        logger_1.logger.error('Workspace middleware error:', error);
+        logger_1.logger.error('Workspace validation error:', error);
         return res.status(500).json({
             success: false,
             code: 'SERVER_ERROR',
-            message: 'Error accessing workspace.'
+            message: 'Error validating workspace.'
+        });
+    }
+});
+/**
+ * Middleware to check if user is a workspace member
+ */
+const isWorkspaceMember = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                success: false,
+                code: 'UNAUTHORIZED',
+                message: 'Authentication required.'
+            });
+        }
+        // First attach the workspace to the request
+        yield attachWorkspace(req, res, () => __awaiter(void 0, void 0, void 0, function* () {
+            const workspace = req.workspace;
+            const userId = req.user.id;
+            if (!workspace) {
+                return res.status(404).json({
+                    success: false,
+                    code: 'WORKSPACE_NOT_FOUND',
+                    message: 'Workspace not found.'
+                });
+            }
+            const isMember = workspace.members.some((member) => member._id.toString() === userId);
+            if (!isMember) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'NOT_WORKSPACE_MEMBER',
+                    message: 'You must be a member of this workspace to perform this action.'
+                });
+            }
+            next();
+        }));
+    }
+    catch (error) {
+        logger_1.logger.error('Workspace member check error:', error);
+        return res.status(500).json({
+            success: false,
+            code: 'SERVER_ERROR',
+            message: 'Error checking workspace membership.'
         });
     }
 });
@@ -54,32 +166,42 @@ exports.isWorkspaceMember = isWorkspaceMember;
  * Middleware to check if user is a workspace admin
  */
 const isWorkspaceAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
     try {
-        const workspace = yield Workspace_1.default.findOne({
-            _id: req.params.workspaceId || req.params.id,
-            $or: [
-                { admins: (_a = req.user) === null || _a === void 0 ? void 0 : _a._id },
-                { owner: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id }
-            ]
-        });
-        if (!workspace) {
-            return res.status(403).json({
+        if (!req.user) {
+            return res.status(401).json({
                 success: false,
-                code: 'FORBIDDEN',
-                message: 'Admin access required for this workspace.'
+                code: 'UNAUTHORIZED',
+                message: 'Authentication required.'
             });
         }
-        // Attach workspace to request for use in subsequent middleware/controllers
-        req.workspace = workspace;
-        next();
+        // First attach the workspace to the request
+        yield attachWorkspace(req, res, () => __awaiter(void 0, void 0, void 0, function* () {
+            const workspace = req.workspace;
+            const userId = req.user.id;
+            if (!workspace) {
+                return res.status(404).json({
+                    success: false,
+                    code: 'WORKSPACE_NOT_FOUND',
+                    message: 'Workspace not found.'
+                });
+            }
+            const isAdmin = workspace.admins.some((admin) => admin._id.toString() === userId);
+            if (!isAdmin && workspace.owner._id.toString() !== userId) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'NOT_WORKSPACE_ADMIN',
+                    message: 'You must be an admin of this workspace to perform this action.'
+                });
+            }
+            next();
+        }));
     }
     catch (error) {
-        logger_1.logger.error('Workspace admin middleware error:', error);
+        logger_1.logger.error('Workspace admin check error:', error);
         return res.status(500).json({
             success: false,
             code: 'SERVER_ERROR',
-            message: 'Error verifying workspace admin status.'
+            message: 'Error checking workspace admin status.'
         });
     }
 });
@@ -88,29 +210,41 @@ exports.isWorkspaceAdmin = isWorkspaceAdmin;
  * Middleware to check if user is the workspace owner
  */
 const isWorkspaceOwner = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
     try {
-        const workspace = yield Workspace_1.default.findOne({
-            _id: req.params.workspaceId || req.params.id,
-            owner: (_a = req.user) === null || _a === void 0 ? void 0 : _a._id
-        });
-        if (!workspace) {
-            return res.status(403).json({
+        if (!req.user) {
+            return res.status(401).json({
                 success: false,
-                code: 'FORBIDDEN',
-                message: 'Only the workspace owner can perform this action.'
+                code: 'UNAUTHORIZED',
+                message: 'Authentication required.'
             });
         }
-        // Attach workspace to request for use in subsequent middleware/controllers
-        req.workspace = workspace;
-        next();
+        // First attach the workspace to the request
+        yield attachWorkspace(req, res, () => __awaiter(void 0, void 0, void 0, function* () {
+            const workspace = req.workspace;
+            const userId = req.user.id;
+            if (!workspace) {
+                return res.status(404).json({
+                    success: false,
+                    code: 'WORKSPACE_NOT_FOUND',
+                    message: 'Workspace not found.'
+                });
+            }
+            if (workspace.owner._id.toString() !== userId) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'NOT_WORKSPACE_OWNER',
+                    message: 'You must be the owner of this workspace to perform this action.'
+                });
+            }
+            next();
+        }));
     }
     catch (error) {
-        logger_1.logger.error('Workspace owner middleware error:', error);
+        logger_1.logger.error('Workspace owner check error:', error);
         return res.status(500).json({
             success: false,
             code: 'SERVER_ERROR',
-            message: 'Error verifying workspace ownership.'
+            message: 'Error checking workspace ownership.'
         });
     }
 });
@@ -120,20 +254,25 @@ exports.isWorkspaceOwner = isWorkspaceOwner;
  */
 const isWorkspacePublic = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const workspace = yield Workspace_1.default.findOne({
-            _id: req.params.workspaceId || req.params.id,
-            isPublic: true
-        });
-        if (!workspace) {
-            return res.status(404).json({
-                success: false,
-                code: 'NOT_FOUND',
-                message: 'Workspace not found or is not public.'
-            });
-        }
-        // Attach workspace to request for use in subsequent middleware/controllers
-        req.workspace = workspace;
-        next();
+        // First attach the workspace to the request
+        yield attachWorkspace(req, res, () => __awaiter(void 0, void 0, void 0, function* () {
+            const workspace = req.workspace;
+            if (!workspace) {
+                return res.status(404).json({
+                    success: false,
+                    code: 'WORKSPACE_NOT_FOUND',
+                    message: 'Workspace not found.'
+                });
+            }
+            if (!workspace.isPublic) {
+                return res.status(403).json({
+                    success: false,
+                    code: 'WORKSPACE_NOT_PUBLIC',
+                    message: 'This workspace is not public.'
+                });
+            }
+            next();
+        }));
     }
     catch (error) {
         logger_1.logger.error('Workspace public check error:', error);
@@ -145,3 +284,58 @@ const isWorkspacePublic = (req, res, next) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.isWorkspacePublic = isWorkspacePublic;
+/**
+ * Check if a user has a specific permission in the workspace
+ */
+const hasPermission = (workspace, userId, permission) => {
+    if (!workspace || !userId)
+        return false;
+    const userRole = workspace.roles[userId];
+    if (!userRole)
+        return false;
+    return WORKSPACE_PERMISSIONS[userRole].includes(permission);
+};
+/**
+ * Middleware to check if user has specific permission
+ */
+const hasWorkspacePermission = (permission) => {
+    return (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            if (!req.user) {
+                return res.status(401).json({
+                    success: false,
+                    code: 'UNAUTHORIZED',
+                    message: 'Authentication required.'
+                });
+            }
+            yield attachWorkspace(req, res, () => {
+                const workspace = req.workspace;
+                const userId = req.user.id;
+                if (!workspace) {
+                    return res.status(404).json({
+                        success: false,
+                        code: 'WORKSPACE_NOT_FOUND',
+                        message: 'Workspace not found.'
+                    });
+                }
+                if (!hasPermission(workspace, userId, permission)) {
+                    return res.status(403).json({
+                        success: false,
+                        code: 'PERMISSION_DENIED',
+                        message: `You don't have permission to ${permission.replace(/_/g, ' ').toLowerCase()}`
+                    });
+                }
+                next();
+            });
+        }
+        catch (error) {
+            logger_1.logger.error('Workspace permission check error:', error);
+            return res.status(500).json({
+                success: false,
+                code: 'SERVER_ERROR',
+                message: 'Error checking workspace permissions.'
+            });
+        }
+    });
+};
+exports.hasWorkspacePermission = hasWorkspacePermission;

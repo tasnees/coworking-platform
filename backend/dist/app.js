@@ -13,7 +13,7 @@ const rateLimit_1 = require("./middleware/rateLimit");
 const logger_1 = require("./utils/logger");
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
-const workspace_routes_1 = __importDefault(require("./routes/workspace.routes"));
+const workspace_routes_1 = require("./routes/workspace.routes");
 const booking_routes_1 = __importDefault(require("./routes/booking.routes"));
 const app = (0, express_1.default)();
 // Trust first proxy (for production)
@@ -33,7 +33,7 @@ app.use(rateLimit_1.apiLimiter);
 // API Routes
 app.use('/api/v1/auth', auth_routes_1.default);
 app.use('/api/v1/users', user_routes_1.default);
-app.use('/api/v1/workspaces', workspace_routes_1.default);
+app.use('/api/v1/workspaces', workspace_routes_1.workspaceRoutes);
 app.use('/api/v1/bookings', booking_routes_1.default);
 // Health check endpoint
 app.get('/api/health', (req, res) => {
