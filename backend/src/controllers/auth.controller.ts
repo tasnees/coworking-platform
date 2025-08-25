@@ -2,10 +2,19 @@ import { Request, Response } from 'express';
 import { User } from '../models/User';
 import { generateToken, verifyToken } from '../utils/jwt';
 import { logger } from '../utils/logger';
+import { IUserDocument } from '../@types/express';
 
 // Extend Express Request type for authenticated user
-interface AuthenticatedRequest extends Request {
-  user?: { _id: string; email: string; role: string };
+declare global {
+  namespace Express {
+    interface Request {
+      user?: IUserDocument;
+      cookies: {
+        refreshToken?: string;
+        [key: string]: string | undefined;
+      };
+    }
+  }
 }
 
 // Request body interfaces
@@ -26,12 +35,9 @@ interface UpdatePasswordBody {
 }
 
 export const authController = {
-  // ----------------------
-  // Register
-  // ----------------------
   async register(req: Request, res: Response): Promise<Response> {
     try {
-      const { email, password, role = 'member' } = req.body as unknown as RegisterBody;
+      const { email, password, role = 'member' } = req.body as RegisterBody;
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -43,6 +49,7 @@ export const authController = {
 
       const { accessToken, refreshToken } = generateToken(user);
 
+      // Set refresh token in HTTP-only cookie
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -61,12 +68,9 @@ export const authController = {
     }
   },
 
-  // ----------------------
-  // Login
-  // ----------------------
   async login(req: Request, res: Response): Promise<Response> {
     try {
-      const { email, password } = req.body as unknown as LoginBody;
+      const { email, password } = req.body as LoginBody;
 
       const user = await User.findOne({ email });
       if (!user || !(await user.comparePassword(password))) {
@@ -79,7 +83,7 @@ export const authController = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
       return res.json({
@@ -93,12 +97,9 @@ export const authController = {
     }
   },
 
-  // ----------------------
-  // Refresh Token
-  // ----------------------
   async refreshToken(req: Request, res: Response): Promise<Response> {
     try {
-      const { refreshToken } = req.cookies as { refreshToken?: string };
+      const refreshToken = req.cookies.refreshToken;
       if (!refreshToken) {
         return res.status(401).json({ message: 'No refresh token provided' });
       }
@@ -109,7 +110,9 @@ export const authController = {
       }
 
       const user = await User.findById(decoded.userId);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
       const { accessToken, refreshToken: newRefreshToken } = generateToken(user);
 
@@ -117,7 +120,7 @@ export const authController = {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       });
 
       return res.json({ accessToken });
@@ -127,9 +130,6 @@ export const authController = {
     }
   },
 
-  // ----------------------
-  // Logout
-  // ----------------------
   async logout(_req: Request, res: Response): Promise<Response> {
     try {
       res.clearCookie('refreshToken', {
@@ -144,22 +144,21 @@ export const authController = {
     }
   },
 
-  // ----------------------
-  // Update Password
-  // ----------------------
-  async updatePassword(req: AuthenticatedRequest, res: Response): Promise<Response> {
+  async updatePassword(req: Request, res: Response): Promise<Response> {
     try {
-      const { currentPassword, newPassword } = req.body as unknown as UpdatePasswordBody;
-      const userId = req.user?._id;
-
-      if (!userId) {
+      if (!req.user) {
         return res.status(401).json({ message: 'Not authenticated' });
       }
 
-      const user = await User.findById(userId);
-      if (!user) return res.status(404).json({ message: 'User not found' });
+      const { currentPassword, newPassword } = req.body as UpdatePasswordBody;
+      const user = await User.findById(req.user._id);
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
 
-      if (!(await user.comparePassword(currentPassword))) {
+      const isMatch = await user.comparePassword(currentPassword);
+      if (!isMatch) {
         return res.status(400).json({ message: 'Current password is incorrect' });
       }
 
