@@ -5,14 +5,14 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { compare } from 'bcryptjs';
 
 // Import the MongoDB client and types
-import { MongoClient } from 'mongodb';
+import { MongoClient, MongoClientOptions } from 'mongodb';
 import { 
   Adapter, 
   AdapterUser, 
   AdapterAccount, 
   VerificationToken 
 } from 'next-auth/adapters';
-import { getDb } from './mongodb';
+import { getDb } from './db-utils';
 
 // Import UserRole type from our centralized types
 import { UserRole } from '@/types/next-auth';
@@ -57,9 +57,38 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
-const client = new MongoClient(uri);
-const clientPromise = client.connect();
+// MongoDB connection options
+const mongoOptions: MongoClientOptions = {
+  connectTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+  serverSelectionTimeoutMS: 10000,
+  retryWrites: true,
+  w: 'majority',
+  tls: uri.startsWith('mongodb+srv'),
+  serverApi: {
+    version: '1' as const,
+    strict: false,
+    deprecationErrors: true,
+  }
+};
 
+let client: MongoClient;
+let clientPromise: Promise<MongoClient>;
+
+try {
+  client = new MongoClient(uri, mongoOptions);
+  clientPromise = client.connect();
+  
+  // Log successful connection
+  clientPromise.then(() => {
+    console.log('✅ Successfully connected to MongoDB');
+  }).catch((error) => {
+    console.error('❌ Failed to connect to MongoDB:', error);
+  });
+} catch (error) {
+  console.error('❌ Failed to create MongoDB client:', error);
+  throw error;
+}
 
 // Define the shape of the user document in MongoDB
 interface IUserDocument {
@@ -129,10 +158,17 @@ export const authOptions: NextAuthOptions = {
             log('No user found with email:', credentials.email);
             throw new Error('No user found with this email');
           }
+          
+          // Check if user is active
+          if (userDoc.status === 'inactive' || userDoc.status === 'suspended') {
+            log('Login attempt for inactive/suspended account:', credentials.email);
+            throw new Error('This account is not active. Please contact support.');
+          }
 
           // Check if password is correct
           const isValid = await compare(credentials.password, userDoc.password);
           if (!isValid) {
+            log('Invalid password attempt for email:', credentials.email);
             throw new Error('Incorrect password');
           }
 
@@ -153,24 +189,26 @@ export const authOptions: NextAuthOptions = {
   
   // Use a custom MongoDB adapter that uses a single 'users' collection
   adapter: {
-    async getAdapter() {
-      const db = await getDb();
+  async getAdapter() {
+    const { db, client } = await getDb();  // Destructure both db and client
       
-      console.log('Using database for auth:', db.databaseName);
-      
-      // Helper function to find a user by query in the users collection
-      const findUser = async (query: any) => {
-        try {
-          const user = await db.collection('users').findOne(query);
-          if (user) {
-            return { ...user, id: user._id.toString() };
-          }
-          return null;
-        } catch (error) {
-          console.error('Error finding user:', error);
-          return null;
+    console.log('Using database for auth:', db.databaseName);
+    
+    // Helper function to find a user by query in the users collection
+    const findUser = async (query: any) => {
+      try {
+        const user = await db.collection('users').findOne(query);
+        if (user) {
+          return { ...user, id: user._id.toString() };
         }
-      };
+        return null;
+      } catch (error) {
+        console.error('Error finding user:', error);
+        return null;
+      }
+    };
+    
+    // Rest of the adapter implementation...
       
       return {
         // User methods
@@ -349,12 +387,56 @@ export const authOptions: NextAuthOptions = {
     secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key',
   },
   
+  // Add callbacks for handling JWT, session, and redirects
+  callbacks: {
+    async jwt({ token, user }) {
+      // Initial sign in
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
+      }
+      return token;
+    },
+    
+    async session({ session, token }) {
+      // Add role and ID to the session
+      if (session.user) {
+        session.user.role = token.role as UserRole;
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+    
+    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+      // If there's a specific URL to redirect to, use it
+      if (url) {
+        // Handle relative URLs
+        if (url.startsWith('/')) return `${baseUrl}${url}`;
+        // Handle absolute URLs on the same origin
+        if (new URL(url).origin === baseUrl) return url;
+      }
+      
+      // For role-based redirection, we'll handle it in the login page
+      // This ensures we have the latest session data
+      return `${baseUrl}/dashboard`;
+    }
+  },
   
   // Custom pages
   pages: {
     signIn: '/auth/login',
-    signOut: '/auth/logout',
+    signOut: '/',  // Redirect to home after sign out
     error: '/auth/error',
+  },
+  
+  // Ensure sign out redirects to home page
+  events: {
+    async signOut(message) {
+      // This ensures the user is redirected to the home page after sign out
+      if (typeof window !== 'undefined') {
+        window.location.href = '/';
+      }
+    },
   },
   
   debug: debug,

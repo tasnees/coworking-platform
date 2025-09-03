@@ -12,7 +12,7 @@ export interface IUser extends Document {
   password: string;
   phone?: string;
   avatar?: string;
-  role: 'member' | 'staff' | 'admin' | 'user' | 'manager';
+  role: 'member' | 'staff' | 'admin';
   membershipType?: string;
   membershipStatus?: 'active' | 'inactive' | 'suspended';
   tokenVersion: number;
@@ -200,12 +200,27 @@ userSchema.virtual('fullName').get(function() {
 });
 
 // Ensure virtual fields are serialized
+// The transform function removes sensitive fields when converting to JSON
 userSchema.set('toJSON', {
   virtuals: true,
-  transform: function(doc, ret) {
-    delete ret.password;
-    return ret;
-  }
+  versionKey: false,
+  transform: (doc, ret) => {
+    // Use destructuring to exclude sensitive fields (type-safe approach)
+    const {
+      password,
+      emailVerificationToken,
+      passwordResetToken,
+      tokenVersion,
+      _id,
+      ...cleanRet
+    } = ret;
+    
+    // Return clean object with id field
+    return {
+      ...cleanRet,
+      id: _id
+    };
+  } 
 });
 
 // Create and export the User model

@@ -1,7 +1,8 @@
 import rateLimit from 'express-rate-limit';
-import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
-
+import type { Request, Response } from 'express';
+// Define a type that includes the IP property from the requestinterface RequestWithIp extends Request {  ip: string;}
+// Extend the Error type to include status codeinterface ErrorWithStatus extends Error {  status?: number;}
+// Type for the next function with error handlingtype NextFunction = (err?: ErrorWithStatus) => void;
 // Rate limiting configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -11,14 +12,13 @@ const apiLimiter = rateLimit({
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   keyGenerator: (req: Request): string => {
     // Ensure we always return a string, defaulting to 'unknown' if IP is not available
-    return req.ip || 'unknown';
+    return (req as RequestWithIp).ip || 'unknown';
   },
-  handler: (req: Request, res: Response, next: NextFunction) => {
-    logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
-    res.status(429).json({
-      success: false,
-      message: 'Too many requests, please try again later.',
-    });
+  handler: (req: Request, _res: Response, next: NextFunction) => {
+    const ip = (req as RequestWithIp).ip || 'unknown';
+    const error = new Error(`Rate limit exceeded for IP: ${ip}`) as ErrorWithStatus;
+    error.status = 429;
+    next(error);
   },
 });
 
@@ -31,14 +31,13 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req: Request): string => {
     // Ensure we always return a string, defaulting to 'unknown' if IP is not available
-    return req.ip || 'unknown';
+    return (req as RequestWithIp).ip || 'unknown';
   },
-  handler: (req: Request, res: Response, next: NextFunction) => {
-    logger.warn(`Auth rate limit exceeded for IP: ${req.ip}`);
-    res.status(429).json({
-      success: false,
-      message: 'Too many login attempts, please try again later.',
-    });
+  handler: (req: Request, _res: Response, next: NextFunction) => {
+    const ip = (req as RequestWithIp).ip || 'unknown';
+    const error = new Error(`Too many login attempts from IP: ${ip}`) as ErrorWithStatus;
+    error.status = 429;
+    next(error);
   },
 });
 

@@ -1,4 +1,6 @@
-import { IUserDocument } from '../models/User';
+import { IUser } from '../models/User';
+import { Document } from 'mongoose';
+import { Types } from 'mongoose';
 
 // Cookie options type
 export interface CookieOptions {
@@ -14,7 +16,10 @@ export interface CookieOptions {
 declare global {
   namespace Express {
     interface Request {
-      user?: IUserDocument;
+      user?: IUser & { _id: Types.ObjectId };
+      resource?: any;
+      isAdmin?: boolean;
+      [key: string]: any;  // Allow additional properties
     }
 
     interface Response {

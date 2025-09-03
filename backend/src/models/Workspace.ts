@@ -67,17 +67,19 @@ const WorkspaceSchema = new Schema<IWorkspace>(
     timestamps: true,
     toJSON: {
       virtuals: true,
-      transform: function (doc, ret) {
-        delete ret.__v;
-        delete ret._id;
-        ret.id = doc._id.toString();
+      transform: function (doc: mongoose.Document & { _id: Types.ObjectId }, ret: Record<string, unknown>): Record<string, unknown> {
+        if ('__v' in ret) delete ret.__v;
+        if ('_id' in ret) {
+          ret.id = doc._id.toString();
+          delete ret._id;
+        }
         return ret;
       },
     },
     toObject: {
       virtuals: true,
-      transform: function (doc, ret) {
-        delete ret.__v;
+      transform: function (doc: mongoose.Document & { _id: Types.ObjectId }, ret: Record<string, unknown>): Record<string, unknown> {
+        if ('__v' in ret) delete ret.__v;
         delete ret._id;
         ret.id = doc._id.toString();
         return ret;
@@ -115,4 +117,6 @@ WorkspaceSchema.pre('save', function (next) {
 });
 
 // Create and export the model
-export const WorkspaceModel = mongoose.model<IWorkspace>('Workspace', WorkspaceSchema);
+export const Workspace = mongoose.model<IWorkspace>('Workspace', WorkspaceSchema);
+
+export default Workspace;

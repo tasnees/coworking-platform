@@ -40,7 +40,11 @@ export async function POST(request: Request) {
   console.log('🚀 --- Starting registration request ---');
   console.log('🌐 Request URL:', request.url);
   console.log('📝 Request method:', request.method);
-  console.log('📋 Request headers:', JSON.stringify(Object.fromEntries(request.headers.entries()), null, 2));
+  const headersObj: Record<string, string> = {};
+  request.headers.forEach((value, key) => {
+    headersObj[key] = value;
+  });
+  console.log('📋 Request headers:', JSON.stringify(headersObj, null, 2));
   
   try {
     debugLog('Parsing request body...');

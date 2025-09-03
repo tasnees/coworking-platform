@@ -2,7 +2,7 @@
 "use client";
 
 export const dynamic = "force-dynamic";
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, useSession, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
@@ -33,7 +33,6 @@ function LoginForm() {
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('member');
   const [isLoading, setIsLoading] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   
@@ -41,33 +40,41 @@ function LoginForm() {
   useEffect(() => {
     if (status === 'authenticated' && session?.user?.role) {
       // Get the intended URL from the callbackUrl or use the default dashboard
-      const callbackUrl = searchParams?.get('callbackUrl') || null;
+      const callbackUrl = searchParams?.get('callbackUrl');
       const defaultPath = getDashboardPath(session.user.role as UserRole);
       
-      // If there's a callback URL and it's a valid path for the user's role
-      if (callbackUrl) {
-        const url = new URL(callbackUrl, window.location.origin);
-        // Only allow redirecting to paths the user has access to
-        if (url.pathname.startsWith('/dashboard')) {
-          // Verify the user has access to the requested dashboard
-          const role = session.user.role as UserRole;
-          if (
-            (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
-            (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
-          ) {
-            // Redirect to their default dashboard if unauthorized for the requested path
-            router.push(defaultPath);
-            return;
+      // Small delay to ensure session is fully loaded
+      const timer = setTimeout(() => {
+        if (callbackUrl) {
+          try {
+            const url = new URL(callbackUrl, window.location.origin);
+            // Only allow redirecting to dashboard paths
+            if (url.pathname.startsWith('/dashboard')) {
+              // Verify the user has access to the requested dashboard
+              const role = session.user.role as UserRole;
+              if (
+                (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
+                (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
+              ) {
+                // Redirect to their default dashboard if unauthorized for the requested path
+                window.location.href = defaultPath;
+                return;
+              }
+              // If authorized, allow the redirect
+              window.location.href = callbackUrl;
+              return;
+            }
+          } catch (e) {
+            console.error('Invalid callback URL:', e);
           }
-          // If authorized, allow the redirect
-          router.push(callbackUrl);
-          return;
         }
-      }
-      // Default redirect to role-specific dashboard
-      router.push(defaultPath);
+        // Default redirect to role-specific dashboard
+        window.location.href = defaultPath;
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
-  }, [status, session, router, searchParams]);
+  }, [status, session, searchParams]);
   
   useEffect(() => {
     setIsMounted(true);
@@ -84,39 +91,42 @@ function LoginForm() {
       });
       return;
     }
-    
-    if (!['member', 'staff', 'admin'].includes(role)) {
-      toast({
-        title: 'Error',
-        description: 'Please select a valid role',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     try {
       setIsLoading(true);
       
-      // Get the dashboard path based on the selected role
-      const dashboardPath = getDashboardPath(role);
+      // Get the intended URL from the callbackUrl or use role-based dashboard
+      const callbackUrl = searchParams?.get('callbackUrl') || '';
       
+      // Sign in with credentials
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-        role,
-        callbackUrl: dashboardPath, // Use the role-specific dashboard path as callback
       });
 
       if (result?.error) {
-        throw new Error(result.error);
+        // Map specific error messages to user-friendly text
+        const errorMessages: Record<string, string> = {
+          'No user found with this email': 'No account found with this email',
+          'Incorrect password': 'Incorrect password',
+          'Authentication failed': 'Authentication failed. Please try again.',
+          'CredentialsSignin': 'Invalid credentials. Please check your email and password.'
+        };
+        
+        const friendlyMessage = errorMessages[result.error] || 'An error occurred during login';
+        throw new Error(friendlyMessage);
       }
 
-      // If there's no error, the sign-in was successful
-      // The redirect will be handled by NextAuth using the callbackUrl we provided
-      if (result?.url) {
-        router.push(result.url);
+      // If we have a callback URL, use it
+      if (callbackUrl) {
+        window.location.href = callbackUrl;
+        return;
       }
+
+      // Otherwise, use Next.js router to navigate to the appropriate dashboard
+      // This will be handled by the middleware based on the user's role
+      router.push('/dashboard');
       
     } catch (error) {
       console.error('Login error:', error);
@@ -180,14 +190,6 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                disabled={isLoading}
-              />
-            </div>
-
-            <div>
-              <RoleSelect
-                value={role}
-                onChange={(value) => setRole(value as UserRole)}
                 disabled={isLoading}
               />
             </div>

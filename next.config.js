@@ -4,10 +4,10 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '4mb',
-    },
-    // Enable server components external packages
-    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+    }
   },
+  // External packages for server components
+  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // Image optimization configuration
   images: {

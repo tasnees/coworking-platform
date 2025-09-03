@@ -10,12 +10,12 @@ import rateLimit from 'express-rate-limit';
 // Import routes
 import bookingRoutes from './routes/bookings';
 import resourceRoutes from './routes/resources';
-import authRoutes from './routes/auth';
-import settingsRoutes from './routes/settings';
+import authRoutes from './routes/auth.routes';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
 import { notFound } from './middleware/notFound';
+import { logger } from './utils/logger';
 
 dotenv.config();
 
@@ -45,38 +45,63 @@ app.use(limiter);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/resources', resourceRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/settings', settingsRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
 
 // Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
 // Connect to MongoDB
-const connectDB = async () => {
+const connectDB = async (): Promise<void> => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/coworking-platform';
-    await mongoose.connect(mongoURI);
-    console.log('MongoDB connected successfully');
+    
+    const options: mongoose.ConnectOptions = {
+      // Connection timeout
+      connectTimeoutMS: 10000,
+      // Server selection timeout
+      serverSelectionTimeoutMS: 5000,
+      // Retry writes for better reliability
+      retryWrites: true,
+      // Write concern
+      w: 'majority' as const,
+    };
+
+    await mongoose.connect(mongoURI, options);
+    logger.info('MongoDB connected successfully');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    logger.error('MongoDB connection error:', error);
     process.exit(1);
   }
 };
 
 // Start server
-const startServer = async () => {
-  await connectDB();
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  });
+const startServer = async (): Promise<void> => {
+  try {
+    await connectDB();
+    const server = app.listen(PORT, () => {
+      logger.info(`Server running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+
+    // Handle unhandled promise rejections
+    process.on('unhandledRejection', (err: Error) => {
+      logger.error('Unhandled Rejection! Shutting down...');
+      logger.error(`${err.name}: ${err.message}`);
+      server.close(() => {
+        process.exit(1);
+      });
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
 };
 
-startServer();
+// Start the server
+startServer().catch((error) => {
+  logger.error('Failed to start server:', error);
+  process.exit(1);
+});
 
 export default app;

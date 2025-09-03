@@ -1,26 +1,30 @@
-import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
+import type { Request } from 'express';
+import { ApiError } from '../utils/ApiError';
+
+// Create a custom request interface that extends Express Request
+interface CustomRequest extends Request {
+  path: string;
+  originalUrl: string;
+}
+
+type NotFoundHandler = (req: CustomRequest) => never;
 
 /**
- * Middleware to handle 404 Not Found errors
+ * Not found handler middleware
+ * @param req - Express request object
  */
-const notFoundHandler = (req: Request, res: Response, next: NextFunction) => {
-  const error = new Error(`Not Found - ${req.originalUrl}`);
-  logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
-  
-  res.status(404).json({
-    success: false,
-    message: 'The requested resource was not found',
-    error: {
-      code: 'NOT_FOUND',
-      details: `The route ${req.originalUrl} does not exist on this server`,
-    },
-    request: {
-      method: req.method,
-      path: req.path,
-      timestamp: new Date().toISOString(),
-    },
-  });
+const notFoundHandler: NotFoundHandler = (req) => {
+  const errorDetails = {
+    method: req.method,
+    path: req.path,
+    originalUrl: req.originalUrl
+  };
+
+  // Throw a 404 error that will be caught by the error handler
+  const error = new ApiError(404, `The requested resource ${req.path} was not found.`);
+  // Add details to the error object
+  Object.assign(error, { details: errorDetails });
+  throw error;
 };
 
 export { notFoundHandler };

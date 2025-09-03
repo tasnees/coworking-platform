@@ -81,7 +81,9 @@ const bookingSchema = new Schema<IBooking>({
     frequency: { 
       type: String, 
       enum: ['daily', 'weekly', 'monthly'],
-      required: function() { return this.recurring?.isRecurring; }
+      required: function(this: { recurring?: { isRecurring: boolean } }) { 
+        return this.recurring?.isRecurring; 
+      }
     },
     endDate: { type: Date }
   }

@@ -13,17 +13,28 @@ export function LogoutButton({ className = '' }: { className?: string }) {
 
   const handleLogout = async () => {
     try {
-      await signOut({ redirect: false });
+      // Sign out and prevent automatic redirect
+      await signOut({ 
+        redirect: false,
+        callbackUrl: '/' // Set the callback URL to the main page
+      });
+      
       // Clear any client-side state or cache if needed
+      if (typeof window !== 'undefined') {
+        // Clear any stored data in localStorage if needed
+        localStorage.clear();
+      }
       
-      // Redirect to login page
-      router.push('/auth/login');
-      router.refresh();
-      
+      // Show success message
       toast({
         title: 'Logged out',
         description: 'You have been successfully logged out.',
       });
+      
+      // Redirect to the main page
+      router.push('/');
+      router.refresh();
+      
     } catch (error) {
       console.error('Logout error:', error);
       toast({
@@ -38,7 +49,7 @@ export function LogoutButton({ className = '' }: { className?: string }) {
     <Button
       variant="ghost"
       onClick={handleLogout}
-      className={`flex items-center gap-2 ${className}`}
+      className={`flex items-center gap-2 hover:bg-gray-100 transition-colors ${className}`}
     >
       <LogOut className="h-4 w-4" />
       <span>Logout</span>

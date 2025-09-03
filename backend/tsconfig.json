@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2020",
     "module": "commonjs",
     "outDir": "./dist",
     "rootDir": "./src",
@@ -11,18 +11,31 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "baseUrl": ".",
+    "lib": ["es2020"],
+    "types": ["node", "express"],
     "paths": {
       "@/*": ["src/*"]
     },
-    "typeRoots": ["./node_modules/@types"],
-    "types": ["node", "express"],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types",
+      "./src/@types"
+    ],
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
-    "src/**/*",
-    "seed.js",
-    "seed-all.js"
+    "src/**/*"
   ],
-  "exclude": ["node_modules", "dist", "seed-*.js"]
+  "exclude": ["node_modules", "dist"]
 }

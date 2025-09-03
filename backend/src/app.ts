@@ -26,7 +26,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 // Logging
-app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
+app.use(morgan('combined', { stream: { write: (message: string) => logger.info(message.trim()) } }));
 
 // Rate limiting
 app.use(apiLimiter);
@@ -38,16 +38,7 @@ app.use('/api/v1/workspaces', workspaceRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    database: 'connected', // This should be updated based on actual DB connection status
-    memoryUsage: process.memoryUsage(),
-    env: process.env.NODE_ENV || 'development'
-  });
-});
+app.get('/api/health', () => 'Server is running');
 
 // 404 handler
 app.use(notFoundHandler);

@@ -1,89 +1,48 @@
-const fs = require('fs');
-const { MongoClient } = require('mongodb');
-
-// Create a write stream for logging
-const logStream = fs.createWriteStream('mongo-test.log');
-
-function log(message) {
-  const timestamp = new Date().toISOString();
-  const logMessage = `[${timestamp}] ${message}\n`;
-  process.stdout.write(logMessage);
-  logStream.write(logMessage);
-}
+const mongoose = require('mongoose');
+require('dotenv').config();
 
 async function testConnection() {
-  log('Starting MongoDB connection test...');
-  
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    log('❌ Error: MONGODB_URI environment variable is not set');
-    return;
-  }
-
-  // Log masked URI (hides password)
-  const maskedUri = uri.replace(/(mongodb\+srv:\/\/[^:]+:)[^@]+@/, '$1***@');
-  log(`MongoDB URI: ${maskedUri}`);
-  
-  const client = new MongoClient(uri, {
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 30000,
-  });
-
   try {
-    log('\n🔌 Attempting to connect to MongoDB...');
-    await client.connect();
-    log('✅ Successfully connected to MongoDB');
-
-    const db = client.db('coworking-platform');
-    log(`\n📊 Connected to database: ${db.databaseName}`);
-
-    // List collections
-    const collections = await db.listCollections().toArray();
-    log('\n📂 Collections:');
-    log(collections.map(c => `- ${c.name}`).join('\n') || 'No collections found');
-
-    // Check users collection
-    if (collections.some(c => c.name === 'users')) {
-      const users = db.collection('users');
-      const count = await users.countDocuments();
-      log(`\n👥 Users count: ${count}`);
-      
-      if (count > 0) {
-        const user = await users.findOne({}, { projection: { password: 0 } });
-        log('\n👤 Sample user:');
-        log(JSON.stringify(user, null, 2));
-      }
+    console.log('Attempting to connect to MongoDB...');
+    
+    const mongoURI = process.env.MONGODB_URI;
+    console.log('Using connection string:', mongoURI ? '*** (exists) ***' : 'NOT FOUND');
+    
+    if (!mongoURI) {
+      console.error('Error: MONGODB_URI is not defined in .env file');
+      process.exit(1);
     }
 
+    const options = {
+      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 10000,
+      retryWrites: true,
+      w: 'majority',
+    };
+
+    console.log('Connection options:', JSON.stringify(options, null, 2));
+    
+    // Set mongoose debug mode
+    mongoose.set('debug', true);
+    
+    // Try to connect
+    await mongoose.connect(mongoURI, options);
+    console.log('✅ Successfully connected to MongoDB');
+    
+    // If we get here, connection was successful
+    process.exit(0);
+    
   } catch (error) {
-    log(`\n❌ Error: ${error.message}`);
-    log(`Error stack: ${error.stack}`);
+    console.error('❌ MongoDB connection error:', error);
     
-    if (error.syscall === 'getaddrinfo') {
-      log('\n🔍 Network issue detected. Please check:');
-      log('1. Internet connection');
-      log('2. MongoDB Atlas IP whitelist');
-      log('3. Connection string format');
-    }
+    // Additional debug information
+    console.log('\n--- Debug Info ---');
+    console.log('Node.js version:', process.version);
+    console.log('Mongoose version:', require('mongoose/package.json').version);
+    console.log('MongoDB URI starts with:', process.env.MONGODB_URI?.substring(0, 30) + '...');
     
-    // Check if it's a MongoDB server selection error
-    if (error.name === 'MongoServerSelectionError') {
-      log('\n🔍 MongoDB Server Selection Error:');
-      log(`- Error Code: ${error.codeName}`);
-      log(`- Error Message: ${error.message}`);
-    }
-    
-  } finally {
-    log('\n🔌 Closing connection...');
-    await client.close();
-    log('✅ Connection closed');
-    logStream.end();
+    process.exit(1);
   }
 }
 
-// Run the test
-testConnection().catch(error => {
-  log(`Unhandled error: ${error.message}`);
-  log(error.stack);
-  process.exit(1);
-});
+testConnection();

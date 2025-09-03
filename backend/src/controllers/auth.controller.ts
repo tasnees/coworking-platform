@@ -1,27 +1,63 @@
-import { Request, Response } from 'express';
+/* eslint-disable @typescript-eslint/no-namespace */
+import { Request } from 'express';
 import { User } from '../models/User';
-import { generateToken, verifyToken } from '../utils/jwt';
+import { generateToken, generateRefreshToken } from '../utils/tokens';
 import { logger } from '../utils/logger';
-import { IUserDocument } from '../@types/express';
+import { IUserDocument, Role } from '../middleware/roles';
+import { verify, JwtPayload } from 'jsonwebtoken';
+import { Types, Document } from 'mongoose';
 
-// Extend Express Request type for authenticated user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: IUserDocument;
-      cookies: {
-        refreshToken?: string;
-        [key: string]: string | undefined;
-      };
-    }
-  }
+export interface AuthResponse {
+  success: boolean;
+  message?: string;
+  token?: string;
+  refreshToken?: string;
+  user?: {
+    id: string;
+    email: string;
+    role: Role;
+    firstName?: string;
+    lastName?: string;
+  };
+  clearCookie?: {
+    name: string;
+    options: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: 'strict' | 'lax' | 'none' | boolean;
+      path?: string;
+      domain?: string;
+    };
+  };
+  setCookie?: {
+    name: string;
+    value: string;
+    options: {
+      httpOnly: boolean;
+      secure: boolean;
+      sameSite: 'strict' | 'lax' | 'none' | boolean;
+      maxAge?: number;
+      path?: string;
+      domain?: string;
+    };
+  };
 }
 
-// Request body interfaces
+// Extend Express Request type for authenticated user
+interface AuthRequest extends Request {
+  user?: IUserDocument & { tokenVersion: number };
+  cookies: {
+    refreshToken?: string;
+    [key: string]: string | undefined;
+  };
+}
+
 interface RegisterBody {
   email: string;
   password: string;
   role?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 interface LoginBody {
@@ -35,140 +71,190 @@ interface UpdatePasswordBody {
 }
 
 export const authController = {
-  async register(req: Request, res: Response): Promise<Response> {
+  async register(req: AuthRequest & { body: RegisterBody }): Promise<AuthResponse> {
     try {
-      const { email, password, role = 'member' } = req.body as RegisterBody;
+      const { email, password, role = 'member', firstName, lastName } = req.body as RegisterBody;
 
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
+        throw new Error('User already exists');
       }
 
-      const user = new User({ email, password, role });
-      await user.save();
-
-      const { accessToken, refreshToken } = generateToken(user);
-
-      // Set refresh token in HTTP-only cookie
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      const user = await User.create({
+        email,
+        password,
+        role,
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
       });
 
-      return res.status(201).json({
-        message: 'User registered successfully',
-        user: { id: user._id, email: user.email, role: user.role },
-        accessToken,
-      });
+      // Ensure user has required properties
+      if (!user._id) {
+        throw new Error('User creation failed - missing _id');
+      }
+
+      const token = generateToken(user);
+      const refreshToken = generateRefreshToken(user);
+
+      return {
+        success: true,
+        token,
+        refreshToken,
+        user: {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role as Role,
+          firstName: user.firstName as string | undefined,
+          lastName: user.lastName as string | undefined,
+        },
+      };
     } catch (error) {
       logger.error('Registration error:', error);
-      return res.status(500).json({ message: 'Server error during registration' });
+      throw error;
     }
   },
 
-  async login(req: Request, res: Response): Promise<Response> {
+  async login(req: AuthRequest & { body: LoginBody }): Promise<AuthResponse> {
     try {
-      const { email, password } = req.body as LoginBody;
+      const { email, password } = req.body;
 
-      const user = await User.findOne({ email });
-      if (!user || !(await user.comparePassword(password))) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+      // Find user by email with proper typing
+      const userDoc = await User.findOne({ email });
+      if (!userDoc || !userDoc._id) {
+        throw new Error('Invalid credentials');
       }
 
-      const { accessToken, refreshToken } = generateToken(user);
+      // Check if password matches
+      const isMatch = await userDoc.comparePassword(password);
+      if (!isMatch) {
+        throw new Error('Invalid credentials');
+      }
 
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
+      const token = generateToken(userDoc);
+      const refreshToken = generateRefreshToken(userDoc);
 
-      return res.json({
-        message: 'Login successful',
-        user: { id: user._id, email: user.email, role: user.role },
-        accessToken,
-      });
+      return {
+        success: true,
+        token,
+        refreshToken,
+        user: {
+          id: userDoc._id.toString(),
+          email: userDoc.email,
+          role: userDoc.role,
+          firstName: userDoc.firstName,
+          lastName: userDoc.lastName,
+        },
+      };
     } catch (error) {
       logger.error('Login error:', error);
-      return res.status(500).json({ message: 'Server error during login' });
+      throw error;
     }
   },
 
-  async refreshToken(req: Request, res: Response): Promise<Response> {
+  async refreshToken(req: AuthRequest): Promise<AuthResponse> {
     try {
-      const refreshToken = req.cookies.refreshToken;
+      const { refreshToken } = req.cookies;
       if (!refreshToken) {
-        return res.status(401).json({ message: 'No refresh token provided' });
+        throw new Error('No refresh token provided');
       }
 
-      const decoded = verifyToken(refreshToken, 'refresh');
-      if (!decoded) {
-        return res.status(403).json({ message: 'Invalid refresh token' });
+      const secret = process.env.REFRESH_TOKEN_SECRET;
+      if (!secret) {
+        throw new Error('REFRESH_TOKEN_SECRET is not defined');
+      }
+
+      const decoded = verify(refreshToken, secret) as JwtPayload & { userId: string };
+      if (!decoded?.userId || typeof decoded.userId !== 'string') {
+        throw new Error('Invalid refresh token: Missing or invalid userId');
       }
 
       const user = await User.findById(decoded.userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+      if (!user?._id) {
+        throw new Error('User not found');
       }
 
-      const { accessToken, refreshToken: newRefreshToken } = generateToken(user);
+      const token = generateToken(user);
+      const newRefreshToken = generateRefreshToken(user);
 
-      res.cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      });
-
-      return res.json({ accessToken });
+      return {
+        success: true,
+        token,
+        refreshToken: newRefreshToken,
+        user: {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+      };
     } catch (error) {
       logger.error('Token refresh error:', error);
-      return res.status(500).json({ message: 'Server error during token refresh' });
+      throw error;
     }
   },
 
-  async logout(_req: Request, res: Response): Promise<Response> {
+  async logout(): Promise<AuthResponse> {
     try {
-      res.clearCookie('refreshToken', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
-      return res.json({ message: 'Logout successful' });
+      return {
+        success: true,
+        message: 'Logged out successfully',
+        clearCookie: {
+          name: 'refreshToken',
+          options: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+          },
+        },
+      };
     } catch (error) {
       logger.error('Logout error:', error);
-      return res.status(500).json({ message: 'Server error during logout' });
+      throw error;
     }
   },
 
-  async updatePassword(req: Request, res: Response): Promise<Response> {
+  async updatePassword(req: AuthRequest & { body: UpdatePasswordBody }): Promise<AuthResponse> {
     try {
-      if (!req.user) {
-        return res.status(401).json({ message: 'Not authenticated' });
+      const { currentPassword, newPassword } = req.body as UpdatePasswordBody;
+      if (!currentPassword || !newPassword) {
+        throw new Error('Current password and new password are required');
       }
 
-      const { currentPassword, newPassword } = req.body as UpdatePasswordBody;
-      const user = await User.findById(req.user._id);
-      
+      if (!req.user?._id) {
+        throw new Error('User not authenticated or invalid user data');
+      }
+      const userId = req.user._id;
+
+      const user = await User.findById(userId).select('+password');
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        throw new Error('User not found');
       }
 
       const isMatch = await user.comparePassword(currentPassword);
       if (!isMatch) {
-        return res.status(400).json({ message: 'Current password is incorrect' });
+        throw new Error('Current password is incorrect');
       }
 
       user.password = newPassword;
+      user.tokenVersion = ((user.tokenVersion as number) || 0) + 1; // Invalidate all existing tokens
       await user.save();
 
-      return res.json({ message: 'Password updated successfully' });
+      return {
+        success: true,
+        message: 'Password updated successfully',
+        clearCookie: {
+          name: 'refreshToken',
+          options: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict'
+          }
+        }
+      };
     } catch (error) {
       logger.error('Password update error:', error);
-      return res.status(500).json({ message: 'Server error during password update' });
+      throw error;
     }
   },
 };

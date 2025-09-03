@@ -1,19 +1,45 @@
-import { Request, Response, NextFunction } from 'express';
-import { validationResult, ValidationChain, ValidationError } from 'express-validator';
+import { validationResult } from 'express-validator';
+import type { ValidationChain } from 'express-validator';
 import { logger } from '../utils/logger';
+
+// Simple type definitions to avoid TypeScript namespace issues
+type ExpressRequest = {
+  method: string;
+  url: string;
+  originalUrl?: string;
+  body: unknown;
+  params: Record<string, string>;
+  query: Record<string, string | string[]>;
+  [key: string]: unknown;
+};
+
+type ExpressResponse = {
+  status: (code: number) => ExpressResponse;
+  json: (data: unknown) => void;
+  [key: string]: unknown;
+};
+
+type ExpressNextFunction = (err?: Error) => void;
+type ExpressRequestHandler = (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction) => void;
 
 interface FieldError {
   field: string;
   message: string;
 }
 
+type ErrorType = {
+  param?: string;
+  msg?: string;
+  nestedErrors?: ErrorType[];
+};
+
 /**
  * Middleware to validate request using express-validator
  * @param validations Array of validation chains
  * @returns Middleware function
  */
-const validateRequest = (validations: ValidationChain[]) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+const validateRequest = (validations: ValidationChain[]): ExpressRequestHandler => {
+  return async (req: ExpressRequest, res: ExpressResponse, next: ExpressNextFunction): Promise<void> => {
     // Run all validations
     await Promise.all(validations.map(validation => validation.run(req)));
 
@@ -26,49 +52,36 @@ const validateRequest = (validations: ValidationChain[]) => {
 
     // Format errors
     const extractedErrors: FieldError[] = [];
-    const errorArray = errors.array({ onlyFirstError: false });
+    const errorArray = errors.array({ onlyFirstError: false }) as ErrorType[];
     
-    for (const err of errorArray) {
-      // Type guard for standard validation errors
-      if (err && typeof err === 'object' && 'param' in err) {
-        const param = typeof (err as any).param === 'string' ? (err as any).param : 'unknown';
-        const msg = typeof (err as any).msg === 'string' ? (err as any).msg : 'Validation error';
-        
-        if (!extractedErrors.some(e => e.field === param)) {
-          extractedErrors.push({
-            field: param,
-            message: msg
-          });
-        }
+    const processError = (error: ErrorType): void => {
+      if (!error) return;
+      
+      const param = typeof error.param === 'string' ? error.param : 'unknown';
+      const msg = typeof error.msg === 'string' ? error.msg : 'Validation error';
+      
+      if (!extractedErrors.some(e => e.field === param)) {
+        extractedErrors.push({
+          field: param,
+          message: msg
+        });
       }
       
-      // Handle nested errors if they exist
-      if ('nestedErrors' in err && Array.isArray((err as any).nestedErrors)) {
-        const nestedErrors = (err as any).nestedErrors || [];
-        
-        for (const nestedErr of nestedErrors) {
-          if (nestedErr && typeof nestedErr === 'object' && 'param' in nestedErr) {
-            const nestedParam = nestedErr.param || 'unknown';
-            const nestedMsg = nestedErr.msg || 'Validation error';
-            
-            if (!extractedErrors.some(e => e.field === nestedParam)) {
-              extractedErrors.push({
-                field: nestedParam,
-                message: nestedMsg
-              });
-            }
-          }
-        }
+      // Process nested errors
+      if (Array.isArray(error.nestedErrors)) {
+        error.nestedErrors.forEach(processError);
       }
-    }
+    };
+    
+    errorArray.forEach(processError);
 
     logger.warn('Validation failed:', { 
-      path: req.path,
+      path: req.originalUrl || req.url,
       method: req.method,
-      errors: extractedErrors 
+      errors: extractedErrors
     });
     
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       code: 'VALIDATION_ERROR',
       message: 'Validation failed',
@@ -82,14 +95,22 @@ const validateRequest = (validations: ValidationChain[]) => {
  * @param fn The async route handler function
  * @returns A function that handles async errors
  */
-const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) => {
-  return (req: Request, res: Response, next: NextFunction) => {
+type AsyncRequestHandler = (
+  req: ExpressRequest,
+  res: ExpressResponse,
+  next: ExpressNextFunction
+) => Promise<unknown>;
+
+const asyncHandler = (fn: AsyncRequestHandler): ExpressRequestHandler => {
+  return (req, res, next) => {
     return Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
 
 // Export as named exports
 export { validateRequest, asyncHandler };
+
+export type { AsyncRequestHandler };
 
 // Also export as default
 const exported = {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type ReactNode } from 'react'
+import { useState, type ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -44,17 +44,16 @@ export default function DashboardLayout({
   children, 
   userRole = 'member' 
 }: DashboardLayoutProps) {
-  const [isMounted, setIsMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const { user, isLoading, logout } = useAuth()
 
-  // Ensure this only runs on the client
+  // Set mounted state after client-side hydration
   useEffect(() => {
     setIsMounted(true)
   }, [])
-  const [mounted, setMounted] = useState(false)
 
   // Navigation items
   const navigation: NavigationItem[] = [
@@ -107,25 +106,28 @@ export default function DashboardLayout({
     item.roles.includes(userRole)
   )
 
-  // Set mounted state after client-side hydration
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // isMounted is already set in the first useEffect
 
-  // Show loading state while user data is being fetched
-  // Show loading state on server or during auth check
+  // Handle authentication state
+  useEffect(() => {
+    if (!isLoading && !user && isMounted) {
+      const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      router.push(`/auth/login?callbackUrl=${callbackUrl}`);
+    }
+  }, [user, isLoading, router, isMounted]);
+
+  // Show loading state while checking auth or if not mounted
   if (!isMounted || isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
-  // Redirect to login if user is not authenticated
+  // Don't render anything if not authenticated - will be handled by the useEffect
   if (!user) {
-    router.push('/auth/login')
-    return null
+    return null;
   }
 
   const handleLogout = async () => {

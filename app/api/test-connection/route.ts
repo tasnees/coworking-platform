@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDb } from '@/lib/mongodb';
+import { getDb } from '@/lib/db-utils';
 
 // For static exports, we need to handle API routes differently
 if (process.env.NODE_ENV === 'production') {
@@ -30,8 +30,8 @@ export async function GET() {
     // Test MongoDB connection with timeout
     const connectionTest = await Promise.race([
       (async () => {
-        const db = await getDb();
-        const stats = await db.stats();
+        const { db } = await getDb();
+        const dbStats = await db.stats();
         const collections = await db.listCollections().toArray();
         return {
           success: true,
@@ -39,12 +39,12 @@ export async function GET() {
           database: db.databaseName,
           collections: collections.map((c: { name: string }) => c.name),
           stats: {
-            collections: stats.collections,
-            objects: stats.objects,
-            dataSize: stats.dataSize,
-            storageSize: stats.storageSize,
-            indexSize: stats.indexSize,
-            indexCount: stats.indexes
+            collections: dbStats.collections,
+            objects: dbStats.objects,
+            dataSize: dbStats.dataSize,
+            storageSize: dbStats.storageSize,
+            indexSize: dbStats.indexSize,
+            indexCount: dbStats.indexes
           },
           // Move environment info here to avoid spread type issues
           timestamp: new Date().toISOString(),

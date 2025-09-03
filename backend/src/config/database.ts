@@ -26,17 +26,33 @@ const connectDB = async (): Promise<typeof mongoose> => {
     throw error;
   }
 
-  const options: ConnectOptions = {
-    serverSelectionTimeoutMS: 10000,    // 10 seconds
-    socketTimeoutMS: 45000,             // 45 seconds
-    connectTimeoutMS: 30000,            // 30 seconds
-    maxPoolSize: 10,                    // Maximum number of connections in the connection pool
-    minPoolSize: 1,                     // Minimum number of connections in the connection pool
-    maxIdleTimeMS: 60000,               // Close idle connections after 60 seconds
+  const options: mongoose.ConnectOptions = {
+    // Connection timeout
+    connectTimeoutMS: 10000,
+    // Server selection timeout
+    serverSelectionTimeoutMS: 10000,
+    // Retry writes for better reliability
     retryWrites: true,
-    retryReads: true,
-    heartbeatFrequencyMS: 10000,         // Send a heartbeat every 10 seconds
-  } as const;
+    // Write concern
+    w: 'majority' as const,
+    // Disable directConnection for SRV URIs
+    directConnection: MONGODB_URI.startsWith('mongodb+srv') ? false : undefined,
+    // Enable TLS for SRV URIs
+    tls: MONGODB_URI.startsWith('mongodb+srv'),
+    // Server API version
+    serverApi: {
+      version: '1',
+      strict: false,
+      deprecationErrors: true,
+    },
+    // Connection pooling
+    maxPoolSize: 10,
+    minPoolSize: 1,
+    maxIdleTimeMS: 30000,
+    // Keep alive settings
+    keepAlive: true,
+    keepAliveInitialDelay: 300000,
+  };
 
   try {
     logger.info('Attempting to establish MongoDB connection...');

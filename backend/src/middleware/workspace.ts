@@ -1,11 +1,12 @@
-import { Request, Response, NextFunction } from 'express';
-import { Types } from 'mongoose';
-import { AuthRequest } from './auth';
+import { Request, Response } from 'express';
+import { Types, Document } from 'mongoose';
 import { logger } from '../utils/logger';
-import { WorkspaceModel, IWorkspace } from '../models/Workspace';
+import Workspace, { IWorkspace } from '../models/Workspace';
 
-// Role-based permissions
-type WorkspacePermission =
+// Define custom types
+export type WorkspaceRole = 'admin' | 'staff' | 'member';
+
+export type WorkspacePermission =
   | 'manage_members'
   | 'manage_staff'
   | 'manage_workspace'
@@ -20,6 +21,71 @@ type WorkspacePermission =
   | 'view_amenities'
   | 'view_own';
 
+export interface WorkspaceUser {
+  _id: Types.ObjectId;
+  email: string;
+  name: string;
+}
+
+export interface IUserDocument extends Document {
+  _id: Types.ObjectId;
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}
+
+export interface WorkspaceMember {
+  _id: Types.ObjectId;
+  role: WorkspaceRole;
+  user: WorkspaceUser | Types.ObjectId;
+}
+
+export type WorkspaceType = 'desk' | 'meeting_room' | 'private_office' | 'event_space';
+
+export interface IWorkspaceExtended extends Omit<IWorkspace, 'owner' | 'staffMembers' | 'admins' | 'members' | 'location' | 'type'> {
+  isPublic?: boolean;
+  roles: Record<string, WorkspaceRole>;
+  owner: WorkspaceUser | Types.ObjectId;
+  staffMembers: WorkspaceMember[];
+  admins: WorkspaceMember[];
+  members: WorkspaceMember[];
+  location?: {
+    address: string;
+    city: string;
+    country: string;
+    coordinates?: [number, number];
+  };
+  type?: WorkspaceType;
+}
+
+// Create a custom request interface that extends properly
+interface WorkspaceMiddlewareRequest extends Request {
+  user?: IUserDocument;
+  workspace?: IWorkspaceExtended;
+  params: {
+    id?: string;
+    [key: string]: string | undefined;
+  };
+}
+
+export interface WorkspaceRequest extends WorkspaceMiddlewareRequest {
+  workspace: IWorkspaceExtended;
+  user: IUserDocument;
+}
+
+// Define ApiResponse interface for proper typing
+interface ApiResponseMethods {
+  unauthorized: (res: Response, message: string) => void;
+  notFound: (res: Response, message: string) => void;
+  forbidden: (res: Response, message: string) => void;
+  internalError: (res: Response, message: string) => void;
+}
+
+// Import ApiResponse and cast it properly
+import { ApiResponse as ApiResponseClass } from '../utils/apiResponse';
+const ApiResponse = ApiResponseClass as unknown as ApiResponseMethods;
+
 const WORKSPACE_PERMISSIONS: Record<WorkspaceRole, WorkspacePermission[]> = {
   admin: [
     'manage_members',
@@ -33,345 +99,268 @@ const WORKSPACE_PERMISSIONS: Record<WorkspaceRole, WorkspacePermission[]> = {
   ],
   staff: [
     'manage_bookings',
-    'view_members',
-    'manage_amenities',
     'view_analytics',
-    'view_all',
+    'manage_amenities',
   ],
   member: [
     'view_workspace',
     'create_bookings',
     'view_amenities',
-    'view_own',
   ],
 };
 
-type WorkspaceRole = 'admin' | 'staff' | 'member';
-
-interface WorkspaceUser {
-  _id: Types.ObjectId;
-  email: string;
-  name: string;
-}
-
-interface WorkspaceMember {
-  _id: Types.ObjectId;
-  role: WorkspaceRole;
-  user: WorkspaceUser;
-}
-
-interface WorkspaceRequest extends AuthRequest {
-  workspace?: IWorkspace & {
-    isPublic?: boolean;
-    owner: {
-      _id: Types.ObjectId;
-      email: string;
-      name: string;
-    };
-    staffMembers: WorkspaceMember[];
-    admins: WorkspaceMember[];
-    members: WorkspaceMember[];
-    roles: Record<string, WorkspaceRole>;  // Map user IDs to their roles
-  };
-}
-
 /**
  * Middleware to validate and attach workspace to request
- * This is a base middleware that other workspace middlewares will use
  */
-const attachWorkspace = async (
-  req: WorkspaceRequest,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
+const attachWorkspace = async (req: WorkspaceMiddlewareRequest, res: Response, next: () => void): Promise<void> => {
   try {
     const workspaceId = req.params.id;
 
     if (!workspaceId || !Types.ObjectId.isValid(workspaceId)) {
-      return res.status(400).json({
-        success: false,
-        code: 'INVALID_WORKSPACE_ID',
-        message: 'Invalid workspace ID provided.'
-      });
+      ApiResponse.unauthorized(res, 'Authentication required');
+      return;
     }
 
-    const workspaceData = await WorkspaceModel.findById(workspaceId)
+    const workspaceData = await Workspace.findById(workspaceId)
       .populate('owner', '_id name email')
       .populate({
         path: 'members',
         populate: {
           path: 'user',
-          select: '_id name email'
-        }
+          select: '_id name email',
+        },
       })
       .populate({
         path: 'staffMembers',
         populate: {
           path: 'user',
-          select: '_id name email'
-        }
+          select: '_id name email',
+        },
       })
       .populate({
         path: 'admins',
         populate: {
           path: 'user',
-          select: '_id name email'
-        }
+          select: '_id name email',
+        },
       })
-      .lean();
+      .lean() as unknown as IWorkspaceExtended;
 
     if (!workspaceData) {
-      return res.status(404).json({
-        success: false,
-        code: 'WORKSPACE_NOT_FOUND',
-        message: 'Workspace not found.'
+      ApiResponse.notFound(res, 'Workspace not found');
+      return;
+    }
+
+    // Build the roles map
+    const roles: Record<string, WorkspaceRole> = {};
+    const workspace = workspaceData;
+
+    // Map all member roles
+    if (workspace.members) {
+      workspace.members.forEach((member: WorkspaceMember) => {
+        if (member.user && typeof member.user === 'object' && '_id' in member.user) {
+          const userId = (member.user._id as Types.ObjectId).toString();
+          if (userId) {
+            roles[userId] = 'member';
+          }
+        }
       });
     }
 
-    // Build the roles map and ensure proper typing
-    const roles: Record<string, WorkspaceRole> = {};
-    const workspace = workspaceData as unknown as IWorkspace & {
-      owner: { _id: Types.ObjectId; name: string; email: string };
-      members: WorkspaceMember[];
-      staffMembers: WorkspaceMember[];
-      admins: WorkspaceMember[];
-    };
-
-    // Map all member roles
-    workspace.members.forEach((member: WorkspaceMember) => {
-      if (member.user._id) {
-        roles[member.user._id.toString()] = 'member';
-      }
-    });
-
     // Map all staff roles
-    workspace.staffMembers.forEach((staff: WorkspaceMember) => {
-      if (staff.user._id) {
-        roles[staff.user._id.toString()] = 'staff';
-      }
-    });
+    if (workspace.staffMembers) {
+      workspace.staffMembers.forEach((staff: WorkspaceMember) => {
+        if (staff.user && typeof staff.user === 'object' && '_id' in staff.user) {
+          const userId = (staff.user._id as Types.ObjectId).toString();
+          if (userId) {
+            roles[userId] = 'staff';
+          }
+        }
+      });
+    }
 
     // Map all admin roles
-    workspace.admins.forEach((admin: WorkspaceMember) => {
-      if (admin.user._id) {
-        roles[admin.user._id.toString()] = 'admin';
+    if (workspace.admins) {
+      workspace.admins.forEach((admin: WorkspaceMember) => {
+        if (admin.user && typeof admin.user === 'object' && '_id' in admin.user) {
+          const userId = (admin.user._id as Types.ObjectId).toString();
+          if (userId) {
+            roles[userId] = 'admin';
+          }
+        }
+      });
+    }
+
+    // Map owner as admin
+    if (workspace.owner && typeof workspace.owner === 'object' && '_id' in workspace.owner) {
+      const ownerId = (workspace.owner._id as Types.ObjectId).toString();
+      if (ownerId) {
+        roles[ownerId] = 'admin';
       }
-    });
+    }
 
-    // Owner is always admin
-    roles[workspace.owner._id.toString()] = 'admin';
-
-    req.workspace = {
+    // Create workspace with roles
+    const workspaceWithRoles: IWorkspaceExtended = {
       ...workspace,
       roles,
+      staffMembers: workspace.staffMembers || [],
+      admins: workspace.admins || [],
+      members: workspace.members || []
     };
+    
+    req.workspace = workspaceWithRoles;
     next();
   } catch (error) {
     logger.error('Workspace validation error:', error);
-    return res.status(500).json({
-      success: false,
-      code: 'SERVER_ERROR',
-      message: 'Error validating workspace.'
-    });
+    ApiResponse.internalError(res, 'Error validating workspace');
   }
 };
 
 /**
  * Middleware to check if user is a workspace member
  */
-export const isWorkspaceMember = async (
-  req: WorkspaceRequest,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
+export const isWorkspaceMember = async (req: WorkspaceMiddlewareRequest, res: Response, next: () => void): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required.'
-      });
+      ApiResponse.unauthorized(res, 'Authentication required');
+      return;
     }
 
-    // First attach the workspace to the request
-    await attachWorkspace(req, res, async () => {
+    await attachWorkspace(req, res, () => {
       const workspace = req.workspace;
-      const userId = req.user!.id;
+      const userId = req.user?._id?.toString() || req.user?.id;
 
       if (!workspace) {
-        return res.status(404).json({
-          success: false,
-          code: 'WORKSPACE_NOT_FOUND',
-          message: 'Workspace not found.'
-        });
+        ApiResponse.notFound(res, 'Workspace not found');
+        return;
       }
 
       const isMember = workspace.members.some(
-        (member: { _id: Types.ObjectId }) => member._id.toString() === userId
+        (member: WorkspaceMember) => {
+          if (typeof member.user === 'object' && '_id' in member.user) {
+            return (member.user._id as Types.ObjectId).toString() === userId;
+          }
+          return (member.user as Types.ObjectId).toString() === userId;
+        }
       );
 
       if (!isMember) {
-        return res.status(403).json({
-          success: false,
-          code: 'NOT_WORKSPACE_MEMBER',
-          message: 'You must be a member of this workspace to perform this action.'
-        });
+        ApiResponse.forbidden(res, 'You must be a member of this workspace to perform this action.');
+        return;
       }
 
       next();
     });
   } catch (error) {
     logger.error('Workspace member check error:', error);
-    return res.status(500).json({
-      success: false,
-      code: 'SERVER_ERROR',
-      message: 'Error checking workspace membership.'
-    });
+    ApiResponse.internalError(res, 'Error checking workspace membership');
   }
 };
 
 /**
  * Middleware to check if user is a workspace admin
  */
-export const isWorkspaceAdmin = async (
-  req: WorkspaceRequest,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
+export const isWorkspaceAdmin = async (req: WorkspaceMiddlewareRequest, res: Response, next: () => void): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required.'
-      });
+      ApiResponse.unauthorized(res, 'Authentication required');
+      return;
     }
 
-    // First attach the workspace to the request
-    await attachWorkspace(req, res, async () => {
+    await attachWorkspace(req, res, () => {
       const workspace = req.workspace;
-      const userId = req.user!.id;
+      const userId = req.user?._id?.toString() || req.user?.id;
 
       if (!workspace) {
-        return res.status(404).json({
-          success: false,
-          code: 'WORKSPACE_NOT_FOUND',
-          message: 'Workspace not found.'
-        });
+        ApiResponse.notFound(res, 'Workspace not found');
+        return;
       }
 
       const isAdmin = workspace.admins.some(
-        (admin: { _id: Types.ObjectId }) => admin._id.toString() === userId
+        (admin: WorkspaceMember) => {
+          if (typeof admin.user === 'object' && '_id' in admin.user) {
+            return (admin.user._id as Types.ObjectId).toString() === userId;
+          }
+          return (admin.user as Types.ObjectId).toString() === userId;
+        }
       );
 
-      if (!isAdmin && workspace.owner._id.toString() !== userId) {
-        return res.status(403).json({
-          success: false,
-          code: 'NOT_WORKSPACE_ADMIN',
-          message: 'You must be an admin of this workspace to perform this action.'
-        });
+      const isOwner = workspace.owner && typeof workspace.owner === 'object' && '_id' in workspace.owner 
+        ? (workspace.owner._id as Types.ObjectId).toString() === userId
+        : (workspace.owner as Types.ObjectId)?.toString() === userId;
+
+      if (!isAdmin && !isOwner) {
+        ApiResponse.forbidden(res, 'You must be an admin of this workspace to perform this action.');
+        return;
       }
 
       next();
     });
   } catch (error) {
     logger.error('Workspace admin check error:', error);
-    return res.status(500).json({
-      success: false,
-      code: 'SERVER_ERROR',
-      message: 'Error checking workspace admin status.'
-    });
+    ApiResponse.internalError(res, 'Error checking workspace admin status');
   }
 };
 
 /**
  * Middleware to check if user is the workspace owner
  */
-export const isWorkspaceOwner = async (
-  req: WorkspaceRequest,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
+export const isWorkspaceOwner = async (req: WorkspaceMiddlewareRequest, res: Response, next: () => void): Promise<void> => {
   try {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        code: 'UNAUTHORIZED',
-        message: 'Authentication required.'
-      });
+      ApiResponse.unauthorized(res, 'Authentication required');
+      return;
     }
 
-    // First attach the workspace to the request
-    await attachWorkspace(req, res, async () => {
+    await attachWorkspace(req, res, () => {
       const workspace = req.workspace;
-      const userId = req.user!.id;
+      const userId = req.user?._id?.toString() || req.user?.id;
 
       if (!workspace) {
-        return res.status(404).json({
-          success: false,
-          code: 'WORKSPACE_NOT_FOUND',
-          message: 'Workspace not found.'
-        });
+        ApiResponse.notFound(res, 'Workspace not found');
+        return;
       }
 
-      if (workspace.owner._id.toString() !== userId) {
-        return res.status(403).json({
-          success: false,
-          code: 'NOT_WORKSPACE_OWNER',
-          message: 'You must be the owner of this workspace to perform this action.'
-        });
+      const isOwner = workspace.owner && typeof workspace.owner === 'object' && '_id' in workspace.owner 
+        ? (workspace.owner._id as Types.ObjectId).toString() === userId
+        : (workspace.owner as Types.ObjectId)?.toString() === userId;
+
+      if (!isOwner) {
+        ApiResponse.forbidden(res, 'You must be the owner of this workspace to perform this action.');
+        return;
       }
 
       next();
     });
   } catch (error) {
     logger.error('Workspace owner check error:', error);
-    return res.status(500).json({
-      success: false,
-      code: 'SERVER_ERROR',
-      message: 'Error checking workspace ownership.'
-    });
+    ApiResponse.internalError(res, 'Error checking workspace ownership');
   }
 };
 
 /**
  * Middleware to check if a workspace is public
  */
-export const isWorkspacePublic = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response | void> => {
+export const isWorkspacePublic = async (req: WorkspaceMiddlewareRequest, res: Response, next: () => void): Promise<void> => {
   try {
-    // First attach the workspace to the request
-    await attachWorkspace(req as WorkspaceRequest, res, async () => {
-      const workspace = (req as WorkspaceRequest).workspace;
+    await attachWorkspace(req, res, () => {
+      const workspace = req.workspace;
 
       if (!workspace) {
-        return res.status(404).json({
-          success: false,
-          code: 'WORKSPACE_NOT_FOUND',
-          message: 'Workspace not found.'
-        });
+        ApiResponse.notFound(res, 'Workspace not found');
+        return;
       }
 
       if (!workspace.isPublic) {
-        return res.status(403).json({
-          success: false,
-          code: 'WORKSPACE_NOT_PUBLIC',
-          message: 'This workspace is not public.'
-        });
+        ApiResponse.forbidden(res, 'This workspace is not public.');
+        return;
       }
 
       next();
     });
   } catch (error) {
     logger.error('Workspace public check error:', error);
-    return res.status(500).json({
-      success: false,
-      code: 'SERVER_ERROR',
-      message: 'Error checking workspace visibility.'
-    });
+    ApiResponse.internalError(res, 'Error checking workspace visibility');
   }
 };
 
@@ -379,67 +368,58 @@ export const isWorkspacePublic = async (
  * Check if a user has a specific permission in the workspace
  */
 const hasPermission = (
-  workspace: WorkspaceRequest['workspace'],
+  workspace: IWorkspaceExtended,
   userId: string,
   permission: WorkspacePermission
 ): boolean => {
   if (!workspace || !userId) return false;
-  
+
   const userRole = workspace.roles[userId];
   if (!userRole) return false;
 
   return WORKSPACE_PERMISSIONS[userRole].includes(permission);
 };
 
-
-
 /**
  * Middleware to check if user has specific permission
  */
 export const hasWorkspacePermission = (permission: WorkspacePermission) => {
-  return async (
-    req: WorkspaceRequest,
-    res: Response,
-    next: NextFunction
-  ): Promise<Response | void> => {
+  return async (req: WorkspaceMiddlewareRequest, res: Response, next: () => void): Promise<void> => {
     try {
-      if (!req.user) {
-        return res.status(401).json({
-          success: false,
-          code: 'UNAUTHORIZED',
-          message: 'Authentication required.'
-        });
+      if (!req.user || (!req.user._id && !req.user.id)) {
+        ApiResponse.unauthorized(res, 'Authentication required');
+        return;
       }
 
       await attachWorkspace(req, res, () => {
         const workspace = req.workspace;
-        const userId = req.user!.id;
+        const userId = req.user?.id;
 
         if (!workspace) {
-          return res.status(404).json({
-            success: false,
-            code: 'WORKSPACE_NOT_FOUND',
-            message: 'Workspace not found.'
-          });
+          ApiResponse.notFound(res, 'Workspace not found');
+          return;
+        }
+        
+        if (!userId) {
+          ApiResponse.unauthorized(res, 'Invalid user ID');
+          return;
         }
 
-        if (!hasPermission(workspace, userId, permission)) {
-          return res.status(403).json({
-            success: false,
-            code: 'PERMISSION_DENIED',
-            message: `You don't have permission to ${permission.replace(/_/g, ' ').toLowerCase()}`
-          });
+        const safeWorkspace = {
+          ...workspace,
+          roles: workspace.roles || {}
+        };
+
+        if (!hasPermission(safeWorkspace, userId, permission)) {
+          ApiResponse.forbidden(res, `You don't have permission to ${permission.replace(/_/g, ' ').toLowerCase()}`);
+          return;
         }
 
         next();
       });
     } catch (error) {
       logger.error('Workspace permission check error:', error);
-      return res.status(500).json({
-        success: false,
-        code: 'SERVER_ERROR',
-        message: 'Error checking workspace permissions.'
-      });
+      ApiResponse.internalError(res, 'Error checking workspace permissions');
     }
   };
 };

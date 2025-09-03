@@ -69,6 +69,11 @@ export default withAuth(
         return NextResponse.redirect(loginUrl);
       }
 
+      // Allow access to profile for all authenticated users
+      if (pathname.startsWith('/dashboard/profile')) {
+        return NextResponse.next();
+      }
+
       // Get the base dashboard path for the user's role
       let dashboardPath: string;
       switch (role) {
@@ -81,6 +86,16 @@ export default withAuth(
         case 'member':
         default:
           dashboardPath = '/dashboard/member';
+      }
+
+      // Handle root dashboard path
+      if (pathname === '/dashboard' || pathname === '/dashboard/') {
+        return NextResponse.redirect(new URL(dashboardPath, request.url));
+      }
+
+      // Handle legacy profile path
+      if (pathname === '/profile' || pathname === '/profile/') {
+        return NextResponse.redirect(new URL('/dashboard/profile', request.url));
       }
 
       // If user is trying to access a different dashboard than their role allows
