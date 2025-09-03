@@ -38,42 +38,49 @@ function LoginForm() {
   
   // Redirect if already authenticated
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role) {
-      // Get the intended URL from the callbackUrl or use the default dashboard
-      const callbackUrl = searchParams?.get('callbackUrl');
-      const defaultPath = getDashboardPath(session.user.role as UserRole);
-      
-      // Small delay to ensure session is fully loaded
-      const timer = setTimeout(() => {
-        if (callbackUrl) {
-          try {
-            const url = new URL(callbackUrl, window.location.origin);
-            // Only allow redirecting to dashboard paths
-            if (url.pathname.startsWith('/dashboard')) {
-              // Verify the user has access to the requested dashboard
-              const role = session.user.role as UserRole;
-              if (
-                (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
-                (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
-              ) {
-                // Redirect to their default dashboard if unauthorized for the requested path
-                window.location.href = defaultPath;
-                return;
+    const handleRedirect = async () => {
+      if (status === 'authenticated' && session?.user?.role) {
+        // Get the intended URL from the callbackUrl or use the role-based dashboard
+        const callbackUrl = searchParams?.get('callbackUrl');
+        const role = session.user.role as UserRole;
+        const defaultPath = getDashboardPath(role);
+        
+        // Small delay to ensure session is fully loaded
+        const timer = setTimeout(() => {
+          // If there's a callback URL that's not an auth route, use it
+          if (callbackUrl && !callbackUrl.startsWith('/auth/')) {
+            try {
+              const url = new URL(callbackUrl, window.location.origin);
+              // Only allow redirecting to dashboard paths
+              if (url.pathname.startsWith('/dashboard')) {
+                // Verify the user has access to the requested dashboard
+                if (
+                  (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
+                  (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
+                ) {
+                  // If user doesn't have access, redirect to their default dashboard
+                  window.location.href = defaultPath;
+                } else {
+                  window.location.href = callbackUrl;
+                }
+              } else {
+                window.location.href = callbackUrl;
               }
-              // If authorized, allow the redirect
-              window.location.href = callbackUrl;
-              return;
+            } catch (e) {
+              console.error('Invalid callback URL:', callbackUrl);
+              window.location.href = defaultPath;
             }
-          } catch (e) {
-            console.error('Invalid callback URL:', e);
+          } else {
+            // No callback URL or it's an auth route, use the role-based dashboard
+            window.location.href = defaultPath;
           }
-        }
-        // Default redirect to role-specific dashboard
-        window.location.href = defaultPath;
-      }, 100);
+        }, 100);
 
-      return () => clearTimeout(timer);
-    }
+        return () => clearTimeout(timer);
+      }
+    };
+
+    handleRedirect();
   }, [status, session, searchParams]);
   
   useEffect(() => {
@@ -82,27 +89,15 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (!email || !password) {
-      toast({
-        title: 'Error',
-        description: 'Please enter both email and password',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
-      setIsLoading(true);
-      
-      // Get the intended URL from the callbackUrl or use role-based dashboard
-      const callbackUrl = searchParams?.get('callbackUrl') || '';
-      
-      // Sign in with credentials
+      // Use signIn from next-auth/react
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
+        callbackUrl: '/dashboard' // This will be handled by our redirect callback
       });
 
       if (result?.error) {
@@ -111,6 +106,7 @@ function LoginForm() {
           'No user found with this email': 'No account found with this email',
           'Incorrect password': 'Incorrect password',
           'Authentication failed': 'Authentication failed. Please try again.',
+          'This account is not active': 'This account is not active. Please contact support.',
           'CredentialsSignin': 'Invalid credentials. Please check your email and password.'
         };
         
@@ -118,14 +114,14 @@ function LoginForm() {
         throw new Error(friendlyMessage);
       }
 
-      // If we have a callback URL, use it
-      if (callbackUrl) {
-        window.location.href = callbackUrl;
+      // If we have a callback URL from the result, use it
+      if (result?.url) {
+        // The URL will already include the correct dashboard path from our redirect callback
+        window.location.href = result.url;
         return;
       }
-
-      // Otherwise, use Next.js router to navigate to the appropriate dashboard
-      // This will be handled by the middleware based on the user's role
+      
+      // If no URL was returned, redirect to the default dashboard
       router.push('/dashboard');
       
     } catch (error) {

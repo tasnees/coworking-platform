@@ -23,6 +23,7 @@ const log = (...args: any[]) => debug && console.log('[NextAuth]', ...args);
 
 // Import URL utilities
 import { getBaseUrl } from './url-utils';
+import { getDashboardPath } from '@/lib/utils/routes';
 
 // Get environment variables
 const uri = process.env.MONGODB_URI;
@@ -409,11 +410,17 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     
-    async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
+    async redirect({ url, baseUrl }) {
       // If there's a specific URL to redirect to, use it
       if (url) {
         // Handle relative URLs
-        if (url.startsWith('/')) return `${baseUrl}${url}`;
+        if (url.startsWith('/')) {
+          // Don't redirect to auth routes if already authenticated
+          if (url.startsWith('/auth/')) {
+            return `${baseUrl}/dashboard`;
+          }
+          return `${baseUrl}${url}`;
+        }
         // Handle absolute URLs on the same origin
         if (new URL(url).origin === baseUrl) return url;
       }
