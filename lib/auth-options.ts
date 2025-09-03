@@ -97,6 +97,7 @@ interface IUserDocument {
   name?: string;
   password: string;
   role: UserRole;
+  status?: 'active' | 'inactive' | 'suspended';
   emailVerified?: Date | null;
   image?: string | null;
   createdAt: Date;
@@ -149,6 +150,7 @@ export const authOptions: NextAuthOptions = {
             password: string;
             name?: string;
             role?: UserRole;
+            status?: 'active' | 'inactive' | 'suspended';
           }>({ 
             email: credentials.email.toLowerCase().trim()
           });
