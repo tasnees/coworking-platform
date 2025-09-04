@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 export default function Unauthorized() {
   return (
@@ -21,11 +24,16 @@ export default function Unauthorized() {
             <span className="flex-shrink mx-4 text-gray-500">or</span>
             <div className="flex-grow border-t border-gray-300"></div>
           </div>
-          <Link href="/api/auth/signout">
-            <Button variant="outline" className="w-full">
-              Sign Out
-            </Button>
-          </Link>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={async () => {
+              await signOut({ redirect: false });
+              window.location.href = '/';
+            }}
+          >
+            Sign Out
+          </Button>
         </div>
       </div>
     </div>

@@ -35,6 +35,8 @@ function SignupForm() {
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
     const role = formData.get('role') as 'member' | 'staff' | 'admin';
+    
+    console.log('Form submitted:', { name, email, password: '***', confirmPassword: '***', role });
 
     // Basic validation
     if (!name || !email || !password || !confirmPassword || !role) {
@@ -67,6 +69,7 @@ function SignupForm() {
     setIsLoading(true);
 
     try {
+      console.log('Sending signup request to /api/auth/signup');
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: {
@@ -80,7 +83,15 @@ function SignupForm() {
         }),
       });
 
-      const data = await response.json();
+      console.log('Received response:', response.status, response.statusText);
+      const data = await response.json().catch(async (parseError) => {
+        console.error('Failed to parse JSON response:', parseError);
+        const text = await response.text();
+        console.error('Response text:', text);
+        throw new Error('Invalid server response');
+      });
+
+      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create account');
@@ -100,9 +111,19 @@ function SignupForm() {
       console.error('Signup error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create account. Please try again.",
+        description: error.message || 'Failed to create account',
         variant: "destructive",
       });
+      
+      // Log additional error details in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error details:', {
+          name: error.name,
+          message: error.message,
+          stack: error.stack,
+          cause: error.cause,
+        });
+      }
     } finally {
       setIsLoading(false);
     }

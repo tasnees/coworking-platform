@@ -13,11 +13,12 @@ export function LogoutButton({ className = '' }: { className?: string }) {
 
   const handleLogout = async () => {
     try {
-      // Sign out and prevent automatic redirect
+      // Sign out and redirect to home
       await signOut({ 
-        redirect: false,
-        callbackUrl: '/' // Set the callback URL to the main page
+        redirect: false
       });
+      router.push('/');
+      router.refresh();
       
       // Clear any client-side state or cache if needed
       if (typeof window !== 'undefined') {

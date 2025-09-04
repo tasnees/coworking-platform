@@ -99,6 +99,23 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // If there's a specific URL to redirect to, use it
+      if (url) {
+        // Handle relative URLs
+        if (url.startsWith('/')) {
+          // Don't redirect to auth routes if already authenticated
+          if (url.startsWith('/auth/')) {
+            return `${baseUrl}/dashboard`; // Will be overridden by the role-based redirect
+          }
+          return `${baseUrl}${url}`;
+        }
+        // Handle absolute URLs on the same origin
+        if (new URL(url).origin === baseUrl) return url;
+      }
+      return `${baseUrl}/dashboard`; // Default fallback
+    },
+    
     async session({ session, token }) {
       logDebug('Session callback started', { token, session });
       

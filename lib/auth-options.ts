@@ -150,7 +150,7 @@ export const authOptions: NextAuthOptions = {
             email: string;
             password: string;
             name?: string;
-            role?: UserRole;
+            role: UserRole;
             status?: 'active' | 'inactive' | 'suspended';
           }>({ 
             email: credentials.email.toLowerCase().trim()
@@ -163,8 +163,11 @@ export const authOptions: NextAuthOptions = {
           }
           
           // Check if user is active
-          if (userDoc.status === 'inactive' || userDoc.status === 'suspended') {
-            log('Login attempt for inactive/suspended account:', credentials.email);
+          if (userDoc.status !== 'active') {
+            log('Login attempt for non-active account:', {
+              email: credentials.email,
+              status: userDoc.status
+            });
             throw new Error('This account is not active. Please contact support.');
           }
 
@@ -175,12 +178,27 @@ export const authOptions: NextAuthOptions = {
             throw new Error('Incorrect password');
           }
 
+          // Verify the user has a valid role
+          if (!userDoc.role || !['member', 'staff', 'admin'].includes(userDoc.role)) {
+            log('User has invalid role:', { email: credentials.email, role: userDoc.role });
+            throw new Error('Your account has an invalid role. Please contact support.');
+          }
+
+          // Log successful login
+          log('User authenticated successfully:', { email: userDoc.email, role: userDoc.role });
+
+          // Update last login timestamp
+          await db.collection('users').updateOne(
+            { _id: userDoc._id },
+            { $set: { lastLoginAt: new Date() } }
+          );
+
           // Return user object without the password
           return {
             id: userDoc._id.toString(),
             email: userDoc.email,
             name: userDoc.name || null,
-            role: userDoc.role || 'member', // Default to 'member' if role is not set
+            role: userDoc.role,
           } as User;
         } catch (error) {
           console.error('Authentication error:', error);
@@ -410,14 +428,15 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     
-    async redirect({ url, baseUrl }) {
+    async redirect({ url, baseUrl, token }: { url?: string; baseUrl: string; token?: { role?: UserRole } }) {
       // If there's a specific URL to redirect to, use it
       if (url) {
         // Handle relative URLs
         if (url.startsWith('/')) {
           // Don't redirect to auth routes if already authenticated
           if (url.startsWith('/auth/')) {
-            return `${baseUrl}/dashboard`;
+            const role = token?.role;
+            return role ? `${baseUrl}${getDashboardPath(role)}` : `${baseUrl}/dashboard`;
           }
           return `${baseUrl}${url}`;
         }
@@ -425,8 +444,12 @@ export const authOptions: NextAuthOptions = {
         if (new URL(url).origin === baseUrl) return url;
       }
       
-      // For role-based redirection, we'll handle it in the login page
-      // This ensures we have the latest session data
+      // Use role-based redirection if we have a token with a role
+      if (token?.role) {
+        return `${baseUrl}${getDashboardPath(token.role)}`;
+      }
+      
+      // Fallback to default dashboard
       return `${baseUrl}/dashboard`;
     }
   },

@@ -106,8 +106,12 @@ export default function ProfilePage() {
           </div>
           <Button
             variant="outline"
-            onClick={() => signOut({ callbackUrl: '/auth/login' })}
-            className="flex items-center gap-2"
+            onClick={async () => {
+              await signOut({ redirect: false });
+              router.push('/');
+              router.refresh();
+            }}
+            className="w-full sm:w-auto"
           >
             <LogOut className="h-4 w-4" />
             Sign out

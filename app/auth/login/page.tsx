@@ -40,17 +40,23 @@ function LoginForm() {
   useEffect(() => {
     const handleRedirect = async () => {
       if (status === 'authenticated' && session?.user?.role) {
+        const role = session.user.role as UserRole;
+        console.log('User authenticated with role:', role);
+        
         // Get the intended URL from the callbackUrl or use the role-based dashboard
         const callbackUrl = searchParams?.get('callbackUrl');
-        const role = session.user.role as UserRole;
         const defaultPath = getDashboardPath(role);
         
         // Small delay to ensure session is fully loaded
         const timer = setTimeout(() => {
+          console.log('Handling redirect:', { callbackUrl, defaultPath });
+          
           // If there's a callback URL that's not an auth route, use it
           if (callbackUrl && !callbackUrl.startsWith('/auth/')) {
             try {
               const url = new URL(callbackUrl, window.location.origin);
+              console.log('Parsed callback URL:', url.pathname);
+              
               // Only allow redirecting to dashboard paths
               if (url.pathname.startsWith('/dashboard')) {
                 // Verify the user has access to the requested dashboard
@@ -58,20 +64,22 @@ function LoginForm() {
                   (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
                   (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
                 ) {
-                  // If user doesn't have access, redirect to their default dashboard
+                  console.log('User does not have access to requested dashboard, redirecting to:', defaultPath);
                   window.location.href = defaultPath;
-                } else {
-                  window.location.href = callbackUrl;
+                  return;
                 }
-              } else {
-                window.location.href = callbackUrl;
               }
+              // If we get here, either the path is not a dashboard or user has access
+              console.log('Redirecting to callback URL:', callbackUrl);
+              window.location.href = callbackUrl;
             } catch (e) {
-              console.error('Invalid callback URL:', callbackUrl);
+              console.error('Invalid callback URL:', callbackUrl, e);
+              console.log('Falling back to default path:', defaultPath);
               window.location.href = defaultPath;
             }
           } else {
             // No callback URL or it's an auth route, use the role-based dashboard
+            console.log('No valid callback URL, using default path:', defaultPath);
             window.location.href = defaultPath;
           }
         }, 100);
@@ -89,29 +97,28 @@ function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
+    if (!email || !password) {
+      toast({
+        title: 'Error',
+        description: 'Please enter both email and password',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
-      // Use signIn from next-auth/react
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-        callbackUrl: '/dashboard' // This will be handled by our redirect callback
+        callbackUrl: callbackUrl || '/dashboard',
       });
 
       if (result?.error) {
-        // Map specific error messages to user-friendly text
-        const errorMessages: Record<string, string> = {
-          'No user found with this email': 'No account found with this email',
-          'Incorrect password': 'Incorrect password',
-          'Authentication failed': 'Authentication failed. Please try again.',
-          'This account is not active': 'This account is not active. Please contact support.',
-          'CredentialsSignin': 'Invalid credentials. Please check your email and password.'
-        };
-        
-        const friendlyMessage = errorMessages[result.error] || 'An error occurred during login';
-        throw new Error(friendlyMessage);
+        throw new Error(result.error);
       }
 
       // If we have a callback URL from the result, use it

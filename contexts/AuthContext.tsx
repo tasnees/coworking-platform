@@ -57,11 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      await signOut({ redirect: false })
-      router.push('/auth/login')
-      router.refresh()
+      await signOut({ redirect: false });
+      router.push('/');
+      router.refresh();
     } catch (error) {
-      console.error('Logout error:', error)
+      console.error('Logout error:', error);
     }
   }
 
