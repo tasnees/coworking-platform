@@ -13,18 +13,17 @@ export function LogoutButton({ className = '' }: { className?: string }) {
 
   const handleLogout = async () => {
     try {
-      // Sign out and redirect to home
-      await signOut({ 
-        redirect: false
-      });
-      router.push('/');
-      router.refresh();
-      
-      // Clear any client-side state or cache if needed
+      // Clear any client-side state or cache first
       if (typeof window !== 'undefined') {
-        // Clear any stored data in localStorage if needed
         localStorage.clear();
+        sessionStorage.clear();
       }
+      
+      // Sign out
+      const data = await signOut({ 
+        redirect: false,
+        callbackUrl: '/'
+      });
       
       // Show success message
       toast({
@@ -32,9 +31,8 @@ export function LogoutButton({ className = '' }: { className?: string }) {
         description: 'You have been successfully logged out.',
       });
       
-      // Redirect to the main page
-      router.push('/');
-      router.refresh();
+      // Force a hard redirect to ensure all state is cleared
+      window.location.href = '/';
       
     } catch (error) {
       console.error('Logout error:', error);

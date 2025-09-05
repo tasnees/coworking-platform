@@ -1,11 +1,10 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { Request } from 'express';
-import { User } from '../models/User';
+import { Types } from 'mongoose';
+import { User, IUserDocument } from '../models/User';
 import { generateToken, generateRefreshToken } from '../utils/tokens';
 import { logger } from '../utils/logger';
-import { IUserDocument, Role } from '../middleware/roles';
+import { Role } from '../middleware/roles';
 import { verify, JwtPayload } from 'jsonwebtoken';
-import { Types, Document } from 'mongoose';
 
 export interface AuthResponse {
   success: boolean;
@@ -118,32 +117,57 @@ export const authController = {
     try {
       const { email, password } = req.body;
 
-      // Find user by email with proper typing
-      const userDoc = await User.findOne({ email });
-      if (!userDoc || !userDoc._id) {
+      // 1. Find user by email including the password field
+      const userDoc = await User.findOne({ email }).select('+password').lean();
+      if (!userDoc) {
+        logger.warn(`Login attempt with non-existent email: ${email}`);
         throw new Error('Invalid credentials');
       }
 
-      // Check if password matches
-      const isMatch = await userDoc.comparePassword(password);
+      // 2. Check if user is active
+      if (userDoc.isActive === false) {
+        logger.warn(`Login attempt for inactive user: ${email}`);
+        throw new Error('Account is not active');
+      }
+
+      // 3. Find user document with instance methods
+      const user = await User.findById(userDoc._id).exec() as (IUserDocument & { _id: Types.ObjectId }) | null;
+      if (!user) {
+        logger.warn(`User not found after initial lookup: ${email}`);
+        throw new Error('Invalid credentials');
+      }
+      
+      // 4. Verify password
+      const isMatch = await user.comparePassword(password);
       if (!isMatch) {
+        logger.warn(`Invalid password attempt for user: ${email}`);
         throw new Error('Invalid credentials');
       }
 
-      const token = generateToken(userDoc);
-      const refreshToken = generateRefreshToken(userDoc);
+      // 5. Update last login timestamp
+      user.lastLogin = new Date();
+      await user.save();
+
+      // 6. Generate tokens
+      const token = generateToken(user);
+      const refreshToken = generateRefreshToken(user);
+
+      logger.info(`Successful login for user: ${email}`);
+
+      // Create response with proper typing for user fields
+      const userResponse = {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role as Role,
+        ...(user.firstName && { firstName: user.firstName }),
+        ...(user.lastName && { lastName: user.lastName })
+      };
 
       return {
         success: true,
         token,
         refreshToken,
-        user: {
-          id: userDoc._id.toString(),
-          email: userDoc.email,
-          role: userDoc.role,
-          firstName: userDoc.firstName,
-          lastName: userDoc.lastName,
-        },
+        user: userResponse,
       };
     } catch (error) {
       logger.error('Login error:', error);
@@ -176,17 +200,19 @@ export const authController = {
       const token = generateToken(user);
       const newRefreshToken = generateRefreshToken(user);
 
+      const userResponse = {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role as Role,
+        ...(user.firstName && { firstName: user.firstName }),
+        ...(user.lastName && { lastName: user.lastName })
+      };
+
       return {
         success: true,
         token,
         refreshToken: newRefreshToken,
-        user: {
-          id: user._id.toString(),
-          email: user.email,
-          role: user.role,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
+        user: userResponse,
       };
     } catch (error) {
       logger.error('Token refresh error:', error);

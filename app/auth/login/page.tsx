@@ -51,37 +51,9 @@ function LoginForm() {
         const timer = setTimeout(() => {
           console.log('Handling redirect:', { callbackUrl, defaultPath });
           
-          // If there's a callback URL that's not an auth route, use it
-          if (callbackUrl && !callbackUrl.startsWith('/auth/')) {
-            try {
-              const url = new URL(callbackUrl, window.location.origin);
-              console.log('Parsed callback URL:', url.pathname);
-              
-              // Only allow redirecting to dashboard paths
-              if (url.pathname.startsWith('/dashboard')) {
-                // Verify the user has access to the requested dashboard
-                if (
-                  (url.pathname.startsWith('/dashboard/admin') && role !== 'admin') ||
-                  (url.pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role))
-                ) {
-                  console.log('User does not have access to requested dashboard, redirecting to:', defaultPath);
-                  window.location.href = defaultPath;
-                  return;
-                }
-              }
-              // If we get here, either the path is not a dashboard or user has access
-              console.log('Redirecting to callback URL:', callbackUrl);
-              window.location.href = callbackUrl;
-            } catch (e) {
-              console.error('Invalid callback URL:', callbackUrl, e);
-              console.log('Falling back to default path:', defaultPath);
-              window.location.href = defaultPath;
-            }
-          } else {
-            // No callback URL or it's an auth route, use the role-based dashboard
-            console.log('No valid callback URL, using default path:', defaultPath);
-            window.location.href = defaultPath;
-          }
+          // Always use the role-based dashboard path to ensure correct redirection
+          console.log('Redirecting to role-specific dashboard:', defaultPath);
+          window.location.href = defaultPath;
         }, 100);
 
         return () => clearTimeout(timer);

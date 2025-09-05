@@ -204,7 +204,7 @@ userSchema.virtual('fullName').get(function() {
 userSchema.set('toJSON', {
   virtuals: true,
   versionKey: false,
-  transform: (doc, ret) => {
+  transform: (_doc, ret) => {
     // Use destructuring to exclude sensitive fields (type-safe approach)
     const {
       password,
