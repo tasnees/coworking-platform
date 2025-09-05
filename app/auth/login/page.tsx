@@ -82,26 +82,47 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
+      console.log('Attempting to sign in with email:', email);
+      
+      // Sign in with credentials and get the result
       const result = await signIn('credentials', {
         redirect: false,
         email,
         password,
-        callbackUrl: callbackUrl || '/dashboard',
+        // Let the server handle the redirection based on the user's role
+        callbackUrl: '/dashboard', // This will be overridden by our custom logic
       });
 
       if (result?.error) {
+        console.error('Sign in error:', result.error);
         throw new Error(result.error);
       }
 
-      // If we have a callback URL from the result, use it
-      if (result?.url) {
-        // The URL will already include the correct dashboard path from our redirect callback
-        window.location.href = result.url;
-        return;
+      console.log('Sign in successful, getting user session...');
+      
+      // Get the updated session
+      const session = await getSession();
+      console.log('Session data after sign in:', session);
+      
+      if (!session?.user) {
+        throw new Error('Failed to get user session after sign in');
       }
       
-      // If no URL was returned, redirect to the default dashboard
-      router.push('/dashboard');
+      // Get the user's role from the session
+      const userRole = session.user.role as UserRole;
+      console.log('User role from session:', userRole);
+      
+      if (!userRole) {
+        console.error('No user role found in session');
+        throw new Error('Your account does not have a valid role. Please contact support.');
+      }
+      
+      // Determine the dashboard path based on the user's role
+      const dashboardPath = getDashboardPath(userRole);
+      console.log('Redirecting to dashboard:', dashboardPath);
+      
+      // Use window.location.href for a full page reload to ensure all data is fresh
+      window.location.href = dashboardPath;
       
     } catch (error) {
       console.error('Login error:', error);

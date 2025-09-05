@@ -2,6 +2,7 @@ import { withAuth } from 'next-auth/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { JWT } from 'next-auth/jwt';
+import { getDashboardPath } from '@/lib/utils/routes';
 
 type UserRole = 'admin' | 'staff' | 'member';
 
@@ -33,12 +34,19 @@ const publicApiRoutes = [
 
 export default withAuth(
   function middleware(request) {
-    const { pathname } = request.nextUrl;
+    const { pathname, searchParams } = request.nextUrl;
     const token = request.nextauth?.token as (JWT & { role: UserRole }) | undefined;
-    const role = token?.role || 'guest';
+    const role = token?.role as UserRole | undefined;
+    const callbackUrl = searchParams.get('callbackUrl');
 
     // Skip middleware for public paths
     if (publicPaths.some(path => pathname.startsWith(path))) {
+      // If user is already logged in and tries to access login page, redirect to appropriate dashboard
+      if (pathname.startsWith('/auth/login') && token) {
+        // Default to member dashboard if role is not set
+        const dashboardPath = role ? getDashboardPath(role) : '/dashboard/member';
+        return NextResponse.redirect(new URL(dashboardPath, request.url));
+      }
       return NextResponse.next();
     }
 
@@ -47,6 +55,14 @@ export default withAuth(
       // Allow public API routes
       if (publicApiRoutes.some(route => pathname.startsWith(route))) {
         return NextResponse.next();
+      }
+      
+      // Handle API authentication
+      if (!token) {
+        return new NextResponse(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
 
       // Protect admin API routes
@@ -90,7 +106,9 @@ export default withAuth(
 
       // Handle root dashboard path
       if (pathname === '/dashboard' || pathname === '/dashboard/') {
-        return NextResponse.redirect(new URL(dashboardPath, request.url));
+        // Default to member dashboard if role is not set
+        const defaultDashboard = role ? dashboardPath : '/dashboard/member';
+        return NextResponse.redirect(new URL(defaultDashboard, request.url));
       }
 
       // Handle legacy profile path
@@ -100,12 +118,18 @@ export default withAuth(
 
       // If user is trying to access a different dashboard than their role allows
       if (!pathname.startsWith(dashboardPath)) {
+        // Default to member dashboard if role is not set
+        const targetPath = dashboardPath || '/dashboard/member';
+        
         // Check if they have permission to access the requested path
-        if (pathname.startsWith('/dashboard/admin') && role !== 'admin') {
-          return NextResponse.redirect(new URL(dashboardPath, request.url));
-        }
-        if (pathname.startsWith('/dashboard/staff') && !['admin', 'staff'].includes(role)) {
-          return NextResponse.redirect(new URL(dashboardPath, request.url));
+        if (pathname.startsWith('/dashboard/admin')) {
+          if (role !== 'admin') {
+            return NextResponse.redirect(new URL(targetPath, request.url));
+          }
+        } else if (pathname.startsWith('/dashboard/staff')) {
+          if (role !== 'admin' && role !== 'staff') {
+            return NextResponse.redirect(new URL(targetPath, request.url));
+          }
         }
       }
 
@@ -114,7 +138,7 @@ export default withAuth(
     }
 
     // Handle staff API routes
-    if (pathname.startsWith('/api/staff') && !['admin', 'staff'].includes(role)) {
+    if (pathname.startsWith('/api/staff') && role !== 'admin' && role !== 'staff') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 403 }
@@ -126,13 +150,34 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => {
-        // This is intentionally kept simple as we handle auth in the middleware
-        return true;
+      authorized: function({ token }) {
+        return !!token;
       },
     },
   }
 );
+
+// These should be in your auth options, not in the middleware
+// Move these to your auth-options.ts file if you need them
+/*
+async function jwtCallback({ token, user }: { token: JWT; user?: any }) {
+  // Initial sign in
+  if (user) {
+    token.role = user.role;
+    token.id = user.id;
+  }
+  return token;
+}
+
+async function sessionCallback({ session, token }: { session: any; token: JWT }) {
+  // Add role and ID to the session
+  if (session.user) {
+    session.user.role = token.role as UserRole;
+    session.user.id = token.id as string;
+  }
+  return session;
+}
+*/
 
 export const config = {
   matcher: [
