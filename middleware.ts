@@ -43,9 +43,51 @@ export default withAuth(
     if (publicPaths.some(path => pathname.startsWith(path))) {
       // If user is already logged in and tries to access login page, redirect to appropriate dashboard
       if (pathname.startsWith('/auth/login') && token) {
-        // Default to member dashboard if role is not set
-        const dashboardPath = role ? getDashboardPath(role) : '/dashboard/member';
-        return NextResponse.redirect(new URL(dashboardPath, request.url));
+        // Get and clean the callback URL
+        const callbackUrl = searchParams.get('callbackUrl');
+        
+        try {
+          // If no callback URL, redirect to dashboard
+          if (!callbackUrl) {
+            const dashboardPath = getDashboardPath(role || 'member');
+            return NextResponse.redirect(new URL(dashboardPath, request.url));
+          }
+          
+          // Decode the URL to handle any encoded characters
+          let decodedUrl = decodeURIComponent(callbackUrl);
+          
+          // If the URL is still encoded, decode it again
+          while (decodedUrl !== decodeURIComponent(decodedUrl)) {
+            decodedUrl = decodeURIComponent(decodedUrl);
+          }
+          
+          // Parse the decoded URL
+          const cleanUrl = new URL(decodedUrl, request.url);
+          
+          // Normalize the pathname
+          cleanUrl.pathname = cleanUrl.pathname.replace(/\/+$/, '');
+          
+          // Prevent redirect loops by checking if we're being redirected to an auth page
+          if (cleanUrl.pathname.startsWith('/auth/')) {
+            const dashboardPath = getDashboardPath(role || 'member');
+            return NextResponse.redirect(new URL(dashboardPath, request.url));
+          }
+          
+          // Ensure the URL is within our domain and not a loop
+          if (cleanUrl.origin === new URL(request.url).origin) {
+            return NextResponse.redirect(cleanUrl.toString());
+          }
+          
+          // Fallback to dashboard if URL is not valid or not within our domain
+          const dashboardPath = getDashboardPath(role || 'member');
+          return NextResponse.redirect(new URL(dashboardPath, request.url));
+          
+        } catch (error) {
+          console.error('Error processing callback URL:', error);
+          // If there's an error with the callback URL, redirect to the default dashboard
+          const dashboardPath = getDashboardPath(role || 'member');
+          return NextResponse.redirect(new URL(dashboardPath, request.url));
+        }
       }
       return NextResponse.next();
     }
@@ -81,7 +123,10 @@ export default withAuth(
       // Redirect to login if not authenticated
       if (!token) {
         const loginUrl = new URL('/auth/login', request.url);
-        loginUrl.searchParams.set('callbackUrl', pathname);
+        // Only set callbackUrl if we're not already on a login page to prevent loops
+        if (!pathname.startsWith('/auth/')) {
+          loginUrl.searchParams.set('callbackUrl', pathname);
+        }
         return NextResponse.redirect(loginUrl);
       }
 
@@ -150,7 +195,15 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: function({ token }) {
+      authorized({ token, req }) {
+        const pathname = req.nextUrl?.pathname || '';
+        
+        // Always allow public paths
+        if (publicPaths.some(path => pathname.startsWith(path))) {
+          return true;
+        }
+        
+        // Require authentication for all other paths
         return !!token;
       },
     },

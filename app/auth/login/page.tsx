@@ -84,45 +84,42 @@ function LoginForm() {
     try {
       console.log('Attempting to sign in with email:', email);
       
-      // Sign in with credentials and get the result
-      const result = await signIn('credentials', {
-        redirect: false,
+      // Get and clean the callback URL
+      let callbackUrl = searchParams?.get('callbackUrl') || '';
+      let redirectTo = '/dashboard';
+      
+      try {
+        // Decode the URL to handle encoded characters
+        if (callbackUrl) {
+          callbackUrl = decodeURIComponent(callbackUrl);
+          
+          // If the URL contains auth/login, extract the final redirect URL
+          if (callbackUrl.includes('/auth/login')) {
+            const finalUrlMatch = callbackUrl.match(/callbackUrl=([^&]*)/);
+            if (finalUrlMatch && finalUrlMatch[1]) {
+              redirectTo = decodeURIComponent(finalUrlMatch[1]);
+            }
+          } else if (callbackUrl.startsWith('/') && !callbackUrl.startsWith('/auth/')) {
+            redirectTo = callbackUrl;
+          }
+        }
+      } catch (e) {
+        console.error('Error processing callback URL:', e);
+      }
+      
+      console.log('Final redirect URL:', redirectTo);
+      
+      // Sign in with credentials - let NextAuth handle the redirect
+      await signIn('credentials', {
+        redirect: true,
         email,
         password,
-        // Let the server handle the redirection based on the user's role
-        callbackUrl: '/dashboard', // This will be overridden by our custom logic
+        callbackUrl: redirectTo,
       });
-
-      if (result?.error) {
-        console.error('Sign in error:', result.error);
-        throw new Error(result.error);
-      }
-
-      console.log('Sign in successful, getting user session...');
       
-      // Get the updated session
-      const session = await getSession();
-      console.log('Session data after sign in:', session);
-      
-      if (!session?.user) {
-        throw new Error('Failed to get user session after sign in');
-      }
-      
-      // Get the user's role from the session
-      const userRole = session.user.role as UserRole;
-      console.log('User role from session:', userRole);
-      
-      if (!userRole) {
-        console.error('No user role found in session');
-        throw new Error('Your account does not have a valid role. Please contact support.');
-      }
-      
-      // Determine the dashboard path based on the user's role
-      const dashboardPath = getDashboardPath(userRole);
-      console.log('Redirecting to dashboard:', dashboardPath);
-      
-      // Use window.location.href for a full page reload to ensure all data is fresh
-      window.location.href = dashboardPath;
+      // If we get here, the redirect didn't happen as expected
+      console.warn('Sign in successful but no redirect occurred, forcing redirect');
+      window.location.href = redirectTo;
       
     } catch (error) {
       console.error('Login error:', error);

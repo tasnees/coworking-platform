@@ -429,28 +429,53 @@ export const authOptions: NextAuthOptions = {
     },
     
     async redirect({ url, baseUrl, token }: { url?: string; baseUrl: string; token?: { role?: UserRole } }) {
-      // If there's a specific URL to redirect to, use it
-      if (url) {
-        // Handle relative URLs
-        if (url.startsWith('/')) {
-          // Don't redirect to auth routes if already authenticated
-          if (url.startsWith('/auth/')) {
-            const role = token?.role;
-            return role ? `${baseUrl}${getDashboardPath(role)}` : `${baseUrl}/dashboard`;
+      // Helper to clean and validate URLs
+      const getSafeRedirectUrl = (inputUrl: string | undefined) => {
+        if (!inputUrl) return null;
+        
+        try {
+          // Decode the URL first
+          let decodedUrl = decodeURIComponent(inputUrl);
+          
+          // If the URL contains auth routes, it's likely part of a loop
+          if (decodedUrl.includes('/auth/')) {
+            // Try to extract the final destination if it's a nested callback
+            const match = decodedUrl.match(/callbackUrl=([^&]*)/);
+            if (match && match[1]) {
+              const nestedUrl = decodeURIComponent(match[1]);
+              if (!nestedUrl.includes('/auth/')) {
+                return nestedUrl.startsWith(baseUrl) ? nestedUrl : `${baseUrl}${nestedUrl}`;
+              }
+            }
+            return null;
           }
-          return `${baseUrl}${url}`;
+          
+          // If it's a relative URL, prepend the base URL
+          if (decodedUrl.startsWith('/')) {
+            return `${baseUrl}${decodedUrl}`;
+          }
+          
+          // If it's an absolute URL, ensure it's from the same origin
+          if (decodedUrl.startsWith('http')) {
+            const urlObj = new URL(decodedUrl);
+            if (urlObj.origin === baseUrl) {
+              return decodedUrl;
+            }
+          }
+          
+          return null;
+        } catch (e) {
+          console.error('Error processing redirect URL:', e);
+          return null;
         }
-        // Handle absolute URLs on the same origin
-        if (new URL(url).origin === baseUrl) return url;
-      }
-      
-      // Use role-based redirection if we have a token with a role
-      if (token?.role) {
-        return `${baseUrl}${getDashboardPath(token.role)}`;
-      }
-      
-      // Fallback to default dashboard
-      return `${baseUrl}/dashboard`;
+      };
+
+      // Try to get a safe redirect URL
+      const safeUrl = getSafeRedirectUrl(url) || 
+                     (token?.role ? `${baseUrl}${getDashboardPath(token.role)}` : baseUrl);
+
+      console.log('Auth redirect:', { originalUrl: url, safeUrl });
+      return safeUrl;
     }
   },
   
