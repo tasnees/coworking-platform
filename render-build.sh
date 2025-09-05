@@ -7,9 +7,17 @@ echo "🚀 Starting build process..."
 echo "📂 Creating required directories..."
 mkdir -p .next/standalone/.next
 
-# Install dependencies
+# Install dependencies with cache
 echo "📦 Installing dependencies..."
 npm ci --prefer-offline --no-audit --progress=false
+
+# Install Prisma and generate client
+echo "⚙️ Setting up Prisma..."
+npx prisma generate
+
+# Verify database connection
+echo "🔌 Testing database connection..."
+npx prisma db push --skip-generate
 
 # Build the application
 echo "🔨 Building application..."

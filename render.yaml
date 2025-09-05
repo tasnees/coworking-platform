@@ -29,13 +29,17 @@ services:
       - key: NODE_ENV
         value: production
       - key: NODE_OPTIONS
-        value: --max_old_space_size=1024
+        value: --max_old_space_size=2048
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
-      - key: NODE_ENV
-        value: production
       - key: NEXT_SHARP_PATH
         value: "/tmp/node_modules/sharp"
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://your-render-app-url.onrender.com
+      - key: PRISMA_QUERY_ENGINE_BINARY
+        value: "/tmp/node_modules/prisma/query-engine"
+      - key: PRISMA_SCHEMA_ENGINE_BINARY
+        value: "/tmp/node_modules/prisma/schema-prisma"
     
     # Build environment variables
     build:
