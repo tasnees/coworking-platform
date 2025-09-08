@@ -1,15 +1,17 @@
 import winston from 'winston';
 
+const { combine, timestamp, json, simple } = winston.format;
+
 // Create a simple console logger
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.json()
+  format: combine(
+    timestamp(),
+    json()
   ),
   transports: [
     new winston.transports.Console({
-      format: winston.format.simple()
+      format: simple()
     })
   ]
 });
