@@ -1,8 +1,19 @@
 import rateLimit from 'express-rate-limit';
-import type { Request, Response } from 'express';
-// Define a type that includes the IP property from the requestinterface RequestWithIp extends Request {  ip: string;}
-// Extend the Error type to include status codeinterface ErrorWithStatus extends Error {  status?: number;}
-// Type for the next function with error handlingtype NextFunction = (err?: ErrorWithStatus) => void;
+import { Request, Response } from 'express';
+
+// Define a type that includes the IP property from the request
+interface RequestWithIp extends Request {
+  ip: string;
+}
+
+// Extend the Error type to include status code
+interface ErrorWithStatus extends Error {
+  status?: number;
+}
+
+// Type for the next function with error handling
+type NextFunction = (err?: ErrorWithStatus) => void;
+
 // Rate limiting configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes

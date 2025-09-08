@@ -1,7 +1,8 @@
-import { Request, Response } from 'express';
 import { Types, Document } from 'mongoose';
 import { logger } from '../utils/logger';
-import Workspace, { IWorkspace } from '../models/Workspace';
+import Workspace from '../models/Workspace';
+import { IWorkspace } from '../types';
+import { Request, Response } from 'express';
 
 // Define custom types
 export type WorkspaceRole = 'admin' | 'staff' | 'member';

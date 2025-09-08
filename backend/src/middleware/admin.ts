@@ -1,19 +1,22 @@
-import { Request, Response } from 'express';
-
 type NextFunction = (err?: Error) => void;
 
-interface AuthenticatedUser {
-  id: string;
-  role: string;
+type RequestHandler = (req: Request, res: Response, next: NextFunction) => void;
+
+interface Request {
+  user?: {
+    id: string;
+    role: string;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
-interface AuthenticatedRequest extends Request {
-  user?: AuthenticatedUser;
+interface Response {
+  [key: string]: unknown;
 }
 
-export class ForbiddenError extends Error {
-  readonly status = 403;
+class ForbiddenError extends Error {
+  status = 403;
   
   constructor(message = 'Access denied') {
     super(message);
@@ -21,9 +24,10 @@ export class ForbiddenError extends Error {
   }
 }
 
-export const adminMiddleware = (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
+export const adminMiddleware: RequestHandler = (req, _res, next) => {
   if (!req.user || req.user.role !== 'admin') {
-    throw new ForbiddenError('Admin access required');
+    const error = new ForbiddenError('Admin access required');
+    return next(error);
   }
   next();
 };

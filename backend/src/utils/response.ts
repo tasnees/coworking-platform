@@ -1,5 +1,5 @@
-import { Response } from 'express';
 import { CookieOptions } from 'express-serve-static-core';
+import 'express'; // This ensures the Response type is available for augmentation
 
 export type SuccessResponseData<T = unknown> = {
   success: boolean;

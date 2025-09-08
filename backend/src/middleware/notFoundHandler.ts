@@ -1,10 +1,10 @@
-import type { Request } from 'express';
 import { ApiError } from '../utils/ApiError';
 
 // Create a custom request interface that extends Express Request
-interface CustomRequest extends Request {
+interface CustomRequest extends Express.Request {
   path: string;
   originalUrl: string;
+  method: string;
 }
 
 type NotFoundHandler = (req: CustomRequest) => never;

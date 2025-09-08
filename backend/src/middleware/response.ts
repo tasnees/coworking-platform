@@ -1,91 +1,108 @@
-/* eslint-disable @typescript-eslint/no-namespace */
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import type { NextFunction } from 'express-serve-static-core';
 
-type SuccessResponse = {
-  success: true;
-  message: string;
-  data?: unknown;
-};
-
-type ErrorResponse = {
-  success: false;
-  message: string;
-  statusCode: number;
-};
-
-declare global {
-  namespace Express {
-    interface Response {
-      success: (message?: string, data?: unknown) => void;
-      error: (message: string, statusCode?: number) => void;
-      notFound: (message?: string) => void;
-      unauthorized: (message?: string) => void;
-      forbidden: (message?: string) => void;
-      badRequest: (message?: string) => void;
-      internalError: (message?: string) => void;
-    }
+declare module 'express-serve-static-core' {
+  interface Response {
+    success: <T = unknown>(data: T, message?: string) => Response;
+    error: (message: string, errors?: unknown) => Response;
+    notFound: (message?: string) => Response;
+    unauthorized: (message?: string) => Response;
+    forbidden: (message?: string) => Response;
+    badRequest: (message?: string, errors?: unknown) => Response;
+    internalError: (message?: string, errors?: unknown) => Response;
   }
 }
 
-interface CustomResponse extends Response {
-  success: (message?: string, data?: unknown) => void;
-  error: (message: string, statusCode?: number) => void;
-  notFound: (message?: string) => void;
-  unauthorized: (message?: string) => void;
-  forbidden: (message?: string) => void;
-  badRequest: (message?: string) => void;
-  internalError: (message?: string) => void;
+type ResponseWithMethods = Response & {
+  success: <T = unknown>(data: T, message?: string) => ResponseWithMethods;
+  error: (message: string, errors?: unknown) => ResponseWithMethods;
+  notFound: (message?: string) => ResponseWithMethods;
+  unauthorized: (message?: string) => ResponseWithMethods;
+  forbidden: (message?: string) => ResponseWithMethods;
+  badRequest: (message?: string, errors?: unknown) => ResponseWithMethods;
+  internalError: (message?: string, errors?: unknown) => ResponseWithMethods;
+  status: (code: number) => ResponseWithMethods;
+  json: (body: unknown) => ResponseWithMethods;
+  locals: {
+    statusCode?: number;
+  };
+};
+
+// Custom response interfaces
+export interface SuccessResponse<T = unknown> {
+  success: true;
+  message: string;
+  data?: T;
 }
 
-type RequestHandler = (_req: unknown, res: Response, next: () => void) => void;
+export interface ErrorResponse {
+  success: false;
+  message: string;
+  statusCode: number;
+  errors?: unknown;
+}
 
-const extendResponse: RequestHandler = (_req, res, next) => {
-  const customRes = res as unknown as CustomResponse;
-
+const extendResponse = (_req: Request, res: Response, next: NextFunction): void => {
+  const response = res as unknown as ResponseWithMethods;
+  
+  // Initialize locals if not exists
+  response.locals = response.locals || {};
   // Add success method
-  customRes.success = function(message = 'Success', data?: unknown): void {
-    const response: SuccessResponse = {
+  response.success = function<T = unknown>(this: ResponseWithMethods, data: T, message = 'Success'): ResponseWithMethods {
+    const resp: SuccessResponse<T> = {
       success: true,
-      message
+      message,
+      data
     };
     
-    if (data !== undefined) {
-      response.data = data;
-    }
+    return this.status(200).json(resp);
   };
 
   // Add error method
-  customRes.error = function(message: string, statusCode = 400): void {
+  response.error = function(this: ResponseWithMethods, message: string, errors?: unknown): ResponseWithMethods {
     if (!message) {
       throw new Error('Error message is required');
     }
     
-    const errorResponse: ErrorResponse = {
+    // Get status code from the response, default to 400 if not set
+    const statusCode = this.locals.statusCode || 400;
+    const resp: ErrorResponse = {
       success: false,
       message,
       statusCode
     };
+    
+    if (errors) {
+      resp.errors = errors;
+    }
+    
+    return this.status(statusCode).json(resp);
   };
 
-  // Add helper methods
-  customRes.notFound = function(message = 'Resource not found'): void {
-    this.error(message, 404);
+  // Helper methods for common HTTP errors
+  response.notFound = function(this: ResponseWithMethods, message = 'Resource not found'): ResponseWithMethods {
+    this.locals.statusCode = 404;
+    return this.error(message);
   };
 
-  customRes.unauthorized = function(message = 'Unauthorized'): void {
-    this.error(message, 401);
+  response.unauthorized = function(this: ResponseWithMethods, message = 'Unauthorized'): ResponseWithMethods {
+    this.locals.statusCode = 401;
+    return this.error(message);
   };
 
-  customRes.forbidden = function(message = 'Forbidden'): void {
-    this.error(message, 403);
+  response.forbidden = function(this: ResponseWithMethods, message = 'Forbidden'): ResponseWithMethods {
+    this.locals.statusCode = 403;
+    return this.error(message);
   };
 
-  customRes.badRequest = function(message = 'Bad Request'): void {
-    this.error(message, 400);
+  response.badRequest = function(this: ResponseWithMethods, message = 'Bad request', errors?: unknown): ResponseWithMethods {
+    this.locals.statusCode = 400;
+    return this.error(message, errors);
   };
 
-  customRes.internalError = function(message = 'Internal Server Error'): void {
-    this.error(message, 500);
+  response.internalError = function(this: ResponseWithMethods, message = 'Internal server error', errors?: unknown): ResponseWithMethods {
+    this.locals.statusCode = 500;
+    return this.error(message, errors);
   };
 
   next();
