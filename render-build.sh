@@ -5,7 +5,7 @@ echo "🚀 Starting build process..."
 
 # Create necessary directories
 echo "📂 Creating required directories..."
-mkdir -p .next/standalone/.next
+mkdir -p .next/standalone
 
 # Install dependencies with cache
 echo "📦 Installing dependencies..."
@@ -15,39 +15,41 @@ npm ci --prefer-offline --no-audit --progress=false
 echo "⚙️ Setting up Prisma..."
 npx prisma generate
 
-# Verify database connection
-echo "🔌 Testing database connection..."
-npx prisma db push --skip-generate
-
-# Build the application in standalone mode
-echo "🔨 Building application in standalone mode..."
+# Build the application
+echo "🔨 Building application..."
 npm run build
 
 # Create standalone directory structure
 echo "📄 Setting up standalone output..."
-mkdir -p .next/standalone/.next
 
-# Copy required files for standalone mode
-cp -r .next/standalone/.next .next/standalone/
-cp -r .next/static .next/standalone/.next/
-cp -r public .next/standalone/
-cp next.config.js .next/standalone/
-cp -r .next/server .next/standalone/.next/
-cp -r .next/trace .next/standalone/.next/
-cp -r .next/cache .next/standalone/.next/
-
-# Ensure the server file is executable
-chmod +x .next/standalone/server.js
-cp -r .next/server .next/standalone/.next/
-cp -r .next/chunks .next/standalone/.next/
-cp -r .next/cache .next/standalone/.next/
-
-# Create server.js for standalone mode
-cat > .next/standalone/server.js << 'EOL'
-// Standalone server for production
-const express = require('express');
-const next = require('next');
-const path = require('path');
+# Copy the standalone output
+if [ -d ".next/standalone" ]; then
+  # Copy the standalone server
+  cp -r .next/standalone/. .next/standalone-temp
+  
+  # Copy required directories
+  mkdir -p .next/standalone-temp/.next
+  cp -r .next/static .next/standalone-temp/.next/
+  cp -r .next/server .next/standalone-temp/.next/
+  
+  # Copy public files
+  cp -r public .next/standalone-temp/
+  
+  # Copy required configuration files
+  cp next.config.js .next/standalone-temp/
+  
+  # Replace the standalone directory
+  rm -rf .next/standalone
+  mv .next/standalone-temp .next/standalone
+  
+  # Ensure the server file is executable
+  chmod +x .next/standalone/server.js
+  
+  echo "✅ Standalone build completed successfully!"
+else
+  echo "❌ Error: Standalone output not found. Build may have failed."
+  exit 1
+fi
 const { parse } = require('url');
 
 const dev = process.env.NODE_ENV !== 'production';

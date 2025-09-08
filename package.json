@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "build:standalone": "next build && cp -r .next/standalone .next/standalone-temp && cp -r .next/static .next/standalone-temp/.next/ && cp -r public .next/standalone-temp/ && cp -r .next/server .next/standalone-temp/.next/ && cp -r .next/cache .next/standalone-temp/.next/ && mv .next/standalone-temp .next/standalone",
+    "build:standalone": "next build && npm run copy:standalone",
+    "copy:standalone": "mkdir -p .next/standalone-temp && cp -r .next/standalone/. .next/standalone-temp/ && mkdir -p .next/standalone-temp/.next && cp -r .next/static .next/standalone-temp/.next/ && cp -r .next/server .next/standalone-temp/.next/ && cp -r public .next/standalone-temp/ && cp next.config.js .next/standalone-temp/ && rm -rf .next/standalone && mv .next/standalone-temp .next/standalone",
     "start": "NODE_ENV=production node .next/standalone/server.js",
     "start:dev": "next start -p $PORT",
     "lint": "next lint",

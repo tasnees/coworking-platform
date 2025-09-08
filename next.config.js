@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   // Enable React strict mode
   reactStrictMode: true,
@@ -22,9 +24,6 @@ const nextConfig = {
     // Enable optimized images in production
     unoptimized: process.env.NODE_ENV === 'development',
   },
-  
-  // External packages
-  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // TypeScript configuration
   typescript: {
