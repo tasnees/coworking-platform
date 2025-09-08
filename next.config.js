@@ -82,9 +82,28 @@ const nextConfig = {
 
 // For production builds, enable more optimizations
 if (process.env.NODE_ENV === 'production') {
+  // Enable standalone output for production
+  nextConfig.output = 'standalone';
+  
   // Add production-specific configurations here
   nextConfig.compress = true;
-  // SWC minification is now enabled by default in Next.js
+  nextConfig.swcMinify = true;
+  
+  // Enable production optimizations
+  nextConfig.productionBrowserSourceMaps = false;
+  
+  // Configure output file tracing
+  nextConfig.experimental = {
+    ...nextConfig.experimental,
+    outputFileTracingRoot: path.join(__dirname, '../../'),
+    outputFileTracingExcludes: {
+      '*': [
+        'node_modules/**/@swc/core-linux-x64-gnu',
+        'node_modules/**/@swc/core-linux-x64-musl',
+        'node_modules/**/@esbuild/linux-x64',
+      ],
+    },
+  };
 }
 
 module.exports = nextConfig;

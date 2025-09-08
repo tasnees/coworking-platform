@@ -17,7 +17,7 @@ services:
     # Start command for the application
     startCommand: >-
       echo "Starting application..."
-      cd .next/standalone && NODE_ENV=production node server.js
+      cd .next/standalone && NODE_ENV=production PORT=$PORT node server.js
     
     # Health check path
     healthCheckPath: /api/health

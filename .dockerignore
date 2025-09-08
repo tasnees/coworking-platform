@@ -7,17 +7,50 @@ node_modules
 coverage
 
 # Next.js
-.next/
-out/
+.next
+.next/*
+!.next/standalone
+!.next/standalone/**
+!.next/server
+!.next/static
 
 # Production
 build
+out
 
-# Misc
-.DS_Store
-*.pem
+# Environment files (handled by Render)
+.env*
+!.env.example
 
 # Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Misc
+*.pem
+*.log
+.cache
+.temp
+.tmp
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

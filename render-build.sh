@@ -19,15 +19,25 @@ npx prisma generate
 echo "🔌 Testing database connection..."
 npx prisma db push --skip-generate
 
-# Build the application
-echo "🔨 Building application..."
+# Build the application in standalone mode
+echo "🔨 Building application in standalone mode..."
 npm run build
 
+# Create standalone directory structure
+echo "📄 Setting up standalone output..."
+mkdir -p .next/standalone/.next
+
 # Copy required files for standalone mode
-echo "📄 Copying static files..."
+cp -r .next/standalone/.next .next/standalone/
 cp -r .next/static .next/standalone/.next/
 cp -r public .next/standalone/
 cp next.config.js .next/standalone/
+cp -r .next/server .next/standalone/.next/
+cp -r .next/trace .next/standalone/.next/
+cp -r .next/cache .next/standalone/.next/
+
+# Ensure the server file is executable
+chmod +x .next/standalone/server.js
 cp -r .next/server .next/standalone/.next/
 cp -r .next/chunks .next/standalone/.next/
 cp -r .next/cache .next/standalone/.next/

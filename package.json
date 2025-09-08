@@ -5,12 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "node .next/standalone/server.js",
+    "build:standalone": "next build && cp -r .next/standalone .next/standalone-temp && cp -r .next/static .next/standalone-temp/.next/ && cp -r public .next/standalone-temp/ && cp -r .next/server .next/standalone-temp/.next/ && cp -r .next/cache .next/standalone-temp/.next/ && mv .next/standalone-temp .next/standalone",
+    "start": "NODE_ENV=production node .next/standalone/server.js",
     "start:dev": "next start -p $PORT",
     "lint": "next lint",
     "prepare": "[ -z \"$CI\" ] && husky install || echo 'Skipping husky install in CI'",
-    "render-build": "chmod +x render-build.sh && ./render-build.sh",
-    "build:backend": "cd backend && npm install"
+    "render-build": "npm run build:standalone",
+    "build:backend": "cd backend && npm install",
+    "postbuild": "next-sitemap"
   },
   "husky": {
     "skipCI": true
