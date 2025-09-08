@@ -1,12 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Experimental features
+  // Enable React strict mode
+  reactStrictMode: true,
+  
+  // Enable server components
   experimental: {
     serverActions: {
       bodySizeLimit: '4mb',
-    }
+    },
   },
-  // External packages for server components
   serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // Image optimization configuration

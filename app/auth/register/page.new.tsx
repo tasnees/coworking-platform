@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,13 +95,28 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Redirect to login page with success message
-      toast({
-        title: 'Success',
-        description: 'Registration successful! Please sign in.',
+      // Automatically sign in the user
+      const signInResult = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
       });
-      
-      router.push('/auth/login');
+
+      if (signInResult?.error) {
+        // If auto-signin fails, redirect to login page with success message
+        toast({
+          title: 'Registration successful',
+          description: 'Please sign in with your new account.',
+        });
+        router.push('/auth/login');
+      } else {
+        // On successful sign in, the auth redirect will handle the dashboard redirection
+        toast({
+          title: 'Welcome!',
+          description: 'Your account has been created successfully.',
+        });
+        // The auth callback will handle the redirect to the appropriate dashboard
+      }
       
     } catch (error) {
       console.error('Registration error:', error);
