@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.clearCookie = exports.withCookie = exports.ApiResponse = void 0;
+require("express"); // This ensures the Response type is available for augmentation
 class ApiResponse {
     static success(_res, _unusedData = null, message = 'Success') {
         return message;

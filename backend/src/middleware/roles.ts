@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-namespace */
 import { Model, Document, Types } from 'mongoose';
 import { logger } from '../utils/logger';
 import { Request as ExpressRequest, Response, NextFunction, ParamsDictionary } from 'express-serve-static-core';

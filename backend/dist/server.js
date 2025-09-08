@@ -17,7 +17,7 @@ const resources_1 = __importDefault(require("./routes/resources"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 // Import middleware
 const errorHandler_1 = require("./middleware/errorHandler");
-const notFound_1 = require("./middleware/notFound");
+const notFoundHandler_1 = require("./middleware/notFoundHandler");
 const logger_1 = require("./utils/logger");
 dotenv_1.default.config();
 const app = (0, express_1.default)();
@@ -44,7 +44,7 @@ app.use('/api/bookings', bookings_1.default);
 app.use('/api/resources', resources_1.default);
 app.use('/api/auth', auth_routes_1.default);
 // Error handling middleware
-app.use(notFound_1.notFound);
+app.use(notFoundHandler_1.notFoundHandler);
 app.use(errorHandler_1.errorHandler);
 // Connect to MongoDB
 const connectDB = async () => {

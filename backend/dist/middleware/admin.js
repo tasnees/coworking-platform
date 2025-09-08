@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminMiddleware = exports.ForbiddenError = void 0;
+exports.adminMiddleware = void 0;
 class ForbiddenError extends Error {
     constructor(message = 'Access denied') {
         super(message);
@@ -8,10 +8,10 @@ class ForbiddenError extends Error {
         this.name = 'ForbiddenError';
     }
 }
-exports.ForbiddenError = ForbiddenError;
 const adminMiddleware = (req, _res, next) => {
     if (!req.user || req.user.role !== 'admin') {
-        throw new ForbiddenError('Admin access required');
+        const error = new ForbiddenError('Admin access required');
+        return next(error);
     }
     next();
 };

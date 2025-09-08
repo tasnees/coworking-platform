@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isOwner = exports.isStaff = exports.isAdmin = void 0;
+/* eslint-disable @typescript-eslint/no-namespace */
 const mongoose_1 = require("mongoose");
 const logger_1 = require("../utils/logger");
 // Role check helper function with proper typing
