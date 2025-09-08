@@ -1,4 +1,4 @@
-import mongoose, { Connection, ConnectOptions } from 'mongoose';
+import mongoose, { Connection } from 'mongoose';
 import { logger } from '../utils/logger';
 
 // Get MongoDB URI from environment variables or use default local development URI

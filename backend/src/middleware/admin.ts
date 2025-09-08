@@ -1,11 +1,15 @@
-import type { Request } from 'express';
+import { Request, Response } from 'express';
+
+type NextFunction = (err?: Error) => void;
+
+interface AuthenticatedUser {
+  id: string;
+  role: string;
+  [key: string]: unknown;
+}
 
 interface AuthenticatedRequest extends Request {
-  user?: {
-    id: string;
-    role: string;
-    [key: string]: unknown;
-  };
+  user?: AuthenticatedUser;
 }
 
 export class ForbiddenError extends Error {
@@ -17,11 +21,7 @@ export class ForbiddenError extends Error {
   }
 }
 
-type ExpressNextFunction = (err?: Error) => void;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type ExpressResponse = any;
-
-export const adminMiddleware = (req: AuthenticatedRequest, _res: ExpressResponse, next: ExpressNextFunction): void => {
+export const adminMiddleware = (req: AuthenticatedRequest, _res: Response, next: NextFunction): void => {
   if (!req.user || req.user.role !== 'admin') {
     throw new ForbiddenError('Admin access required');
   }

@@ -21,24 +21,24 @@ router.post('/register', [
         .matches(/[0-9]/)
         .withMessage('Password must contain at least one number'),
     (0, express_validator_1.body)('name').not().isEmpty().withMessage('Name is required'),
-], validateRequest_1.validateRequest, rateLimit_1.authLimiter, auth_controller_1.register);
+], validateRequest_1.validateRequest, rateLimit_1.authLimiter, auth_controller_1.authController.register);
 // @route   POST /api/auth/login
 // @desc    Login user & get token
 // @access  Public
 router.post('/login', [
     (0, express_validator_1.body)('email').isEmail().withMessage('Please include a valid email'),
     (0, express_validator_1.body)('password').exists().withMessage('Password is required'),
-], validateRequest_1.validateRequest, rateLimit_1.authLimiter, auth_controller_1.login);
+], validateRequest_1.validateRequest, rateLimit_1.authLimiter, auth_controller_1.authController.login);
 // @route   POST /api/auth/refresh-token
 // @desc    Refresh access token
 // @access  Public
 router.post('/refresh-token', [
     (0, express_validator_1.body)('refreshToken').not().isEmpty().withMessage('Refresh token is required'),
-], validateRequest_1.validateRequest, auth_controller_1.refreshToken);
+], validateRequest_1.validateRequest, auth_controller_1.authController.refreshToken);
 // @route   POST /api/auth/logout
 // @desc    Logout user / clear refresh token
 // @access  Private
 router.post('/logout', [
     (0, express_validator_1.body)('refreshToken').not().isEmpty().withMessage('Refresh token is required'),
-], validateRequest_1.validateRequest, auth_controller_1.logout);
+], validateRequest_1.validateRequest, auth_controller_1.authController.logout);
 exports.default = router;

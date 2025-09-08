@@ -138,7 +138,7 @@ resourceSchema.index({ type: 1, isAvailable: 1 });
 resourceSchema.index({ location: 1, floor: 1 });
 resourceSchema.index({ hourlyRate: 1 });
 // Virtual for checking if resource is available at specific time
-resourceSchema.methods.isAvailableAt = function (date, duration) {
+resourceSchema.methods.isAvailableAt = function (date) {
     const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     const dayAvailability = this.availability[dayOfWeek];
     if (!dayAvailability || !dayAvailability.available) {

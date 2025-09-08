@@ -14,7 +14,7 @@ import authRoutes from './routes/auth.routes';
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler';
-import { notFound } from './middleware/notFound';
+import { notFoundHandler } from './middleware/notFoundHandler';
 import { logger } from './utils/logger';
 
 dotenv.config();
@@ -48,7 +48,7 @@ app.use('/api/auth', authRoutes);
 
 
 // Error handling middleware
-app.use(notFound);
+app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Connect to MongoDB

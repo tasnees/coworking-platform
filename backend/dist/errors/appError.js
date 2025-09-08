@@ -55,4 +55,3 @@ class InternalServerError extends AppError {
     }
 }
 exports.InternalServerError = InternalServerError;
-//# sourceMappingURL=appError.js.map

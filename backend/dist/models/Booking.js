@@ -93,7 +93,9 @@ const bookingSchema = new mongoose_1.Schema({
         frequency: {
             type: String,
             enum: ['daily', 'weekly', 'monthly'],
-            required: function () { var _a; return (_a = this.recurring) === null || _a === void 0 ? void 0 : _a.isRecurring; }
+            required: function () {
+                return this.recurring?.isRecurring;
+            }
         },
         endDate: { type: Date }
     }

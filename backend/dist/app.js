@@ -36,16 +36,7 @@ app.use('/api/v1/users', user_routes_1.default);
 app.use('/api/v1/workspaces', workspace_routes_1.workspaceRoutes);
 app.use('/api/v1/bookings', booking_routes_1.default);
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.status(200).json({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        database: 'connected', // This should be updated based on actual DB connection status
-        memoryUsage: process.memoryUsage(),
-        env: process.env.NODE_ENV || 'development'
-    });
-});
+app.get('/api/health', () => 'Server is running');
 // 404 handler
 app.use(notFoundHandler_1.notFoundHandler);
 // Global error handler

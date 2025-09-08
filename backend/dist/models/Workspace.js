@@ -33,7 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WorkspaceModel = void 0;
+exports.Workspace = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 // Define the schema
 const WorkspaceSchema = new mongoose_1.Schema({
@@ -78,16 +78,20 @@ const WorkspaceSchema = new mongoose_1.Schema({
     toJSON: {
         virtuals: true,
         transform: function (doc, ret) {
-            delete ret.__v;
-            delete ret._id;
-            ret.id = doc._id.toString();
+            if ('__v' in ret)
+                delete ret.__v;
+            if ('_id' in ret) {
+                ret.id = doc._id.toString();
+                delete ret._id;
+            }
             return ret;
         },
     },
     toObject: {
         virtuals: true,
         transform: function (doc, ret) {
-            delete ret.__v;
+            if ('__v' in ret)
+                delete ret.__v;
             delete ret._id;
             ret.id = doc._id.toString();
             return ret;
@@ -116,4 +120,5 @@ WorkspaceSchema.pre('save', function (next) {
     next();
 });
 // Create and export the model
-exports.WorkspaceModel = mongoose_1.default.model('Workspace', WorkspaceSchema);
+exports.Workspace = mongoose_1.default.model('Workspace', WorkspaceSchema);
+exports.default = exports.Workspace;

@@ -1,25 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.notFoundHandler = void 0;
-const logger_1 = require("../utils/logger");
+const ApiError_1 = require("../utils/ApiError");
 /**
- * Middleware to handle 404 Not Found errors
+ * Not found handler middleware
+ * @param req - Express request object
  */
-const notFoundHandler = (req, res, next) => {
-    const error = new Error(`Not Found - ${req.originalUrl}`);
-    logger_1.logger.warn(`404 Not Found: ${req.method} ${req.originalUrl}`);
-    res.status(404).json({
-        success: false,
-        message: 'The requested resource was not found',
-        error: {
-            code: 'NOT_FOUND',
-            details: `The route ${req.originalUrl} does not exist on this server`,
-        },
-        request: {
-            method: req.method,
-            path: req.path,
-            timestamp: new Date().toISOString(),
-        },
-    });
+const notFoundHandler = (req) => {
+    const errorDetails = {
+        method: req.method,
+        path: req.path,
+        originalUrl: req.originalUrl
+    };
+    // Throw a 404 error that will be caught by the error handler
+    const error = new ApiError_1.ApiError(404, `The requested resource ${req.path} was not found.`);
+    // Add details to the error object
+    Object.assign(error, { details: errorDetails });
+    throw error;
 };
 exports.notFoundHandler = notFoundHandler;

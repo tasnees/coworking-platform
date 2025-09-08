@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -38,9 +29,9 @@ const smtpConfig = {
 // Create transporter
 const transporter = nodemailer_1.default.createTransport(smtpConfig);
 // Optional: Test connection function (call manually if needed)
-const testConnection = () => __awaiter(void 0, void 0, void 0, function* () {
+const testConnection = async () => {
     try {
-        yield transporter.sendMail({
+        await transporter.sendMail({
             from: process.env.EMAIL_FROM_ADDRESS || 'test@example.com',
             to: process.env.EMAIL_FROM_ADDRESS || 'test@example.com',
             subject: 'Connection Test',
@@ -52,25 +43,29 @@ const testConnection = () => __awaiter(void 0, void 0, void 0, function* () {
         logger.error('SMTP connection failed:', error);
         throw error;
     }
-});
+};
 exports.testConnection = testConnection;
 // Simple template replacement (no Handlebars dependency)
 const compileTemplate = (template, context) => {
     return template.replace(/\{\{(\w+)\}\}/g, (match, key) => {
-        var _a;
-        return ((_a = context[key]) === null || _a === void 0 ? void 0 : _a.toString()) || match;
+        return context[key]?.toString() || match;
     });
 };
 // Email sending function
-const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
+const sendEmail = async (options) => {
     const { to, subject, template, html, context = {}, attachments = [] } = options;
     let emailHtml = html;
     // If template is provided, try to load it
     if (template && !html) {
         try {
             const templatePath = path_1.default.join(TEMPLATES_DIR, `${template}.html`);
-            const templateContent = yield promises_1.default.readFile(templatePath, 'utf8');
-            const emailContext = Object.assign(Object.assign({}, context), { appName: process.env.APP_NAME || 'Coworking Platform', appUrl: process.env.CLIENT_URL || 'http://localhost:3000', year: new Date().getFullYear() });
+            const templateContent = await promises_1.default.readFile(templatePath, 'utf8');
+            const emailContext = {
+                ...context,
+                appName: process.env.APP_NAME || 'Coworking Platform',
+                appUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+                year: new Date().getFullYear(),
+            };
             emailHtml = compileTemplate(templateContent, emailContext);
         }
         catch (error) {
@@ -83,7 +78,7 @@ const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
     }
     const from = `"${process.env.EMAIL_FROM_NAME || 'Coworking Platform'}" <${process.env.EMAIL_FROM_ADDRESS || 'noreply@coworking.com'}>`;
     try {
-        yield transporter.sendMail({
+        await transporter.sendMail({
             from,
             to,
             subject,
@@ -96,15 +91,15 @@ const sendEmail = (options) => __awaiter(void 0, void 0, void 0, function* () {
         logger.error('Error sending email:', error);
         throw error;
     }
-});
+};
 exports.sendEmail = sendEmail;
 // Send simple email without template
-const sendSimpleEmail = (to, subject, html) => __awaiter(void 0, void 0, void 0, function* () {
-    yield (0, exports.sendEmail)({ to, subject, html });
-});
+const sendSimpleEmail = async (to, subject, html) => {
+    await (0, exports.sendEmail)({ to, subject, html });
+};
 exports.sendSimpleEmail = sendSimpleEmail;
 // Test email function
-const sendTestEmail = (to) => __awaiter(void 0, void 0, void 0, function* () {
+const sendTestEmail = async (to) => {
     try {
         const testHtml = `
       <h1>Test Email</h1>
@@ -112,7 +107,7 @@ const sendTestEmail = (to) => __awaiter(void 0, void 0, void 0, function* () {
       <p>This is a test email from Coworking Platform.</p>
       <p>Current time: ${new Date().toISOString()}</p>
     `;
-        yield (0, exports.sendSimpleEmail)(to, 'Test Email', testHtml);
+        await (0, exports.sendSimpleEmail)(to, 'Test Email', testHtml);
         return { success: true, message: 'Test email sent successfully.' };
     }
     catch (error) {
@@ -120,5 +115,5 @@ const sendTestEmail = (to) => __awaiter(void 0, void 0, void 0, function* () {
         logger.error('Test email failed:', errorMessage);
         return { success: false, message: `Failed to send test email: ${errorMessage}` };
     }
-});
+};
 exports.sendTestEmail = sendTestEmail;

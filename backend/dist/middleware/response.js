@@ -1,41 +1,44 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.extendResponse = void 0;
 const extendResponse = (_req, res, next) => {
+    const customRes = res;
     // Add success method
-    res.success = function (data, message = 'Success', status = 200) {
-        return res.status(status).json({
+    customRes.success = function (message = 'Success', data) {
+        const response = {
             success: true,
-            message,
-            data
-        });
+            message
+        };
+        if (data !== undefined) {
+            response.data = data;
+        }
     };
     // Add error method
-    res.error = function (message, status = 500, errors = null) {
-        return res.status(status).json({
+    customRes.error = function (message, statusCode = 400) {
+        if (!message) {
+            throw new Error('Error message is required');
+        }
+        const errorResponse = {
             success: false,
             message,
-            errors: errors || undefined
-        });
+            statusCode
+        };
     };
     // Add helper methods
-    res.notFound = function (message = 'Resource not found') {
-        return this.error(message, 404);
+    customRes.notFound = function (message = 'Resource not found') {
+        this.error(message, 404);
     };
-    res.unauthorized = function (message = 'Unauthorized') {
-        return this.error(message, 401);
+    customRes.unauthorized = function (message = 'Unauthorized') {
+        this.error(message, 401);
     };
-    res.forbidden = function (message = 'Forbidden') {
-        return this.error(message, 403);
+    customRes.forbidden = function (message = 'Forbidden') {
+        this.error(message, 403);
     };
-    res.badRequest = function (message = 'Bad Request', errors = null) {
-        return this.error(message, 400, errors);
+    customRes.badRequest = function (message = 'Bad Request') {
+        this.error(message, 400);
     };
-    res.internalError = function (message = 'Internal Server Error', errors = null) {
-        return this.error(message, 500, errors);
+    customRes.internalError = function (message = 'Internal Server Error') {
+        this.error(message, 500);
     };
     next();
 };
-exports.extendResponse = extendResponse;
-exports.default = exports.extendResponse;
-//# sourceMappingURL=response.js.map
+exports.default = extendResponse;

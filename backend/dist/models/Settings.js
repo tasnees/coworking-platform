@@ -32,15 +32,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
 const settingsSchema = new mongoose_1.Schema({
@@ -74,14 +65,12 @@ const settingsSchema = new mongoose_1.Schema({
     }
 });
 // Add static method
-settingsSchema.statics.getSettings = function () {
-    return __awaiter(this, void 0, void 0, function* () {
-        let settings = yield this.findOne();
-        if (!settings) {
-            settings = yield this.create({});
-        }
-        return settings;
-    });
+settingsSchema.statics.getSettings = async function () {
+    let settings = await this.findOne();
+    if (!settings) {
+        settings = await this.create({});
+    }
+    return settings;
 };
 // Use the extended interface with both ISettings and ISettingsModel
 const Settings = mongoose_1.default.model('Settings', settingsSchema);

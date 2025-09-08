@@ -21,4 +21,3 @@ const clearCookie = (res, name, options) => {
     return res.clearCookie(name, options);
 };
 exports.clearCookie = clearCookie;
-//# sourceMappingURL=response.js.map

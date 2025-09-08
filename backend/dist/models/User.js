@@ -32,15 +32,6 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -151,20 +142,16 @@ const userSchema = new mongoose_1.Schema({
     timestamps: true
 });
 // Hash password before saving
-userSchema.pre('save', function (next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        if (!this.isModified('password'))
-            return next();
-        const salt = yield bcryptjs_1.default.genSalt(12);
-        this.password = yield bcryptjs_1.default.hash(this.password, salt);
-        next();
-    });
+userSchema.pre('save', async function (next) {
+    if (!this.isModified('password'))
+        return next();
+    const salt = await bcryptjs_1.default.genSalt(12);
+    this.password = await bcryptjs_1.default.hash(this.password, salt);
+    next();
 });
 // Compare password method (alias: matchPassword)
-userSchema.methods.comparePassword = function (candidatePassword) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return yield bcryptjs_1.default.compare(candidatePassword, this.password);
-    });
+userSchema.methods.comparePassword = async function (candidatePassword) {
+    return await bcryptjs_1.default.compare(candidatePassword, this.password);
 };
 // Alias for comparePassword
 userSchema.methods.matchPassword = userSchema.methods.comparePassword;
@@ -196,11 +183,18 @@ userSchema.virtual('fullName').get(function () {
     return `${this.firstName} ${this.lastName}`;
 });
 // Ensure virtual fields are serialized
+// The transform function removes sensitive fields when converting to JSON
 userSchema.set('toJSON', {
     virtuals: true,
-    transform: function (doc, ret) {
-        delete ret.password;
-        return ret;
+    versionKey: false,
+    transform: (_doc, ret) => {
+        // Use destructuring to exclude sensitive fields (type-safe approach)
+        const { password, emailVerificationToken, passwordResetToken, tokenVersion, _id, ...cleanRet } = ret;
+        // Return clean object with id field
+        return {
+            ...cleanRet,
+            id: _id
+        };
     }
 });
 // Create and export the User model

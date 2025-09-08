@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authLimiter = exports.apiLimiter = void 0;
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
-const logger_1 = require("../utils/logger");
 // Rate limiting configuration
 const apiLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -17,12 +16,11 @@ const apiLimiter = (0, express_rate_limit_1.default)({
         // Ensure we always return a string, defaulting to 'unknown' if IP is not available
         return req.ip || 'unknown';
     },
-    handler: (req, res, next) => {
-        logger_1.logger.warn(`Rate limit exceeded for IP: ${req.ip}`);
-        res.status(429).json({
-            success: false,
-            message: 'Too many requests, please try again later.',
-        });
+    handler: (req, _res, next) => {
+        const ip = req.ip || 'unknown';
+        const error = new Error(`Rate limit exceeded for IP: ${ip}`);
+        error.status = 429;
+        next(error);
     },
 });
 exports.apiLimiter = apiLimiter;
@@ -37,12 +35,11 @@ const authLimiter = (0, express_rate_limit_1.default)({
         // Ensure we always return a string, defaulting to 'unknown' if IP is not available
         return req.ip || 'unknown';
     },
-    handler: (req, res, next) => {
-        logger_1.logger.warn(`Auth rate limit exceeded for IP: ${req.ip}`);
-        res.status(429).json({
-            success: false,
-            message: 'Too many login attempts, please try again later.',
-        });
+    handler: (req, _res, next) => {
+        const ip = req.ip || 'unknown';
+        const error = new Error(`Too many login attempts from IP: ${ip}`);
+        error.status = 429;
+        next(error);
     },
 });
 exports.authLimiter = authLimiter;

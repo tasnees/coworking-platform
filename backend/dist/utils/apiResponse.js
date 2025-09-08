@@ -51,4 +51,3 @@ function sendResponse(res, data, statusCode = 200, message = 'Success') {
         data
     });
 }
-//# sourceMappingURL=apiResponse.js.map
