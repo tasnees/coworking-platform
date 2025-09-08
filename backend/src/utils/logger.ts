@@ -1,37 +1,19 @@
-import * as winston from 'winston';
+import winston from 'winston';
 
-const { combine, timestamp, printf, colorize } = winston.format;
-
-// Define log format
-const logFormat = printf(({ level, message, timestamp, ...meta }) => {
-  return `${timestamp} [${level}]: ${message} ${
-    Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
-  }`;
-});
-
-// Create logger instance
+// Create a simple logger with minimal configuration
 const logger = winston.createLogger({
-  level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
-  format: combine(
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.errors({ stack: true }),
-    logFormat
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.simple()
   ),
-  defaultMeta: { service: 'coworking-platform' },
-  transports: [
-    // Console transport with colors
-    new winston.transports.Console({
-      format: combine(
-        colorize({ all: true }),
-        printf(
-          ({ level, message, timestamp, ...meta }) =>
-            `${timestamp} [${level}]: ${message} ${
-              Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
-            }`
-        )
-      ),
-    })
-  ]
+  transports: [new winston.transports.Console()]
 });
 
-export { logger };
+// HTTP request logger
+const httpLogger = (message: string): void => {
+  logger.info(message.trim());
+};
+
+export { logger, httpLogger };
+export default logger;
