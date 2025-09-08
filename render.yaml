@@ -10,44 +10,107 @@ services:
     
     # Build configuration
     buildCommand: |
-      # Make the build script executable and run it
-      chmod +x render-build.sh
-      ./render-build.sh
+      # Install Node.js dependencies with legacy peer deps
+      echo "Installing dependencies..."
+      npm config set legacy-peer-deps true
+      npm ci --prefer-offline --no-audit --progress=false
+      
+      # Install Prisma and generate client
+      echo "Setting up Prisma..."
+      npx prisma generate
+      
+      # Build the application
+      echo "Building application..."
+      npm run build
+      
+      # Create standalone output
+      echo "Preparing standalone output..."
+      mkdir -p .next/standalone-temp
+      cp -r .next/standalone/. .next/standalone-temp/
+      mkdir -p .next/standalone-temp/.next
+      cp -r .next/static .next/standalone-temp/.next/
+      cp -r .next/server .next/standalone-temp/.next/
+      cp -r public .next/standalone-temp/
+      cp next.config.js .next/standalone-temp/
+      rm -rf .next/standalone
+      mv .next/standalone-temp .next/standalone
+      
+      # Make server.js executable
+      chmod +x .next/standalone/server.js
+      
+      echo "Build completed successfully!"
     
     # Start command for the application
     startCommand: >-
       echo "Starting application..."
-      cd .next/standalone && NODE_ENV=production PORT=$PORT node server.js
+      cd .next/standalone
+      NODE_ENV=production PORT=$PORT node server.js
     
     # Health check path
     healthCheckPath: /api/health
     
-    # Set the port
+    # Environment variables
     envVars:
+      # Required variables
       - key: PORT
         value: 10000
       - key: NODE_ENV
         value: production
       - key: NODE_OPTIONS
         value: --max_old_space_size=2048
+      
+      # Next.js specific
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
       - key: NEXT_SHARP_PATH
-        value: "/tmp/node_modules/sharp"
+        value: "./node_modules/sharp"
       - key: NEXT_PUBLIC_APP_URL
-        value: https://your-render-app-url.onrender.com
+        value: https://your-render-app-url.onrender.com  # Update this with your actual URL
+      
+      # Prisma configuration
       - key: PRISMA_QUERY_ENGINE_BINARY
-        value: "/tmp/node_modules/prisma/query-engine"
+        value: "./node_modules/prisma/query-engine"
       - key: PRISMA_SCHEMA_ENGINE_BINARY
-        value: "/tmp/node_modules/prisma/schema-prisma"
+        value: "./node_modules/prisma/schema-prisma"
+      - key: PRISMA_CLI_QUERY_ENGINE_TYPE
+        value: "binary"
+      
+      # Build optimization
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"
+      - key: NPM_CONFIG_LEGACY_PEER_DEPS
+        value: "true"
+      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+        value: "1"
+      - key: SKIP_ENV_VALIDATION
+        value: "1"
+      - key: CI
+        value: "false"
     
     # Build environment variables
     build:
       NODE_ENV: production
       NODE_OPTIONS: --max_old_space_size=4096
-      
+      NPM_CONFIG_PRODUCTION: "false"
+      NPM_CONFIG_LEGACY_PEER_DEPS: "true"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PRISMA_CLI_QUERY_ENGINE_TYPE: "binary"
+      SKIP_ENV_VALIDATION: "1"
+      CI: "false"
+    
     # Auto-deploy settings
     autoDeploy: true
+    
+    # Post-deploy script (runs after deployment)
+    postdeploy: |
+      echo "Running post-deployment tasks..."
+      # Generate Prisma client if needed
+      npx prisma generate
+      # Run database migrations
+      npx prisma migrate deploy
+      # Build the application
+      npm run build
+      echo "Post-deployment tasks completed!"
     
     # Build cache settings
     buildCachePolicy: "DEFAULT"
