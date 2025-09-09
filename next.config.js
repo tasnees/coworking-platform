@@ -9,9 +9,10 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '4mb',
+      allowedOrigins: ['*'],
     },
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
-  serverExternalPackages: ['@prisma/client', 'bcryptjs'],
   
   // Image optimization configuration
   images: {
