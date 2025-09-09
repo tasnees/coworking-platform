@@ -32,7 +32,7 @@ const publicApiRoutes = [
   '/api/health',
 ];
 
-export default withAuth(
+const middleware = withAuth(
   function middleware(request) {
     const { pathname, searchParams } = request.nextUrl;
     const token = request.nextauth?.token as (JWT & { role: UserRole }) | undefined;
@@ -224,12 +224,14 @@ export default withAuth(
           return true;
         }
         
-        // Require authentication for all other paths
+        // Require authentication for protected routes
         return !!token;
-      },
-    },
+      }
+    }
   }
 );
+
+export default middleware;
 
 // These should be in your auth options, not in the middleware
 // Move these to your auth-options.ts file if you need them
