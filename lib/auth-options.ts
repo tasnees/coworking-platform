@@ -15,7 +15,7 @@ import {
 import { getDb } from './db-utils';
 
 // Import UserRole type from our centralized types
-import { UserRole } from '@/types/next-auth';
+import { UserRole } from '@/lib/auth-types';
 
 // Enable debug logging
 const debug = process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true';

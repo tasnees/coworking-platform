@@ -1,6 +1,6 @@
-import { Component as BuilderIoComponent } from "@builder.io/sdk";
+import { BuilderComponent } from "@builder.io/react";
 
-export const builderIoSettings: BuilderIoComponent = {
+export const builderIoSettings = {
   name: "React",
   override: true,
   canHaveChildren: true,

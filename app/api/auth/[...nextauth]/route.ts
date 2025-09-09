@@ -1,26 +1,12 @@
 // app/api/auth/[...nextauth]/route.ts
-import NextAuth, { DefaultSession } from "next-auth";
-import { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
+import type { NextAuthOptions, DefaultSession } from "next-auth";
+import type { JWT } from 'next-auth/jwt';
 import CredentialsProvider from "next-auth/providers/credentials";
 
-type UserRole = 'admin' | 'staff' | 'member';
-
-// Extend the built-in session types
-declare module 'next-auth' {
-  interface Session extends DefaultSession {
-    user: {
-      id: string;
-      email: string;
-      role: UserRole;
-    } & DefaultSession['user'];
-  }
-
-  interface User {
-    id: string;
-    email: string;
-    role: UserRole;
-  }
-}
+// Import types from our central type definitions
+import type { DefaultUser } from 'next-auth';
+import type { UserRole } from "@/lib/auth-types";
 
 // Helper function to log debug information
 function logDebug(message: string, data?: any) {
@@ -44,17 +30,11 @@ export const authOptions: NextAuthOptions = {
         
         try {
           // Use absolute URL for the proxy endpoint
-          const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-          const response = await fetch(`${baseUrl}/api/proxy/auth/login`, {
+          const baseUrl = process.env.NEXTAUTH_URL || 'https://coworking-platform.onrender.com';
+          const response = await fetch(`${baseUrl}/api/auth/login`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials)
           });
 
           const responseData = await response.json().catch(() => ({}));
@@ -75,13 +55,16 @@ export const authOptions: NextAuthOptions = {
 
           console.log('Authentication successful for user:', responseData.user.email);
           
-          // Return user data in the format expected by NextAuth
-          return {
-            id: responseData.user.id,
+          // Map the backend user to the NextAuth user
+          const user = {
+            id: responseData.user._id || responseData.user.id,
             email: responseData.user.email,
-            role: responseData.user.role,
+            role: responseData.user.role || 'member',
             name: responseData.user.name || `${responseData.user.firstName || ''} ${responseData.user.lastName || ''}`.trim(),
+            image: responseData.user.image || null
           };
+          
+          return user;
         } catch (error) {
           console.error('Login error:', error);
           return null;
@@ -91,7 +74,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 300 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
@@ -117,45 +100,54 @@ export const authOptions: NextAuthOptions = {
     },
     
     async session({ session, token }) {
-      logDebug('Session callback started', { token, session });
+      logDebug('Session callback', { session, token });
       
-      if (session.user) {
-        session.user.id = token.sub || '';
-        session.user.role = (token.role as UserRole) || 'member';
-        session.user.email = token.email || '';
-        session.user.name = token.name || '';
-        session.user.image = token.picture || null;
-      }
+      // Create the updated session with all user properties
+      const updatedSession = {
+        ...session,
+        user: {
+          ...session.user,
+          id: token.sub || '',
+          name: token.name ?? session.user?.name ?? null,
+          email: token.email ?? session.user?.email ?? null,
+          role: token.role || 'member',
+          // Use type assertion to handle the image property
+          ...(token.picture && { image: token.picture })
+        }
+      };
       
       logDebug('Session callback completed', { 
-        sessionUser: session.user,
+        sessionUser: updatedSession.user,
         tokenUser: token
       });
       
-      return session;
+      return updatedSession;
     },
-    async jwt({ token, user, trigger, session, account }) {
-      logDebug('JWT callback started', { 
-        token, 
-        user, 
-        trigger, 
-        hasSession: !!session,
-        accountType: account?.type
-      });
-      
+    async jwt({ token, user, trigger, session }) {
+      logDebug('JWT callback', { token, user, trigger, session });
+
       // Initial sign in
       if (user) {
-        logDebug('Initial sign in - adding user to token', { user });
-        token.role = user.role || 'member';
-        token.email = user.email;
-        token.name = user.name;
-        token.picture = user.image || null;
+        return {
+          ...token,
+          id: user.id,
+          name: user.name ?? null,
+          email: user.email ?? null,
+          picture: user.image ?? null,
+          role: user.role || 'member'
+        };
       }
-      
+
       // Update token with data from session (if needed)
       if (trigger === 'update' && session?.user) {
         logDebug('Updating token from session', { sessionUser: session.user });
-        token = { ...token, ...session.user };
+        return {
+          ...token,
+          name: session.user.name ?? token.name,
+          email: session.user.email ?? token.email,
+          picture: (session.user as any).image ?? token.picture,
+          role: (session.user as any).role ?? token.role ?? 'member'
+        };
       }
       
       logDebug('JWT callback completed', { 

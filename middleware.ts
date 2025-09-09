@@ -4,6 +4,33 @@ import type { NextRequest } from 'next/server';
 import { JWT } from 'next-auth/jwt';
 import { getDashboardPath } from '@/lib/utils/routes';
 
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      name?: string | null;
+      email?: string | null;
+      role: string;
+    };
+  }
+  interface User {
+    role: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    role: string;
+  }
+}
+
+// Extend NextRequest to include nextauth
+interface NextRequestWithAuth extends NextRequest {
+  nextauth?: {
+    token?: JWT & { role: string };
+  };
+}
+
 type UserRole = 'admin' | 'staff' | 'member';
 
 // List of public paths that don't require authentication
@@ -33,9 +60,10 @@ const publicApiRoutes = [
 ];
 
 const middleware = withAuth(
-  function middleware(request) {
+  function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
-    const token = request.nextauth?.token as (JWT & { role: UserRole }) | undefined;
+    const reqWithAuth = request as unknown as NextRequestWithAuth;
+    const token = reqWithAuth.nextauth?.token;
     const role = token?.role as UserRole | undefined;
     const callbackUrl = searchParams.get('callbackUrl');
 
@@ -217,17 +245,15 @@ const middleware = withAuth(
   {
     callbacks: {
       authorized({ token, req }) {
-        const pathname = req.nextUrl?.pathname || '';
-        
-        // Always allow public paths
-        if (publicPaths.some(path => pathname.startsWith(path))) {
+        const reqWithAuth = req as unknown as NextRequestWithAuth;
+        // This is a workaround for handling redirect on auth pages.
+        // Return true to bypass the middleware for these requests
+        if (reqWithAuth.nextUrl.pathname.startsWith('/auth/')) {
           return true;
         }
-        
-        // Require authentication for protected routes
         return !!token;
-      }
-    }
+      },
+    },
   }
 );
 

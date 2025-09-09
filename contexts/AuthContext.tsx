@@ -3,15 +3,17 @@
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
 import { useSession, signIn, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { UserRole } from '@/lib/auth-types'
+import { UserRole, isUserRole } from '@/lib/auth-types'
 
-interface User {
-  id: string
-  email: string | null
-  name: string | null
-  image: string | null
-  role: UserRole
-}
+// User type that matches our NextAuth session user
+type User = {
+  id: string;
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role: UserRole;
+  [key: string]: unknown; // Allow additional properties
+};
 
 interface AuthContextType {
   user: User | null
@@ -71,11 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const user = session?.user ? {
-    id: session.user.id,
-    email: session.user.email || null,
-    name: session.user.name || null,
-    image: session.user.image || null,
-    role: session.user.role || 'member' as UserRole
+    ...session.user,
+    role: isUserRole(session.user.role) ? session.user.role : 'member'
   } : null
 
   const value = {

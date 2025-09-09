@@ -5,37 +5,41 @@ import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
 import {
   Controller,
-  ControllerProps,
-  FieldPath,
-  FieldValues,
+  type FieldPath,
+  type FieldValues,
   FormProvider,
   useFormContext,
+  type UseFormMethods,
+  type ControllerProps as RHFControllerProps,
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
-const Form = FormProvider
+type FormProviderProps<T extends FieldValues> = {
+  children: React.ReactNode
+} & UseFormMethods<T>
 
-type FormFieldContextValue<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> = {
-  name: TName
-}
-
-const FormFieldContext = React.createContext<FormFieldContextValue>(
-  {} as FormFieldContextValue
+const Form = <T extends FieldValues>({
+  children,
+  ...formMethods
+}: FormProviderProps<T>) => (
+  <FormProvider {...formMethods}>
+    {children}
+  </FormProvider>
 )
 
-const FormField = <
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({
+type FormFieldContextValue = {
+  name: string
+}
+
+const FormFieldContext = React.createContext<FormFieldContextValue | null>(null)
+
+function FormField<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
   ...props
-}: ControllerProps<TFieldValues, TName>) => {
+}: RHFControllerProps<TFieldValues>) {
   return (
-    <FormFieldContext.Provider value={{ name: props.name }}>
+    <FormFieldContext.Provider value={{ name: String(props.name) }}>
       <Controller {...props} />
     </FormFieldContext.Provider>
   )
@@ -44,13 +48,15 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
-
-  const fieldState = getFieldState(fieldContext.name, formState)
+  const formContext = useFormContext()
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
+
+  const fieldState = formContext.formState?.errors?.[fieldContext.name]
+    ? { error: formContext.formState.errors[fieldContext.name] }
+    : { error: undefined }
 
   const { id } = itemContext
 

@@ -43,10 +43,17 @@ export default function ProfilePage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!formData.name.trim()) {
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const formValues: Record<string, string> = {};
+    formData.forEach((value, key) => {
+      formValues[key] = value.toString();
+    });
+    
+    if (!formValues.name?.trim()) {
       toast({
         title: 'Error',
         description: 'Name cannot be empty',
@@ -64,7 +71,8 @@ export default function ProfilePage() {
         ...session,
         user: {
           ...session?.user,
-          name: formData.name,
+          name: formValues.name,
+          email: formValues.email,
         },
       });
       
@@ -130,7 +138,10 @@ export default function ProfilePage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="flex items-center gap-6">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={session.user?.image || ''} alt={session.user?.name || ''} />
+                    <AvatarImage 
+                      src={(session.user as any)?.image || ''} 
+                      alt={(session.user as any)?.name || ''} 
+                    />
                     <AvatarFallback>
                       <User className="h-10 w-10" />
                     </AvatarFallback>
