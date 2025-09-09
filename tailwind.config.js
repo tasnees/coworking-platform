@@ -73,7 +73,8 @@ module.exports = {
     },
   },
   plugins: [
-    require("@tailwindcss/forms"),
-    require("@tailwindcss/typography"),
+    require('@tailwindcss/typography'),
+    // Optional form plugin - uncomment when needed
+    // require('@tailwindcss/forms'),
   ],
 }
