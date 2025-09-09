@@ -29,10 +29,15 @@ services:
       export CXXFLAGS="--std=c++20"
       export npm_config_build_from_source=true
       
-      # Install Node.js dependencies with legacy peer deps
-      echo "Installing dependencies..."
+      # Clean npm cache and node_modules
+      echo "Cleaning npm cache and node_modules..."
+      npm cache clean --force
+      rm -rf node_modules
+      
+      # Install dependencies using npm ci for reliable builds
+      echo "Installing dependencies with npm ci..."
       npm config set legacy-peer-deps true
-      npm install --prefer-offline --no-audit --progress=false
+      npm ci --prefer-offline --no-audit --progress=false
       
       # Install Prisma and generate client
       echo "Installing Prisma..."
