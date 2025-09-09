@@ -150,11 +150,6 @@ export default withAuth(
           return NextResponse.redirect(new URL(dashboardPath, request.url));
         }
       }
-        if (!pathname.startsWith('/auth/')) {
-          loginUrl.searchParams.set('callbackUrl', pathname);
-        }
-        return NextResponse.redirect(loginUrl);
-      }
 
       // Allow access to profile for all authenticated users
       if (pathname.startsWith('/dashboard/profile')) {
