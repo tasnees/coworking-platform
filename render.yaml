@@ -15,6 +15,11 @@ services:
       nvm install 20
       nvm use 20
       
+      # Clean npm cache and remove node_modules
+      echo "Cleaning npm cache and node_modules..."
+      npm cache clean --force
+      rm -rf node_modules
+      
       # Install build dependencies
       echo "Installing build dependencies..."
       sudo apt-get update
@@ -27,11 +32,11 @@ services:
       # Install Node.js dependencies with legacy peer deps
       echo "Installing dependencies..."
       npm config set legacy-peer-deps true
-      npm ci --prefer-offline --no-audit --progress=false
+      npm install --prefer-offline --no-audit --progress=false
       
       # Install Prisma and generate client
       echo "Installing Prisma..."
-      npm install prisma@6.14.0 --save-dev
+      npm install prisma@6.15.0 --save-dev
       echo "Generating Prisma client..."
       npx prisma generate --schema=./prisma/schema.prisma
       
