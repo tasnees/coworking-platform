@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.10.0",
-    "aws4": "^1.12.0",
     "@auth/prisma-adapter": "^2.10.0",
     "@auth0/nextjs-auth0": "^4.9.0",
     "@builder.io/react": "^8.2.7",
@@ -47,6 +46,7 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/speed-insights": "^1.1.0",
     "autoprefixer": "^10.4.17",
+    "aws4": "^1.13.2",
     "bcryptjs": "^3.0.2",
     "chart.js": "^4.5.0",
     "class-variance-authority": "^0.7.1",
