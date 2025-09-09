@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "CXXFLAGS='--std=c++20' npm_config_build_from_source=true next build",
+    "build": "cross-env CXXFLAGS=--std=c++20 npm_config_build_from_source=true next build",
     "start": "next start",
     "postinstall": "npm install prisma @types/node --save && npx prisma generate"
   },
@@ -91,5 +91,8 @@
   },
   "isolated-vm": {
     "buildFromSource": true
+  },
+  "devDependencies": {
+    "cross-env": "^10.0.0"
   }
 }
