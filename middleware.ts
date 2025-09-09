@@ -46,6 +46,11 @@ export default withAuth(
         // Get and clean the callback URL
         const callbackUrl = searchParams.get('callbackUrl');
         
+        // If callbackUrl is already set to a dashboard path, prevent redirect loop
+        if (callbackUrl && (callbackUrl.startsWith('/dashboard') || callbackUrl.startsWith('/auth'))) {
+          return NextResponse.next();
+        }
+        
         try {
           // If no callback URL, redirect to dashboard
           if (!callbackUrl) {
@@ -123,7 +128,28 @@ export default withAuth(
       // Redirect to login if not authenticated
       if (!token) {
         const loginUrl = new URL('/auth/login', request.url);
-        // Only set callbackUrl if we're not already on a login page to prevent loops
+        
+        // Prevent redirect loops by checking if we're already being redirected
+        if (callbackUrl && callbackUrl.startsWith('/auth')) {
+          return NextResponse.next();
+        }
+        
+        // Only set callbackUrl if we're not already on a login page
+        loginUrl.searchParams.set('callbackUrl', pathname);
+        return NextResponse.redirect(loginUrl);
+      }
+      
+      // If user is authenticated, verify they have access to the requested dashboard
+      if (token.role) {
+        const userRole = token.role.toLowerCase();
+        const rolePath = pathname.split('/')[2]; // Get the role from the URL (e.g., 'member' from '/dashboard/member')
+        
+        // If the user is trying to access a dashboard that doesn't match their role, redirect them
+        if (rolePath && rolePath !== userRole && ['admin', 'staff', 'member'].includes(rolePath)) {
+          const dashboardPath = getDashboardPath(userRole as UserRole);
+          return NextResponse.redirect(new URL(dashboardPath, request.url));
+        }
+      }
         if (!pathname.startsWith('/auth/')) {
           loginUrl.searchParams.set('callbackUrl', pathname);
         }

@@ -47,6 +47,13 @@ function LoginForm() {
         const callbackUrl = searchParams?.get('callbackUrl');
         const defaultPath = getDashboardPath(role);
         
+        // Prevent redirect loops by checking if we're already on a dashboard page
+        if (callbackUrl && (callbackUrl.startsWith('/dashboard') || callbackUrl.startsWith('/auth'))) {
+          // If we're in a redirect loop, force a redirect to the default dashboard
+          router.replace(defaultPath);
+          return;
+        }
+        
         // Small delay to ensure session is fully loaded
         const timer = setTimeout(() => {
           console.log('Handling redirect:', { callbackUrl, defaultPath });

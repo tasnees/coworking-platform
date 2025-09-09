@@ -420,11 +420,27 @@ export const authOptions: NextAuthOptions = {
     },
     
     async session({ session, token }) {
+      // Ensure user object exists
+      if (!session.user) {
+        session.user = {} as any;
+      }
+      
       // Add role and ID to the session
-      if (session.user) {
+      if (token.role) {
         session.user.role = token.role as UserRole;
+      } else {
+        // Default role if not set
+        session.user.role = 'member';
+      }
+      
+      if (token.id) {
         session.user.id = token.id as string;
       }
+      
+      // Ensure the session has all required fields
+      session.user.name = session.user.name || token.name || '';
+      session.user.email = session.user.email || token.email || '';
+      
       return session;
     },
     
