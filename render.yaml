@@ -15,11 +15,6 @@ services:
       nvm install 20
       nvm use 20
       
-      # Install Node.js dependencies with legacy peer deps
-      echo "Installing dependencies..."
-      npm config set legacy-peer-deps true
-      npm ci --prefer-offline --no-audit --progress=false
-      
       # Install build dependencies
       echo "Installing build dependencies..."
       sudo apt-get update
@@ -29,9 +24,24 @@ services:
       export CXXFLAGS="--std=c++20"
       export npm_config_build_from_source=true
       
+      # Install Node.js dependencies with legacy peer deps
+      echo "Installing dependencies..."
+      npm config set legacy-peer-deps true
+      npm ci --prefer-offline --no-audit --progress=false
+      
       # Install Prisma and generate client
-      echo "Setting up Prisma..."
-      npx prisma generate
+      echo "Installing Prisma..."
+      npm install prisma@6.14.0 --save-dev
+      echo "Generating Prisma client..."
+      npx prisma generate --schema=./prisma/schema.prisma
+      
+      # Verify Prisma client generation
+      if [ -d "node_modules/.prisma/client" ]; then
+        echo "Prisma client generated successfully"
+      else
+        echo "Error: Prisma client was not generated"
+        exit 1
+      fi
       
       # Build the application
       echo "Building application..."
@@ -141,11 +151,25 @@ services:
       - key: NODE_ENV
         value: production
         
-      # Database configuration
+      # Database
       - key: MONGODB_URI
         fromDatabase:
-          name: mongodb-atlas
+          name: mongodb
           property: connectionString
+          
+      # Ensure Prisma can find the database URL
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mongodb
+          property: connectionString
+          
+      # Required for Prisma with MongoDB
+      - key: PRISMA_QUERY_ENGINE_LIBRARY
+        value: "/opt/render/project/src/node_modules/.prisma/client/libquery_engine-linux-musl.so.node"
+        
+      # Required for Prisma with MongoDB
+      - key: PRISMA_CLI_QUERY_ENGINE_TYPE
+        value: "library"
           
       # NextAuth configuration
       - key: NEXTAUTH_SECRET
