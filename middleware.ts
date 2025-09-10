@@ -4,6 +4,7 @@ import type { NextRequest } from 'next/server';
 import { JWT } from 'next-auth/jwt';
 import { getDashboardPath } from '@/lib/utils/routes';
 
+
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -28,7 +29,7 @@ type UserRole = 'admin' | 'staff' | 'member';
 
 // List of public paths that don't require authentication
 const publicPaths = [
-  '/',
+  '/home',
   '/auth/login',
   '/auth/register',
   '/auth/forgot-password',
@@ -52,12 +53,17 @@ const publicApiRoutes = [
   '/api/health',
 ];
 
-const middleware = withAuth(
-  function middleware(request: NextRequest) {
+export default withAuth(
+  function middleware(request) {
     const { pathname, searchParams } = request.nextUrl;
     const token = (request as any).nextauth?.token as (JWT & { role?: string }) | null;
     const role = (token?.role?.toLowerCase() as UserRole) || 'member';
     const callbackUrl = searchParams.get('callbackUrl');
+
+    // Handle root URL redirection
+    if (pathname === '/') {
+      return NextResponse.redirect(new URL('/home', request.url));
+    }
 
     // Skip middleware for public paths
     if (publicPaths.some(path => pathname.startsWith(path))) {
@@ -137,23 +143,10 @@ const middleware = withAuth(
         const dashboardPath = getDashboardPath(role);
         return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
-      
+
+      // Continue with the request
       return NextResponse.next();
     }
-
-    // Handle legacy profile path
-    if ((pathname === '/profile' || pathname === '/profile/') && token) {
-      return NextResponse.redirect(new URL('/dashboard/profile', request.url));
-    }
-
-    // For all other authenticated routes, redirect to dashboard
-    if (token) {
-      const dashboardPath = getDashboardPath(role);
-      return NextResponse.redirect(new URL(dashboardPath, request.url));
-    }
-
-    // For all other routes, continue with the request
-    return NextResponse.next();
   },
   {
     callbacks: {
@@ -161,8 +154,6 @@ const middleware = withAuth(
     },
   }
 );
-
-export default middleware;
 
 // These should be in your auth options, not in the middleware
 // Move these to your auth-options.ts file if you need them
