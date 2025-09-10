@@ -1,5 +1,25 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Environment variables that should be exposed to the browser
+  env: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    // Add other client-side environment variables here
+  },
+  
+  // Server-side environment variables
+  serverRuntimeConfig: {
+    // Will only be available on the server side
+    authSecret: process.env.NEXTAUTH_SECRET,
+    jwtSecret: process.env.JWT_SECRET,
+    refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET,
+  },
+  
+  // Public runtime config (exposed to both server and client)
+  publicRuntimeConfig: {
+    // Available on both server and client
+    nextAuthUrl: process.env.NEXTAUTH_URL,
+    nodeEnv: process.env.NODE_ENV,
+  },
   // Enable strict routing in production
   trailingSlash: false,
   
