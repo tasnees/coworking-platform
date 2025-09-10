@@ -24,13 +24,6 @@ declare module 'next-auth/jwt' {
   }
 }
 
-// Extend NextRequest to include nextauth
-interface NextRequestWithAuth extends NextRequest {
-  nextauth?: {
-    token?: JWT & { role: string };
-  };
-}
-
 type UserRole = 'admin' | 'staff' | 'member';
 
 // List of public paths that don't require authentication
@@ -62,92 +55,57 @@ const publicApiRoutes = [
 const middleware = withAuth(
   function middleware(request: NextRequest) {
     const { pathname, searchParams } = request.nextUrl;
-    const reqWithAuth = request as unknown as NextRequestWithAuth;
-    const token = reqWithAuth.nextauth?.token;
-    const role = token?.role as UserRole | undefined;
+    const token = (request as any).nextauth?.token as (JWT & { role?: string }) | null;
+    const role = (token?.role?.toLowerCase() as UserRole) || 'member';
     const callbackUrl = searchParams.get('callbackUrl');
 
     // Skip middleware for public paths
     if (publicPaths.some(path => pathname.startsWith(path))) {
-      // If user is already logged in and tries to access login page, redirect to appropriate dashboard
+      // If user is already logged in and tries to access login page, redirect to dashboard
       if (pathname.startsWith('/auth/login') && token) {
-        // Get and clean the callback URL
-        const callbackUrl = searchParams.get('callbackUrl');
-        
-        // If callbackUrl is already set to a dashboard path, prevent redirect loop
-        if (callbackUrl && (callbackUrl.startsWith('/dashboard') || callbackUrl.startsWith('/auth'))) {
-          return NextResponse.next();
+        // If we have a valid callback URL that's not an auth URL, use it
+        if (callbackUrl && !callbackUrl.startsWith('/auth')) {
+          try {
+            const decodedUrl = decodeURIComponent(callbackUrl);
+            const cleanUrl = new URL(decodedUrl, request.url);
+            // Only allow redirects to same origin for security
+            if (cleanUrl.origin === request.nextUrl.origin) {
+              return NextResponse.redirect(cleanUrl);
+            }
+          } catch (e) {
+            console.error('Error processing callback URL:', e);
+          }
         }
-        
-        try {
-          // If no callback URL, redirect to dashboard
-          if (!callbackUrl) {
-            const dashboardPath = getDashboardPath(role || 'member');
-            return NextResponse.redirect(new URL(dashboardPath, request.url));
-          }
-          
-          // Decode the URL to handle any encoded characters
-          let decodedUrl = decodeURIComponent(callbackUrl);
-          
-          // If the URL is still encoded, decode it again
-          while (decodedUrl !== decodeURIComponent(decodedUrl)) {
-            decodedUrl = decodeURIComponent(decodedUrl);
-          }
-          
-          // Parse the decoded URL
-          const cleanUrl = new URL(decodedUrl, request.url);
-          
-          // Normalize the pathname
-          cleanUrl.pathname = cleanUrl.pathname.replace(/\/+$/, '');
-          
-          // Prevent redirect loops by checking if we're being redirected to an auth page
-          if (cleanUrl.pathname.startsWith('/auth/')) {
-            const dashboardPath = getDashboardPath(role || 'member');
-            return NextResponse.redirect(new URL(dashboardPath, request.url));
-          }
-          
-          // Ensure the URL is within our domain and not a loop
-          if (cleanUrl.origin === new URL(request.url).origin) {
-            return NextResponse.redirect(cleanUrl.toString());
-          }
-          
-          // Fallback to dashboard if URL is not valid or not within our domain
-          const dashboardPath = getDashboardPath(role || 'member');
-          return NextResponse.redirect(new URL(dashboardPath, request.url));
-          
-        } catch (error) {
-          console.error('Error processing callback URL:', error);
-          // If there's an error with the callback URL, redirect to the default dashboard
-          const dashboardPath = getDashboardPath(role || 'member');
-          return NextResponse.redirect(new URL(dashboardPath, request.url));
-        }
+        // Default to dashboard if no valid callback URL
+        const dashboardPath = getDashboardPath(role);
+        return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
       return NextResponse.next();
     }
 
     // Handle API routes
-    if (pathname.startsWith('/api')) {
-      // Allow public API routes
+    if (pathname.startsWith('/api/')) {
+      // Skip authentication for public API routes
       if (publicApiRoutes.some(route => pathname.startsWith(route))) {
         return NextResponse.next();
       }
-      
-      // Handle API authentication
+
+      // Require authentication for other API routes
       if (!token) {
-        return new NextResponse(JSON.stringify({ error: 'Authentication required' }), {
+        return new NextResponse(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401,
           headers: { 'Content-Type': 'application/json' },
         });
       }
-
-      // Protect admin API routes
-      if (pathname.startsWith('/api/admin') && role !== 'admin') {
-        return NextResponse.json(
-          { error: 'Unauthorized' },
-          { status: 403 }
-        );
+      
+      // Handle staff API routes
+      if (pathname.startsWith('/api/staff') && role !== 'admin' && role !== 'staff') {
+        return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        });
       }
-
+      
       return NextResponse.next();
     }
 
@@ -156,87 +114,42 @@ const middleware = withAuth(
       // Redirect to login if not authenticated
       if (!token) {
         const loginUrl = new URL('/auth/login', request.url);
-        
-        // Prevent redirect loops by checking if we're already being redirected
-        if (callbackUrl && callbackUrl.startsWith('/auth')) {
-          return NextResponse.next();
-        }
-        
-        // Only set callbackUrl if we're not already on a login page
         loginUrl.searchParams.set('callbackUrl', pathname);
         return NextResponse.redirect(loginUrl);
       }
       
-      // If user is authenticated, verify they have access to the requested dashboard
-      if (token.role) {
-        const userRole = token.role.toLowerCase();
-        const rolePath = pathname.split('/')[2]; // Get the role from the URL (e.g., 'member' from '/dashboard/member')
-        
-        // If the user is trying to access a dashboard that doesn't match their role, redirect them
-        if (rolePath && rolePath !== userRole && ['admin', 'staff', 'member'].includes(rolePath)) {
-          const dashboardPath = getDashboardPath(userRole as UserRole);
-          return NextResponse.redirect(new URL(dashboardPath, request.url));
-        }
+      // Handle root dashboard path
+      if (pathname === '/dashboard' || pathname === '/dashboard/') {
+        const dashboardPath = getDashboardPath(role);
+        return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
-
+      
       // Allow access to profile for all authenticated users
       if (pathname.startsWith('/dashboard/profile')) {
         return NextResponse.next();
       }
-
-      // Get the base dashboard path for the user's role
-      let dashboardPath: string;
-      switch (role) {
-        case 'admin':
-          dashboardPath = '/dashboard/admin';
-          break;
-        case 'staff':
-          dashboardPath = '/dashboard/staff';
-          break;
-        case 'member':
-        default:
-          dashboardPath = '/dashboard/member';
+      
+      // Check if user has access to the requested dashboard
+      const dashboardBase = pathname.split('/')[2]; // Get 'member', 'admin', etc.
+      
+      // If user tries to access a dashboard that's not for their role, redirect to their dashboard
+      if (dashboardBase && dashboardBase !== role) {
+        const dashboardPath = getDashboardPath(role);
+        return NextResponse.redirect(new URL(dashboardPath, request.url));
       }
-
-      // Handle root dashboard path
-      if (pathname === '/dashboard' || pathname === '/dashboard/') {
-        // Default to member dashboard if role is not set
-        const defaultDashboard = role ? dashboardPath : '/dashboard/member';
-        return NextResponse.redirect(new URL(defaultDashboard, request.url));
-      }
-
-      // Handle legacy profile path
-      if (pathname === '/profile' || pathname === '/profile/') {
-        return NextResponse.redirect(new URL('/dashboard/profile', request.url));
-      }
-
-      // If user is trying to access a different dashboard than their role allows
-      if (!pathname.startsWith(dashboardPath)) {
-        // Default to member dashboard if role is not set
-        const targetPath = dashboardPath || '/dashboard/member';
-        
-        // Check if they have permission to access the requested path
-        if (pathname.startsWith('/dashboard/admin')) {
-          if (role !== 'admin') {
-            return NextResponse.redirect(new URL(targetPath, request.url));
-          }
-        } else if (pathname.startsWith('/dashboard/staff')) {
-          if (role !== 'admin' && role !== 'staff') {
-            return NextResponse.redirect(new URL(targetPath, request.url));
-          }
-        }
-      }
-
-      // Allow access to the requested path
+      
       return NextResponse.next();
     }
 
-    // Handle staff API routes
-    if (pathname.startsWith('/api/staff') && role !== 'admin' && role !== 'staff') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 403 }
-      );
+    // Handle legacy profile path
+    if ((pathname === '/profile' || pathname === '/profile/') && token) {
+      return NextResponse.redirect(new URL('/dashboard/profile', request.url));
+    }
+
+    // For all other authenticated routes, redirect to dashboard
+    if (token) {
+      const dashboardPath = getDashboardPath(role);
+      return NextResponse.redirect(new URL(dashboardPath, request.url));
     }
 
     // For all other routes, continue with the request
@@ -244,15 +157,7 @@ const middleware = withAuth(
   },
   {
     callbacks: {
-      authorized({ token, req }) {
-        const reqWithAuth = req as unknown as NextRequestWithAuth;
-        // This is a workaround for handling redirect on auth pages.
-        // Return true to bypass the middleware for these requests
-        if (reqWithAuth.nextUrl.pathname.startsWith('/auth/')) {
-          return true;
-        }
-        return !!token;
-      },
+      authorized: () => true, // We handle all auth logic in the main function
     },
   }
 );
