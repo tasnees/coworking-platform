@@ -399,13 +399,16 @@ export const authOptions: NextAuthOptions = {
   // Configure session settings
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
+    // Set to a very large number (100 years) to effectively make it non-expiring
+    maxAge: 100 * 365 * 24 * 60 * 60, // ~100 years
+    updateAge: 0, // Don't update the session age on each request
   },
   
   // Configure JWT settings
   jwt: {
     secret: process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'your-secret-key',
+    // Increase the maximum token age to match session maxAge
+    maxAge: 100 * 365 * 24 * 60 * 60, // ~100 years
   },
   
   // Add callbacks for handling JWT, session, and redirects
@@ -415,6 +418,11 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        // Set a far future expiration (year 2100)
+        token.exp = Math.floor(new Date('2100-01-01').getTime() / 1000);
+      } else if (token.exp) {
+        // If token already has an expiration, extend it
+        token.exp = Math.floor(Date.now() / 1000) + (100 * 365 * 24 * 60 * 60);
       }
       return token;
     },
@@ -440,6 +448,11 @@ export const authOptions: NextAuthOptions = {
       // Ensure the session has all required fields
       session.user.name = session.user.name || token.name || '';
       session.user.email = session.user.email || token.email || '';
+      
+      // Set a far future expiration for the session cookie
+      if (session.expires) {
+        session.expires = new Date('2100-01-01').toISOString();
+      }
       
       return session;
     },

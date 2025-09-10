@@ -323,11 +323,11 @@ app.post('/api/auth/register', async (req, res, next) => {
     // Remove password from output
     user.password = undefined;
     
-    // Create token
+    // Create token without expiration
     const token = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      process.env.JWT_SECRET
+      // No expiration set
     );
     
     res.status(201).json({
@@ -367,8 +367,8 @@ app.post('/api/auth/login', async (req, res, next) => {
     // 3) If everything ok, send token to client
     const token = jwt.sign(
       { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+      process.env.JWT_SECRET
+      // No expiration set
     );
     
     // Remove password from output
@@ -405,8 +405,10 @@ const protect = async (req, res, next) => {
       });
     }
 
-    // 2) Verification token
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    // 2) Verification token - ignore expiration if present
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET, {
+      ignoreExpiration: true // Skip expiration check
+    });
 
     // 3) Check if user still exists
     const currentUser = await User.findById(decoded.id);
