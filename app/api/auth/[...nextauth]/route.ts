@@ -15,29 +15,16 @@ function logDebug(message: string, data?: any) {
   }
 }
 
-// Get secrets from Next.js runtime config
-const getConfig = () => {
-  if (typeof window === 'undefined') {
-    // Server-side: Use serverRuntimeConfig
-    const { authSecret, jwtSecret, refreshTokenSecret } = require('@/next.config').default.serverRuntimeConfig;
-    return {
-      authSecret,
-      jwtSecret,
-      refreshTokenSecret
-    };
-  }
-  // Client-side: Use publicRuntimeConfig or empty strings
-  return {
-    authSecret: '',
-    jwtSecret: '',
-    refreshTokenSecret: ''
-  };
-};
+// Use environment variables directly for JWT secrets
+const authSecret = process.env.NEXTAUTH_SECRET;
+const jwtSecret = process.env.JWT_SECRET;
+const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 
-const { authSecret, jwtSecret, refreshTokenSecret } = getConfig();
-
-if (!authSecret && process.env.NODE_ENV === 'production') {
-  throw new Error('NEXTAUTH_SECRET is required in production');
+// Validate required secrets in production
+if (process.env.NODE_ENV === 'production') {
+  if (!authSecret) throw new Error('NEXTAUTH_SECRET is required in production');
+  if (!jwtSecret) throw new Error('JWT_SECRET is required in production');
+  if (!refreshTokenSecret) throw new Error('REFRESH_TOKEN_SECRET is required in production');
 }
 
 export const authOptions: NextAuthOptions = {
@@ -111,6 +98,8 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.email = user.email;
+        // Add token version for refresh token rotation
+        (token as any).tokenVersion = (user as any).tokenVersion || 0;
       }
       
       // Update token from session (e.g., when updating user data)
@@ -129,9 +118,16 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as UserRole;
         session.user.email = token.email as string;
+        // Add token version to session
+        (session as any).tokenVersion = (token as any).tokenVersion || 0;
       }
       
       return session;
+    },
+    
+    async signIn({ user, account, profile, email, credentials }) {
+      logDebug('SignIn Callback', { user, account, profile, email, credentials });
+      return true;
     },
     
     async redirect({ url, baseUrl }) {
@@ -145,11 +141,11 @@ export const authOptions: NextAuthOptions = {
           }
           return `${baseUrl}${url}`;
         }
-        // Handle absolute URLs on the same origin
+        // Allows callback URLs on the same origin
         if (new URL(url).origin === baseUrl) return url;
       }
-      return `${baseUrl}/dashboard`; // Default fallback
-    }
+      return baseUrl;
+    },
   },
   cookies: {
     sessionToken: {
@@ -160,7 +156,25 @@ export const authOptions: NextAuthOptions = {
         path: '/',
         secure: process.env.NODE_ENV === 'production',
         maxAge: 300 * 24 * 60 * 60, // 300 days
-        domain: process.env.NODE_ENV === 'production' ? '.coworking-platform.onrender.com' : undefined
+        domain: process.env.NODE_ENV === 'production' ? '.coworking-platform.onrender.com' : 'localhost'
+      }
+    },
+    callbackUrl: {
+      name: `__Secure-next-auth.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? '.coworking-platform.onrender.com' : 'localhost'
+      }
+    },
+    csrfToken: {
+      name: `__Host-next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production'
       }
     }
   }
