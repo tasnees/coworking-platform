@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Enable App Router
+  experimental: {
+    appDir: true,
+    serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+  },
   // Environment variables that should be exposed to the browser
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
@@ -23,13 +28,18 @@ const nextConfig = {
   // Enable strict routing in production
   trailingSlash: false,
   
-  // Disable static exports for API routes
-  output: process.env.NODE_ENV === 'production' ? 'export' : 'standalone',
-  
-  // Disable image optimization for static exports
+  // Image optimization
   images: {
-    unoptimized: true,
-    domains: [],
+    // Enable optimization in production, disable in development
+    unoptimized: process.env.NODE_ENV !== 'production',
+    // Add any external image domains you need to optimize
+    domains: [
+      'coworking-platform.onrender.com',
+      'localhost:3000',
+      'localhost',
+    ],
+    // Enable AVIF format for better compression
+    formats: ['image/avif', 'image/webp'],
   },
   
   // Disable ESLint and TypeScript checks during build for CI/CD pipelines
@@ -63,18 +73,6 @@ const nextConfig = {
     ];
   },
   
-  // Skip API routes during static export
-  exportPathMap: async function() {
-    return {
-      '/': { page: '/' },
-      '/auth/login': { page: '/auth/login' },
-      '/auth/register': { page: '/auth/register' },
-      '/auth/forgot-password': { page: '/auth/forgot-password' },
-      '/auth/reset-password/[token]': { page: '/auth/reset-password/[token]' },
-      // Add other static pages here
-    };
-  },
-  
   // Enable React Strict Mode
   reactStrictMode: true,
   
@@ -84,6 +82,15 @@ const nextConfig = {
   // Configure webpack
   webpack: (config, { isServer }) => {
     // Add custom webpack configurations here if needed
+    if (!isServer) {
+      // Don't include certain packages in the client bundle
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
     return config;
   },
 };
