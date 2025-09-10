@@ -1,4 +1,5 @@
 import { getServerSession } from 'next-auth';
+import { compare, hash } from 'bcryptjs';
 import { authOptions } from './auth-options';
 import { UserRole } from './auth-types';
 
@@ -19,4 +20,18 @@ export async function requireAuth(requiredRole?: UserRole) {
   }
 
   return { user, redirect: null };
+}
+
+export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
+  try {
+    return await compare(password, hashedPassword);
+  } catch (error) {
+    console.error('Error verifying password:', error);
+    return false;
+  }
+}
+
+export async function hashPassword(password: string): Promise<string> {
+  const saltRounds = 12;
+  return await hash(password, saltRounds);
 }

@@ -15,8 +15,19 @@ function logDebug(message: string, data?: any) {
   }
 }
 
+// Generate a secret if not in production
+const generateSecret = () => {
+  if (process.env.NEXTAUTH_SECRET) return process.env.NEXTAUTH_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('NEXTAUTH_SECRET is required in production');
+  }
+  console.warn('⚠️ Using auto-generated NEXTAUTH_SECRET. Set this in production!');
+  return 'your-secret-key-here';
+};
+
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development' || process.env.DEBUG === 'true',
+  secret: generateSecret(),
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -29,42 +40,37 @@ export const authOptions: NextAuthOptions = {
         if (!credentials) return null;
         
         try {
-          // Use absolute URL for the proxy endpoint
-          const baseUrl = process.env.NEXTAUTH_URL || 'https://coworking-platform.onrender.com';
-          const response = await fetch(`${baseUrl}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(credentials)
-          });
-
-          const responseData = await response.json().catch(() => ({}));
+          // Direct database authentication instead of API call to avoid circular dependency
+          const { default: db } = await import('@/lib/mongodb');
+          const client = await db;
+          const users = client.db().collection('users');
           
-          if (!response.ok) {
-            console.error('Login failed:', {
-              status: response.status,
-              statusText: response.statusText,
-              error: responseData
-            });
-            throw new Error(responseData.error || 'Authentication failed');
+          // Find user by email
+          const user = await users.findOne({ email: credentials.email });
+          if (!user) {
+            console.log('User not found:', credentials.email);
+            return null;
           }
           
-          if (!responseData.success || !responseData.user) {
-            console.error('Invalid response format:', responseData);
-            throw new Error('Invalid server response');
+          // Verify password using the auth-utils function
+          const { verifyPassword } = await import('@/lib/auth-utils');
+          const isValid = await verifyPassword(credentials.password, user.password);
+          
+          if (!isValid) {
+            console.log('Invalid password for user:', credentials.email);
+            return null;
           }
 
-          console.log('Authentication successful for user:', responseData.user.email);
+          console.log('Authentication successful for user:', user.email);
           
-          // Map the backend user to the NextAuth user
-          const user = {
-            id: responseData.user._id || responseData.user.id,
-            email: responseData.user.email,
-            role: responseData.user.role || 'member',
-            name: responseData.user.name || `${responseData.user.firstName || ''} ${responseData.user.lastName || ''}`.trim(),
-            image: responseData.user.image || null
+          // Map the database user to the NextAuth user
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            role: user.role || 'member',
+            name: user.name || user.email.split('@')[0],
+            image: user.image || null
           };
-          
-          return user;
         } catch (error) {
           console.error('Login error:', error);
           return null;
@@ -82,6 +88,30 @@ export const authOptions: NextAuthOptions = {
     error: '/auth/error',
   },
   callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      // Initial sign in
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      
+      // Update token from session if needed
+      if (trigger === 'update' && session) {
+        return { ...token, ...session };
+      }
+      
+      return token;
+    },
+    
+    async session({ session, token }) {
+      // Add custom data to session
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
+      return session;
+    },
+    
     async redirect({ url, baseUrl }) {
       // If there's a specific URL to redirect to, use it
       if (url) {
@@ -89,7 +119,7 @@ export const authOptions: NextAuthOptions = {
         if (url.startsWith('/')) {
           // Don't redirect to auth routes if already authenticated
           if (url.startsWith('/auth/')) {
-            return `${baseUrl}/dashboard`; // Will be overridden by the role-based redirect
+            return `${baseUrl}/dashboard`;
           }
           return `${baseUrl}${url}`;
         }
@@ -97,64 +127,23 @@ export const authOptions: NextAuthOptions = {
         if (new URL(url).origin === baseUrl) return url;
       }
       return `${baseUrl}/dashboard`; // Default fallback
-    },
-    
-    async session({ session, token }) {
-      logDebug('Session callback', { session, token });
+    }
       
-      // Create the updated session with all user properties
-      const updatedSession = {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.sub || '',
-          name: token.name ?? session.user?.name ?? null,
-          email: token.email ?? session.user?.email ?? null,
-          role: token.role || 'member',
-          // Use type assertion to handle the image property
-          ...(token.picture && { image: token.picture })
-        }
-      };
-      
-      logDebug('Session callback completed', { 
-        sessionUser: updatedSession.user,
-        tokenUser: token
-      });
-      
-      return updatedSession;
     },
     async jwt({ token, user, trigger, session }) {
-      logDebug('JWT callback', { token, user, trigger, session });
-
       // Initial sign in
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          name: user.name ?? null,
-          email: user.email ?? null,
-          picture: user.image ?? null,
-          role: user.role || 'member'
-        };
-      }
-
-      // Update token with data from session (if needed)
-      if (trigger === 'update' && session?.user) {
-        logDebug('Updating token from session', { sessionUser: session.user });
-        return {
-          ...token,
-          name: session.user.name ?? token.name,
-          email: session.user.email ?? token.email,
-          picture: (session.user as any).image ?? token.picture,
-          role: (session.user as any).role ?? token.role ?? 'member'
-        };
+        token.id = user.id;
+        token.role = user.role;
+        token.name = user.name;
+        token.email = user.email;
+        if (user.image) token.picture = user.image;
       }
       
-      logDebug('JWT callback completed', { 
-        tokenId: token.sub,
-        tokenRole: token.role,
-        tokenEmail: token.email
-      });
+      // Update token from session if needed
+      if (trigger === 'update' && session) {
+        return { ...token, ...session };
+      }
       
       return token;
     },
