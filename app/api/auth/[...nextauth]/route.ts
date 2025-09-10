@@ -80,7 +80,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 300 * 24 * 60 * 60, // 30 days
+    maxAge: 300 * 24 * 60 * 60, // 300 days
     updateAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
@@ -139,7 +139,8 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: true // Set to true for production, false for development
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 300 * 24 * 60 * 60 // 300 days
       }
     }
   }
