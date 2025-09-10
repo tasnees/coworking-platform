@@ -93,6 +93,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.name = user.name;
+        token.email = user.email;
+        if (user.image) token.picture = user.image;
       }
       
       // Update token from session if needed
@@ -128,25 +131,6 @@ export const authOptions: NextAuthOptions = {
       }
       return `${baseUrl}/dashboard`; // Default fallback
     }
-      
-    },
-    async jwt({ token, user, trigger, session }) {
-      // Initial sign in
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.name = user.name;
-        token.email = user.email;
-        if (user.image) token.picture = user.image;
-      }
-      
-      // Update token from session if needed
-      if (trigger === 'update' && session) {
-        return { ...token, ...session };
-      }
-      
-      return token;
-    },
   },
   cookies: {
     sessionToken: {
@@ -155,10 +139,10 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
-      },
-    },
-  },
+        secure: true // Set to true for production, false for development
+      }
+    }
+  }
 };
 
 const handler = NextAuth(authOptions);
