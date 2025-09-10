@@ -88,8 +88,8 @@ export default function RegisterPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
           password: formData.password,
           role: formData.role,
         }),
@@ -98,13 +98,22 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || data.message || 'Registration failed');
       }
 
       // Show success message and redirect to sign-in page
       toast({
         title: 'Registration successful!',
         description: 'Please sign in with your new account.',
+      });
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        role: 'member',
       });
       
       // Redirect to sign-in page after a short delay
@@ -114,9 +123,10 @@ export default function RegisterPage() {
       
     } catch (error) {
       console.error('Registration error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Registration failed',
+        title: 'Registration Error',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {

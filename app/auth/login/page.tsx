@@ -181,6 +181,14 @@ function LoginForm() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 disabled={isLoading}
               />
+              <div className="mt-1 text-right">
+                <a 
+                  href="/auth/forgot-password" 
+                  className="text-sm font-medium text-primary-600 hover:text-primary-500"
+                >
+                  Forgot password?
+                </a>
+              </div>
             </div>
           </div>
 
