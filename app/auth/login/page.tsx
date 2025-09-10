@@ -38,37 +38,26 @@ function LoginForm() {
   
   // Redirect if already authenticated
   useEffect(() => {
-    const handleRedirect = async () => {
-      if (status === 'authenticated' && session?.user?.role) {
-        const role = session.user.role as UserRole;
-        console.log('User authenticated with role:', role);
-        
-        // Get the intended URL from the callbackUrl or use the role-based dashboard
-        const callbackUrl = searchParams?.get('callbackUrl');
-        const defaultPath = getDashboardPath(role);
-        
-        // Prevent redirect loops by checking if we're already on a dashboard page
-        if (callbackUrl && (callbackUrl.startsWith('/dashboard') || callbackUrl.startsWith('/auth'))) {
-          // If we're in a redirect loop, force a redirect to the default dashboard
-          router.replace(defaultPath);
-          return;
-        }
-        
-        // Small delay to ensure session is fully loaded
-        const timer = setTimeout(() => {
-          console.log('Handling redirect:', { callbackUrl, defaultPath });
-          
-          // Always use the role-based dashboard path to ensure correct redirection
-          console.log('Redirecting to role-specific dashboard:', defaultPath);
-          window.location.href = defaultPath;
-        }, 100);
-
-        return () => clearTimeout(timer);
+    if (status === 'authenticated' && session?.user?.role) {
+      const role = session.user.role.toLowerCase() as UserRole;
+      console.log('User authenticated with role:', role);
+      
+      // Get the intended URL from the callbackUrl or use the role-based dashboard
+      const callbackUrl = searchParams?.get('callbackUrl');
+      const defaultPath = getDashboardPath(role);
+      
+      // Validate callback URL to prevent open redirects
+      let targetPath = defaultPath;
+      if (callbackUrl && 
+          !callbackUrl.startsWith('/auth') && 
+          (callbackUrl.startsWith('/dashboard') || callbackUrl === '/')) {
+        targetPath = callbackUrl;
       }
-    };
-
-    handleRedirect();
-  }, [status, session, searchParams]);
+      
+      // Use Next.js router for client-side navigation
+      router.replace(targetPath);
+    }
+  }, [status, session, searchParams, router]);
   
   useEffect(() => {
     setIsMounted(true);

@@ -8,7 +8,7 @@ export default async function DashboardPage() {
   
   // If no session, redirect to login
   if (!session?.user) {
-    const loginUrl = new URL('/auth/login', process.env.NEXTAUTH_URL || 'http://localhost:3000');
+    const loginUrl = new URL('/auth/login', process.env.NEXTAUTH_URL || 'https://coworking-platform.onrender.com');
     loginUrl.searchParams.set('callbackUrl', '/dashboard');
     redirect(loginUrl.toString());
   }
