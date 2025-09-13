@@ -14,6 +14,7 @@ interface Stat {
   change: string;
   changeType: 'positive' | 'negative';
   icon: React.ComponentType<{ className?: string }>;
+  className?: string;
 }
 
 interface Booking {
@@ -139,12 +140,14 @@ export default function AdminDashboard() {
 
     loadData()
   }, [])
+
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem("user")
       router.push("/auth/login")
     }
   }
+
   // Show loading state during initial data load
   if (!isClient || isLoading) {
     return (
@@ -155,49 +158,47 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Header */}
-      <div>
+      <div className="space-y-1">
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="text-muted-foreground">Welcome back! Here's what's happening at your coworking space today.</p>
       </div>
       
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.length > 0 ? (
-          stats.map((stat, index) => (
-            <Card key={index}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground">
-                  <span className={stat.changeType === "positive" ? "text-green-600" : "text-red-600"}>
-                    {stat.change}
-                  </span>{" "}
-                  from last month
-                </p>
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          <div className="col-span-4 text-center py-8">
-            <p className="text-muted-foreground">Loading stats...</p>
-          </div>
-        )}
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Recent Bookings */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Bookings</CardTitle>
-            <CardDescription>Latest space reservations</CardDescription>
-          </CardHeader>
+        {stats.map((stat, index) => (
+          <Card key={index} className="min-w-0">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium truncate">{stat.title}</CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold truncate">{stat.value}</div>
+              <p className="text-xs text-muted-foreground truncate">
+                <span className={stat.changeType === "positive" ? "text-green-600" : "text-red-600"}>
+                  {stat.change}
+                </span>{" "}
+                from last month
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column - 2/3 width on large screens */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Recent Bookings */}
+          <Card className="h-full">
+            <CardHeader>
+              <CardTitle>Recent Bookings</CardTitle>
+              <CardDescription>Latest space reservations</CardDescription>
+            </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Array.isArray(recentBookings) && recentBookings.length > 0 ? (
+                {recentBookings.length > 0 ? (
                   recentBookings.map((booking) => (
                     <div key={`booking-${booking.id}`} className="flex items-center justify-between">
                       <div className="space-y-1">
@@ -217,6 +218,7 @@ export default function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          
           {/* Space Utilization */}
           <Card>
             <CardHeader>
@@ -225,88 +227,89 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Array.isArray(spaceStatus) && spaceStatus.length > 0 ? (
-                  spaceStatus.map((space) => (
-                    <div key={`space-${space.name.replace(/\s+/g, '-').toLowerCase()}`} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{space.name}</span>
-                        <span className="text-muted-foreground">
-                          {space.occupied}/{space.total}
-                        </span>
-                      </div>
-                      <Progress value={(space.occupied / space.total) * 100} className="h-2" />
+                {spaceStatus.map((space) => (
+                  <div key={`space-${space.name.replace(/\s+/g, '-').toLowerCase()}`} className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{space.name}</span>
+                      <span className="text-muted-foreground">
+                        {space.occupied}/{space.total}
+                      </span>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No space status data available</p>
-                )}
+                    <Progress value={(space.occupied / space.total) * 100} className="h-2" />
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         </div>
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Manage your coworking space efficiently</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Button asChild className="h-20 flex-col gap-2">
-                <Link href="/dashboard/admin/floorplan">
-                  <MapPin className="h-5 w-5" />
-                  <span className="text-sm">View Floor Plan</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-20 flex-col gap-2 bg-transparent">
-                <Link href="/dashboard/admin/hours">
-                  <Clock className="h-5 w-5" />
-                  <span className="text-sm">Manage Hours</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-20 flex-col gap-2 bg-transparent">
-                <Link href="/dashboard/admin/wifi">
-                  <Wifi className="h-5 w-5" />
-                  <span className="text-sm">WiFi Settings</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-20 flex-col gap-2 bg-transparent">
-                <Link href="/dashboard/admin/amenities">
-                  <Coffee className="h-5 w-5" />
-                  <span className="text-sm">Amenities</span>
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-        {/* Additional Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Tools</CardTitle>
-            <CardDescription>Access more administrative tools</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Button asChild variant="outline" className="h-20 flex-col gap-2 bg-transparent">
-                <Link href="/dashboard/admin/analytics">
-                  <BarChart className="h-5 w-5" />
-                  <span className="text-sm">Analytics</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-20 flex-col gap-2 bg-transparent">
-                <Link href="/dashboard/admin/settings">
-                  <Settings className="h-5 w-5" />
-                  <span className="text-sm">Settings</span>
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        
+        {/* Right Column - 1/3 width on large screens */}
+        <div className="space-y-6">
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+              <CardDescription>Manage your coworking space efficiently</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <Button asChild className="h-20 flex-col gap-1.5 p-2">
+                  <Link href="/dashboard/admin/floorplan" className="flex flex-col items-center justify-center">
+                    <MapPin className="h-5 w-5 mb-1" />
+                    <span className="text-xs text-center leading-tight">View Floor Plan</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
+                  <Link href="/dashboard/admin/hours" className="flex flex-col items-center justify-center">
+                    <Clock className="h-5 w-5 mb-1" />
+                    <span className="text-xs text-center leading-tight">Manage Hours</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
+                  <Link href="/dashboard/admin/wifi" className="flex flex-col items-center justify-center">
+                    <Wifi className="h-5 w-5 mb-1" />
+                    <span className="text-xs text-center leading-tight">WiFi Settings</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
+                  <Link href="/dashboard/admin/amenities" className="flex flex-col items-center justify-center">
+                    <Coffee className="h-5 w-5 mb-1" />
+                    <span className="text-xs text-center leading-tight">Amenities</span>
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
+          {/* Additional Tools */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Additional Tools</CardTitle>
+              <CardDescription>Access more administrative tools</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3">
+                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
+                  <Link href="/dashboard/admin/analytics" className="flex flex-col items-center justify-center">
+                    <BarChart className="h-5 w-5 mb-1" />
+                    <span className="text-xs text-center leading-tight">Analytics</span>
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
+                  <Link href="/dashboard/admin/settings" className="flex flex-col items-center justify-center">
+                    <Settings className="h-5 w-5 mb-1" />
+                    <span className="text-xs text-center leading-tight">Settings</span>
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
       
       {/* Logout Button */}
-      <div className="flex justify-end">
-        <Button variant="outline" onClick={handleLogout}>
+      <div className="flex justify-end pt-2">
+        <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
           <LogOut className="h-4 w-4 mr-1" />
           Sign Out
         </Button>

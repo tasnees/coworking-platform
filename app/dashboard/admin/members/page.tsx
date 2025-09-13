@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -197,7 +198,17 @@ export default function AdminMembersPage() {
   };
   
   // State for form data
-  // State for form data
+  // State for new member form
+  const [newMember, setNewMember] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // State for member form data
   const [memberForm, setMemberForm] = useState<MemberFormData>({
     id: '',
     name: '',
@@ -281,6 +292,80 @@ export default function AdminMembersPage() {
   };
 
 
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!newMember.name.trim()) errors.name = 'Name is required';
+    if (!newMember.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(newMember.email)) {
+      errors.email = 'Email is invalid';
+    }
+    if (!newMember.password) {
+      errors.password = 'Password is required';
+    } else if (newMember.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
+    }
+    if (newMember.password !== newMember.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    return errors;
+  };
+
+  const handleNewMemberSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      setFormErrors({});
+      
+      const response = await fetch('/api/admin/members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newMember.name,
+          email: newMember.email,
+          password: newMember.password,
+          role: 'member',
+          status: 'active'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create member');
+      }
+      
+      // Reset form
+      setNewMember({
+        name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+      
+      // Close the dialog
+      setIsAddMemberOpen(false);
+      
+      // Refresh the members list
+      await fetchMembers();
+      
+      toast.success('Member created successfully');
+    } catch (error) {
+      console.error('Error creating member:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create member');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleMemberSubmit = async (data: MemberFormData) => {
     try {
       const response = await fetch('/api/admin/members', {
@@ -297,7 +382,6 @@ export default function AdminMembersPage() {
       const newMember = await response.json();
       setMembers(prev => [...prev, newMember]);
       setFilteredMembers(prev => [...prev, newMember]);
-      
       toast.success('Member created successfully');
     } catch (error) {
       console.error('Error creating member:', error);
@@ -317,10 +401,90 @@ export default function AdminMembersPage() {
             Manage your coworking space members and their memberships
           </p>
         </div>
-        <Button onClick={() => setIsAddMemberOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Member
-        </Button>
+        <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+          <Button onClick={() => setIsAddMemberOpen(true)}>
+            <UserPlus className="mr-2 h-4 w-4" /> Add Member
+          </Button>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Add New Member</DialogTitle>
+              <DialogDescription>
+                Fill in the details below to create a new member account.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleNewMemberSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  value={newMember.name}
+                  onChange={(e) => setNewMember({...newMember, name: e.target.value})}
+                  placeholder="John Doe"
+                  className={formErrors.name ? 'border-red-500' : ''}
+                />
+                {formErrors.name && <p className="text-sm text-red-500">{formErrors.name}</p>}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={newMember.email}
+                  onChange={(e) => setNewMember({...newMember, email: e.target.value})}
+                  placeholder="john@example.com"
+                  className={formErrors.email ? 'border-red-500' : ''}
+                />
+                {formErrors.email && <p className="text-sm text-red-500">{formErrors.email}</p>}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={newMember.password}
+                  onChange={(e) => setNewMember({...newMember, password: e.target.value})}
+                  placeholder="••••••••"
+                  className={formErrors.password ? 'border-red-500' : ''}
+                />
+                {formErrors.password && <p className="text-sm text-red-500">{formErrors.password}</p>}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  value={newMember.confirmPassword}
+                  onChange={(e) => setNewMember({...newMember, confirmPassword: e.target.value})}
+                  placeholder="••••••••"
+                  className={formErrors.confirmPassword ? 'border-red-500' : ''}
+                />
+                {formErrors.confirmPassword && <p className="text-sm text-red-500">{formErrors.confirmPassword}</p>}
+              </div>
+              
+              <DialogFooter>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setIsAddMemberOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : 'Create Member'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="rounded-md border">

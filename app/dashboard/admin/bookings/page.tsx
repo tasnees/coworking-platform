@@ -1,18 +1,8 @@
 "use client"
 import { useState, useEffect } from "react"
-import dynamic from 'next/dynamic'
-// Dynamically import the dashboard layout with SSR disabled
-const DashboardLayout = dynamic(
-  () => import('@/components/dashboard-layout'),
-  { 
-    ssr: false, 
-    loading: () => (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
-    ) 
-  }
-)
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import { format, addDays } from "date-fns"
 // Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -30,17 +20,46 @@ import {
 } from "@/components/ui/dialog"
 import { Calendar } from "@/components/ui/calendar"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, Clock, MapPin, Plus, Search } from "lucide-react"
+import DashboardLayout from "@/components/dashboard-layout"
+import { CalendarDays, Clock, MapPin, Plus, Search, Loader2, RefreshCw } from "lucide-react"
+
+// Helper function to get badge variant based on status
+function getStatusColor(status: string) {
+  switch (status.toLowerCase()) {
+    case 'confirmed':
+      return 'default';
+    case 'pending':
+      return 'secondary';
+    case 'cancelled':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+}
+
 // Main bookings page component with client-side rendering
 export default function BookingsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const router = useRouter();
   const [viewMode, setViewMode] = useState("day")
-  // Mock data - in a real app, this would come from an API
+  // Form state
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    member: '',
+    resource: '',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    startTime: '09:00',
+    endTime: '10:00',
+    notes: ''
+  })
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
+  
+  // Bookings data
   const [bookings, setBookings] = useState<Array<{
-    id: number;
+    id: string;
     member: string;
     resource: string;
     type: string;
@@ -55,6 +74,13 @@ export default function BookingsPage() {
     { id: "office-3", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
     { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
   ]);
+  
+  // Mock members - in a real app, this would come from an API
+  const [members] = useState([
+    { id: "1", name: "John Doe", email: "john@example.com" },
+    { id: "2", name: "Jane Smith", email: "jane@example.com" },
+    { id: "3", name: "Mike Johnson", email: "mike@example.com" },
+  ]);
   // Load data on component mount
   useEffect(() => {
     // This effect only runs on the client side
@@ -62,12 +88,17 @@ export default function BookingsPage() {
     const fetchBookings = async () => {
       try {
         setIsLoading(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        // Mock data - replace with actual API call
+        const response = await fetch('/api/bookings');
+        if (!response.ok) throw new Error('Failed to fetch bookings');
+        const data = await response.json();
+        setBookings(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching bookings:', err);
+        // Fallback to mock data if API fails
         const mockBookings = [
           {
-            id: 1,
+            id: '1',
             member: "John Doe",
             resource: "Desk A-12",
             type: "Hot Desk",
@@ -77,7 +108,7 @@ export default function BookingsPage() {
             date: new Date().toISOString().split('T')[0],
           },
           {
-            id: 2,
+            id: '2',
             member: "Jane Smith",
             resource: "Meeting Room B",
             type: "Meeting Room",
@@ -87,7 +118,7 @@ export default function BookingsPage() {
             date: new Date().toISOString().split('T')[0],
           },
           {
-            id: 3,
+            id: '3',
             member: "Mike Johnson",
             resource: "Private Office 3",
             type: "Private Office",
@@ -98,10 +129,7 @@ export default function BookingsPage() {
           },
         ];
         setBookings(mockBookings);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching bookings:', err);
-        setError('Failed to load bookings. Please try again later.');
+        toast.error('Using mock data. Could not connect to the server.');
       } finally {
         setIsLoading(false);
       }
@@ -120,6 +148,121 @@ export default function BookingsPage() {
       </div>
     );
   }
+  // Form validation
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.member) errors.member = 'Member is required';
+    if (!formData.resource) errors.resource = 'Resource is required';
+    if (!formData.date) errors.date = 'Date is required';
+    if (!formData.startTime) errors.startTime = 'Start time is required';
+    if (!formData.endTime) errors.endTime = 'End time is required';
+    
+    // Validate time range
+    if (formData.startTime && formData.endTime) {
+      const [startHour, startMinute] = formData.startTime.split(':').map(Number);
+      const [endHour, endMinute] = formData.endTime.split(':').map(Number);
+      
+      const startDate = new Date();
+      startDate.setHours(startHour, startMinute, 0, 0);
+      
+      const endDate = new Date();
+      endDate.setHours(endHour, endMinute, 0, 0);
+      
+      if (endDate <= startDate) {
+        errors.endTime = 'End time must be after start time';
+      }
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+  
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when field is edited
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+  
+  // Handle form submission
+  const handleCreateBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Validate form
+    const errors: Record<string, string> = {};
+    if (!formData.member) errors.member = 'Member is required';
+    if (!formData.resource) errors.resource = 'Resource is required';
+    if (!formData.date) errors.date = 'Date is required';
+    if (!formData.startTime) errors.startTime = 'Start time is required';
+    if (!formData.endTime) errors.endTime = 'End time is required';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      setIsSubmitting(false);
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          memberId: formData.member,
+          resourceId: formData.resource,
+          date: formData.date,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+          notes: formData.notes,
+          status: 'confirmed',
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create booking');
+      }
+      
+      const newBooking = await response.json();
+      setBookings(prev => [...prev, newBooking]);
+      toast.success('Booking created successfully');
+      
+      // Reset form
+      setFormData({
+        member: '',
+        resource: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        startTime: '09:00',
+        endTime: '10:00',
+        notes: ''
+      });
+      
+      // Close the dialog
+      const dialog = document.getElementById('create-booking-dialog');
+      if (dialog) {
+        (dialog as HTMLDialogElement).close();
+      }
+      
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create booking');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   // Show loading state
   if (isLoading) {
     return (
@@ -179,53 +322,137 @@ export default function BookingsPage() {
                 <DialogTitle>Create New Booking</DialogTitle>
                 <DialogDescription>Book a space for a member or walk-in customer.</DialogDescription>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="member" className="text-right">
-                    Member
-                  </Label>
-                  <Input id="member" placeholder="Search member..." className="col-span-3" />
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleCreateBooking(e);
+              }}>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="member">Member</Label>
+                    <Select 
+                      value={formData.member} 
+                      onValueChange={(value) => setFormData({...formData, member: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {members.map((member) => (
+                          <SelectItem key={member.id} value={member.id}>
+                            {member.name} ({member.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {formErrors.member && (
+                      <p className="text-sm text-red-500">{formErrors.member}</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="resource">Resource</Label>
+                    <Select 
+                      value={formData.resource} 
+                      onValueChange={(value) => setFormData({...formData, resource: value})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a resource" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {resources.map((resource) => (
+                          <SelectItem key={resource.id} value={resource.id}>
+                            {resource.name} - ${resource.hourlyRate}/hr
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {formErrors.resource && (
+                      <p className="text-sm text-red-500">{formErrors.resource}</p>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="date">Date</Label>
+                    <Input 
+                      id="date" 
+                      type="date" 
+                      name="date"
+                      value={formData.date}
+                      onChange={handleInputChange}
+                      min={format(new Date(), 'yyyy-MM-dd')}
+                      className={formErrors.date ? 'border-red-500' : ''}
+                    />
+                    {formErrors.date && (
+                      <p className="text-sm text-red-500">{formErrors.date}</p>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="startTime">Start Time</Label>
+                      <Input 
+                        id="startTime" 
+                        type="time" 
+                        name="startTime"
+                        value={formData.startTime}
+                        onChange={handleInputChange}
+                        className={formErrors.startTime ? 'border-red-500' : ''}
+                      />
+                      {formErrors.startTime && (
+                        <p className="text-sm text-red-500">{formErrors.startTime}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="endTime">End Time</Label>
+                      <Input 
+                        id="endTime" 
+                        type="time" 
+                        name="endTime"
+                        value={formData.endTime}
+                        onChange={handleInputChange}
+                        className={formErrors.endTime ? 'border-red-500' : ''}
+                      />
+                      {formErrors.endTime && (
+                        <p className="text-sm text-red-500">{formErrors.endTime}</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="notes">Notes (Optional)</Label>
+                    <textarea
+                      id="notes"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                      className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      placeholder="Any special requirements or notes..."
+                    />
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="resource" className="text-right">
-                    Resource
-                  </Label>
-                  <Select>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select resource" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {resources.map((resource) => (
-                        <SelectItem key={resource.id} value={resource.id}>
-                          {resource.name} - ${resource.hourlyRate}/hr
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => document.getElementById('close-dialog')?.click()}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : 'Create Booking'}
+                  </Button>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="date" className="text-right">
-                    Date
-                  </Label>
-                  <Input id="date" type="date" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="startTime" className="text-right">
-                    Start Time
-                  </Label>
-                  <Input id="startTime" type="time" className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="endTime" className="text-right">
-                    End Time
-                  </Label>
-                  <Input id="endTime" type="time" className="col-span-3" />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="outline">Cancel</Button>
-                <Button>Create Booking</Button>
-              </div>
+              </form>
+              {/* Hidden close button for programmatic closing */}
+              <button id="close-dialog" className="hidden" onClick={() => {}} />
             </DialogContent>
           </Dialog>
         </div>
@@ -278,20 +505,34 @@ export default function BookingsPage() {
               />
             </CardContent>
           </Card>
+          
           {/* Bookings List */}
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Today's Bookings</CardTitle>
-              <CardDescription>{selectedDate?.toDateString() || "Select a date to view bookings"}</CardDescription>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Today's Bookings</CardTitle>
+                  <CardDescription>{selectedDate?.toDateString() || "Select a date to view bookings"}</CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => window.location.reload()}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {bookings.map((booking) => (
+                {bookings.map(booking => (
                   <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{booking.member}</p>
-                        <Badge variant={getStatusColor(booking.status)}>{booking.status}</Badge>
+                        <Badge variant={getStatusColor(booking.status as any)}>{booking.status}</Badge>
                       </div>
                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">

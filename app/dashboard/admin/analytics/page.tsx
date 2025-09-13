@@ -1,22 +1,10 @@
 "use client";
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-// Dynamically import components with SSR disabled
-const DashboardLayout = dynamic(
-  () => import('@/components/dashboard-layout'),
-  { 
-    ssr: false, 
-    loading: () => (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-);
 // Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
-// AnalyticsPage component with client-side only rendering
+import DashboardLayout from "@/components/dashboard-layout";
+
 export default function AnalyticsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);

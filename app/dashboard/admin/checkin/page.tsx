@@ -2,14 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
-import { Calendar, Clock, CheckCircle, XCircle, Clock as ClockIcon, MoreVertical } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle, XCircle, Clock as ClockIcon, MoreVertical, User, Plus, Loader2 } from 'lucide-react';
 // Using relative paths to the UI components
 import { Button } from '../../../../components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '../../../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
 import { Badge } from '../../../../components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../../../components/ui/dropdown-menu';
 import { useToast } from '../../../../components/ui/use-toast';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../../../../components/ui/dialog';
+import { Input } from '../../../../components/ui/input';
+import { Label } from '../../../../components/ui/label';
+import { Textarea } from '../../../../components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../../components/ui/popover';
+import { cn } from '../../../../lib/utils';
+import { Calendar } from '../../../../components/ui/calendar';
 
 // Types
 type CheckInStatus = 'scheduled' | 'completed' | 'cancelled' | 'missed';
@@ -37,9 +44,43 @@ export default function CheckInPage() {
   const [activeTab, setActiveTab] = useState('upcoming');
   const [checkIns, setCheckIns] = useState<ScheduledCheckIn[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [checkInDate, setCheckInDate] = useState<Date | undefined>(new Date());
+  const [checkInTime, setCheckInTime] = useState('09:00');
+  const [notes, setNotes] = useState('');
   const { toast } = useToast();
   
+  // Form state
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  
   // Fetch check-ins based on the active tab
+  // Fetch users for the dropdown
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        // In a real app, fetch users from your API
+        // const response = await fetch('/api/users');
+        // const data = await response.json();
+        
+        // Mock users for demonstration
+        const mockUsers: User[] = [
+          { id: '1', name: 'John Doe', email: 'john@example.com' },
+          { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
+          { id: '3', name: 'Bob Johnson', email: 'bob@example.com' },
+        ];
+        
+        setUsers(mockUsers);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
+
   useEffect(() => {
     const fetchCheckIns = async () => {
       try {
@@ -140,6 +181,82 @@ export default function CheckInPage() {
     }
   };
   
+  const handleCreateCheckIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    const errors: Record<string, string> = {};
+    if (!selectedUserId) errors.user = 'Please select a member';
+    if (!checkInDate) errors.date = 'Please select a date';
+    if (!checkInTime) errors.time = 'Please select a time';
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Combine date and time
+      if (!checkInDate) throw new Error('Check-in date is required');
+      const [hours, minutes] = checkInTime.split(':').map(Number);
+      const checkInDateTime = new Date(checkInDate);
+      checkInDateTime.setHours(hours, minutes);
+      
+      // In a real app, you would make an API call to create the check-in
+      // const response = await fetch('/api/admin/check-ins', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({
+      //     userId: selectedUserId,
+      //     checkInTime: checkInDateTime.toISOString(),
+      //     notes,
+      //   }),
+      // });
+      // const newCheckIn = await response.json();
+      
+      // For demo purposes, create a mock check-in
+      const selectedUser = users.find(user => user.id === selectedUserId);
+      if (!selectedUser) throw new Error('Selected user not found');
+      
+      const newCheckIn: ScheduledCheckIn = {
+        id: Math.random().toString(36).substr(2, 9),
+        user: selectedUser,
+        checkInTime: checkInDateTime.toISOString(),
+        status: 'scheduled',
+        notes: notes || undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      // Update local state
+      setCheckIns(prev => [newCheckIn, ...prev]);
+      
+      // Reset form
+      setSelectedUserId('');
+      setCheckInDate(new Date());
+      setCheckInTime('09:00');
+      setNotes('');
+      setFormErrors({});
+      setIsDialogOpen(false);
+      
+      toast({
+        title: 'Success',
+        description: 'Check-in scheduled successfully.',
+      });
+    } catch (error) {
+      console.error('Error creating check-in:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to schedule check-in. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
   const getStatusBadge = (status: CheckInStatus) => {
     const statusConfig = {
       scheduled: { label: 'Scheduled', variant: 'default' as const, icon: <ClockIcon className="h-4 w-4 mr-1" /> },
@@ -175,9 +292,124 @@ export default function CheckInPage() {
             View and manage all scheduled check-ins
           </p>
         </div>
-        <Button>
-          Schedule New Check-in
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Schedule New Check-in
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Schedule New Check-in</DialogTitle>
+              <DialogDescription>
+                Schedule a new check-in for a member. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateCheckIn}>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="member">Member</Label>
+                  <select
+                    id="member"
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Select a member</option>
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name} ({user.email})
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.user && (
+                    <p className="text-sm text-destructive">{formErrors.user}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          'w-full justify-start text-left font-normal',
+                          !checkInDate && 'text-muted-foreground'
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {checkInDate ? (
+                          format(checkInDate, 'PPP')
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={checkInDate}
+                        onSelect={setCheckInDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  {formErrors.date && (
+                    <p className="text-sm text-destructive">{formErrors.date}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="time">Time</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={checkInTime}
+                    onChange={(e) => setCheckInTime(e.target.value)}
+                    className={formErrors.time ? 'border-destructive' : ''}
+                  />
+                  {formErrors.time && (
+                    <p className="text-sm text-destructive">{formErrors.time}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add any notes about this check-in"
+                    className="min-h-[100px]"
+                  />
+                </div>
+              </div>
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scheduling...
+                    </>
+                  ) : (
+                    'Schedule Check-in'
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
       
       <Tabs defaultValue="upcoming" onValueChange={setActiveTab} className="space-y-4">
