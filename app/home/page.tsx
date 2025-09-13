@@ -11,12 +11,12 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <span className="text-sm bg-blue-500 px-3 py-1 rounded-full">Beta</span>
               <span className="text-sm">Last Login</span>
-              <a 
-                href="https://coworking-platform.onrender.com/auth/login" 
+              <Link 
+                href="/auth/login" 
                 className="text-sm font-medium hover:underline"
               >
                 Sign In
-              </a>
+              </Link>
               <Link 
                 href="/auth/register" 
                 className="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-gray-100"
