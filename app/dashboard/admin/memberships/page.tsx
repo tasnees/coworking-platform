@@ -44,6 +44,7 @@ import {
   History, 
   FileText 
 } from "lucide-react"
+import { toast } from 'sonner'
 
 interface MembershipPlan {
   id: string;
@@ -63,6 +64,15 @@ function MembershipsContent() {
   const [membershipPlans, setMembershipPlans] = useState<MembershipPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingPlan, setEditingPlan] = useState<MembershipPlan | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<MembershipPlan>>({
+    name: '',
+    type: 'flex',
+    price: 0,
+    features: [],
+    active: true
+  });
 
   useEffect(() => {
     setIsMounted(true);
@@ -129,6 +139,120 @@ function MembershipsContent() {
     );
   }
 
+  const handleEditPlan = (plan: MembershipPlan) => {
+    setEditingPlan(plan);
+    setFormData({
+      name: plan.name,
+      type: plan.type,
+      price: plan.price,
+      features: [...plan.features],
+      active: plan.active
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleToggleStatus = async (planId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/memberships/${planId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ active: !currentStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update plan status');
+      
+      // Update local state
+      setMembershipPlans(prev => 
+        prev.map(plan => 
+          plan.id === planId 
+            ? { ...plan, active: !currentStatus } 
+            : plan
+        )
+      );
+      
+      toast.success(`Plan ${currentStatus ? 'deactivated' : 'activated'} successfully`);
+    } catch (error) {
+      console.error('Error updating plan status:', error);
+      toast.error('Failed to update plan status');
+    }
+  };
+
+  const handleAddPlan = () => {
+    setEditingPlan(null);
+    setFormData({
+      name: '',
+      type: 'flex',
+      price: 0,
+      features: [],
+      active: true
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleCreatePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/memberships', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          members: 0, // Initialize with 0 members
+          features: formData.features || [],
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create plan');
+      
+      // Refresh the plans list
+      await fetchMembershipPlans();
+      setIsEditDialogOpen(false);
+      setFormData({
+        name: '',
+        type: 'flex',
+        price: 0,
+        features: [],
+        active: true
+      });
+      
+      toast.success('Membership plan created successfully');
+    } catch (error) {
+      console.error('Error creating plan:', error);
+      toast.error('Failed to create plan');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPlan) return handleCreatePlan(e);
+
+    try {
+      const response = await fetch(`/api/memberships/${editingPlan.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error('Failed to update plan');
+      
+      // Refresh the plans list
+      await fetchMembershipPlans();
+      setIsEditDialogOpen(false);
+      setEditingPlan(null);
+      
+      toast.success('Plan updated successfully');
+    } catch (error) {
+      console.error('Error updating plan:', error);
+      toast.error('Failed to update plan');
+    }
+  };
+
   // If no membership plans found, show empty state
   if (membershipPlans.length === 0) {
     return (
@@ -138,7 +262,17 @@ function MembershipsContent() {
           <p className="text-sm mt-1">Create your first membership plan to get started.</p>
           <button
             className="mt-3 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
-            onClick={() => {/* Add create membership plan handler */}}
+            onClick={() => {
+              setEditingPlan(null);
+              setFormData({
+                name: '',
+                type: 'flex',
+                price: 0,
+                features: [],
+                active: true
+              });
+              setIsEditDialogOpen(true);
+            }}
           >
             Create Membership Plan
           </button>
@@ -148,12 +282,13 @@ function MembershipsContent() {
   }
 
   return (
-    <div className="container mx-auto p-6">
+    <>
+      <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Membership Plans</h1>
         <button
           className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors flex items-center"
-          onClick={() => {/* Add create membership plan handler */}}
+          onClick={handleAddPlan}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add Plan
@@ -205,10 +340,20 @@ function MembershipsContent() {
                   </div>
 
                   <div className="mt-4 flex space-x-2">
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleEditPlan(plan)}
+                    >
                       Edit
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1">
+                    <Button 
+                      variant={plan.active ? "outline" : "default"} 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleToggleStatus(plan.id, plan.active)}
+                    >
                       {plan.active ? "Deactivate" : "Activate"}
                     </Button>
                   </div>
@@ -242,7 +387,99 @@ function MembershipsContent() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+      
+      {/* Edit Plan Dialog */}
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{editingPlan ? 'Edit Membership Plan' : 'Create New Membership Plan'}</DialogTitle>
+          <DialogDescription>
+            {editingPlan ? 'Update the details of this membership plan.' : 'Fill in the details for the new membership plan.'}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Plan Name</Label>
+            <Input
+              id="name"
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              placeholder="Enter plan name"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="type">Plan Type</Label>
+            <Select 
+              value={formData.type} 
+              onValueChange={(value) => setFormData({...formData, type: value})}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select plan type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="flex">Flex</SelectItem>
+                <SelectItem value="dedicated">Dedicated</SelectItem>
+                <SelectItem value="team">Team</SelectItem>
+                <SelectItem value="enterprise">Enterprise</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="price">Monthly Price ($)</Label>
+            <Input
+              id="price"
+              type="number"
+              value={formData.price}
+              onChange={(e) => setFormData({...formData, price: Number(e.target.value)})}
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label>Features (one per line)</Label>
+            <textarea
+              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              value={formData.features?.join('\n') || ''}
+              onChange={(e) => 
+                setFormData({
+                  ...formData, 
+                  features: e.target.value.split('\n').filter(f => f.trim() !== '')
+                })
+              }
+              placeholder="Feature 1\nFeature 2\n..."
+            />
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="active"
+              checked={formData.active}
+              onCheckedChange={(checked) => setFormData({...formData, active: checked})}
+            />
+            <Label htmlFor="active">Active Plan</Label>
+          </div>
+          
+          <div className="flex justify-end space-x-2 pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit">Save Changes</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 

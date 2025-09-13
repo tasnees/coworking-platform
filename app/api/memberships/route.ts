@@ -193,5 +193,110 @@ export async function GET(request: Request) {
   }
 }
 
+export async function POST(request: Request) {
+  console.log('POST /api/memberships called');
+  
+  // Handle CORS preflight
+  const corsResponse = handleCors(request);
+  if (corsResponse) return corsResponse;
+  
+  try {
+    // Get the session
+    const session = await getServerSession(authOptions);
+    
+    // Check if user is admin
+    if (!session?.user || (session.user as any)?.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    // Parse request body
+    const data = await request.json();
+    
+    // Validate required fields
+    if (!data.name || data.price === undefined) {
+      return NextResponse.json(
+        { error: 'Name and price are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Get database instance
+    const db = await getDatabase();
+    
+    // Create new membership plan
+    const now = new Date();
+    const newPlan = {
+      name: data.name,
+      type: data.type || 'flex',
+      price: Number(data.price),
+      features: Array.isArray(data.features) ? data.features : [],
+      active: data.active !== false, // default to true if not specified
+      members: 0, // Initialize with 0 members
+      createdAt: now,
+      updatedAt: now
+    };
+    
+    // Insert into database
+    const result = await db.collection('MembershipPlan').insertOne(newPlan);
+    
+    // Get the created plan
+    const createdPlan = await db.collection('MembershipPlan').findOne({
+      _id: result.insertedId
+    });
+    
+    if (!createdPlan) {
+      throw new Error('Failed to create membership plan');
+    }
+    
+    // Transform the response
+    const responseData: MembershipPlanResponse = {
+      id: createdPlan._id.toString(),
+      name: createdPlan.name,
+      type: createdPlan.type,
+      price: createdPlan.price,
+      features: createdPlan.features,
+      active: createdPlan.active,
+      members: createdPlan.members,
+      createdAt: createdPlan.createdAt.toISOString(),
+      updatedAt: createdPlan.updatedAt.toISOString()
+    };
+    
+    const response = NextResponse.json(responseData, { status: 201 });
+    
+    // Set CORS headers
+    response.headers.set('Access-Control-Allow-Origin', 
+      process.env.NODE_ENV === 'production'
+        ? 'https://coworking-platform.onrender.com'
+        : 'http://localhost:3001'
+    );
+    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    
+    return response;
+    
+  } catch (error) {
+    console.error('Error creating membership plan:', error);
+    const errorResponse = NextResponse.json(
+      { 
+        error: 'Failed to create membership plan',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+    
+    // Set CORS headers for the error response
+    errorResponse.headers.set('Access-Control-Allow-Origin', 
+      process.env.NODE_ENV === 'production'
+        ? 'https://coworking-platform.onrender.com'
+        : 'http://localhost:3001'
+    );
+    errorResponse.headers.set('Access-Control-Allow-Credentials', 'true');
+    
+    return errorResponse;
+  }
+}
+
 // This tells Next.js to revalidate the cache every 60 seconds
 export const revalidate = 60;

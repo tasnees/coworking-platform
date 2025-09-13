@@ -1,397 +1,51 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
-import { UserPlus, Settings, EllipsisVertical, Search, CheckCircle, XCircle } from "lucide-react";
+import { UserPlus, EllipsisVertical, Search, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-import { ReactNode, MouseEvent, ChangeEvent } from 'react';
+type MembershipStatus = 'active' | 'suspended' | 'cancelled';
+type MembershipType = 'flex' | 'dedicated' | 'team' | 'enterprise';
+type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending' | 'cancelled';
+type MemberStatus = 'active' | 'suspended' | 'cancelled';
 
-// Define prop types for components
-interface DashboardLayoutProps {
-  children: ReactNode;
-  userRole: string;
-  onNavigate: (path: string) => void;
-}
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  children: ReactNode;
-  variant?: 'default' | 'secondary' | 'outline' | 'destructive' | 'ghost';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  className?: string;
-  disabled?: boolean;
-  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
-}
-
-interface CardProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface CardHeaderProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface CardTitleProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface CardDescriptionProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface CardContentProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface BadgeProps {
-  children: ReactNode;
-  variant?: 'default' | 'secondary' | 'outline' | 'destructive';
-  className?: string;
-}
-
-interface InputProps {
-  placeholder?: string;
-  value: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  className?: string;
-}
-
-interface DropdownMenuProps {
-  children: ReactNode;
-}
-
-interface DropdownMenuTriggerProps {
-  children: ReactNode;
-  asChild?: boolean;
-}
-
-interface DropdownMenuContentProps {
-  children: ReactNode;
-  align?: 'start' | 'center' | 'end';
-}
-
-interface DropdownMenuItemProps {
-  children: ReactNode;
-  onClick?: (e: MouseEvent<HTMLDivElement>) => void;
-  className?: string;
-}
-
-interface DropdownMenuLabelProps {
-  children: ReactNode;
-}
-
-interface DialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  children: ReactNode;
-}
-
-interface DialogHeaderProps {
-  children: ReactNode;
-}
-
-interface DialogTitleProps {
-  children: ReactNode;
-}
-
-interface DialogDescriptionProps {
-  children: ReactNode;
-}
-
-interface DialogContentProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface DialogFooterProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface TableProps {
-  children: ReactNode;
-}
-
-interface TableHeaderProps {
-  children: ReactNode;
-}
-
-interface TableBodyProps {
-  children: ReactNode;
-}
-
-interface TableRowProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface TableHeadProps {
-  children: ReactNode;
-  className?: string;
-}
-
-interface TableCellProps {
-  children: ReactNode;
-  className?: string;
-  colSpan?: number;
-}
-
-// Mock components with proper TypeScript types
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
-  children, 
-  userRole, 
-  onNavigate 
-}) => (
-  <div className="flex min-h-screen">
-    {/* Sidebar */}
-    <aside className="w-64 p-6 bg-white border-r">
-      <h1 className="text-2xl font-bold mb-8">Admin Dashboard</h1>
-      <nav className="space-y-4">
-        {/* Navigation buttons */}
-        <Button onClick={() => onNavigate('members')} className="w-full justify-start" variant="ghost">Members</Button>
-        <Button onClick={() => onNavigate('settings')} className="w-full justify-start" variant="ghost">Settings</Button>
-      </nav>
-    </aside>
-    {/* Main Content */}
-    <main className="flex-1 p-8 bg-gray-100">
-      {children}
-    </main>
-  </div>
-);
-
-// Mock `shadcn/ui` components to make this code runnable
-const Badge = ({ 
-  variant = 'default', 
-  children, 
-  className = '' 
-}: BadgeProps) => {
-  const baseClasses = 'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2';
-  
-  const variants = {
-    default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-    secondary: 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-    destructive: 'border-transparent bg-red-500 text-white hover:bg-red-600',
-    outline: 'text-foreground'
-  } as const;
-  
-  return (
-    <span className={`${baseClasses} ${variants[variant] || variants.default} ${className}`}>
-      {children}
-    </span>
-  );
-};
-
-const Card = ({ children, className = '' }: CardProps) => (
-  <div className={`rounded-lg border bg-white shadow-sm ${className}`}>
-    {children}
-  </div>
-);
-
-const CardHeader = ({ children, className = '' }: CardHeaderProps) => (
-  <div className={`flex flex-col space-y-1.5 p-6 ${className}`}>
-    {children}
-  </div>
-);
-
-const CardTitle = ({ children, className = '' }: CardTitleProps) => (
-  <h3 className={`text-lg font-semibold leading-none tracking-tight ${className}`}>
-    {children}
-  </h3>
-);
-
-const CardDescription = ({ children, className = '' }: CardDescriptionProps) => (
-  <p className={`text-sm text-gray-500 ${className}`}>
-    {children}
-  </p>
-);
-
-const CardContent = ({ children, className = '' }: CardContentProps) => (
-  <div className={`p-6 pt-0 ${className}`}>
-    {children}
-  </div>
-);
-
-const Table = ({ children }: TableProps) => (
-  <div className="w-full overflow-auto">
-    <table className="w-full caption-bottom text-sm">
-      {children}
-    </table>
-  </div>
-);
-
-const TableHeader = ({ children }: TableHeaderProps) => (
-  <thead className="[&_tr]:border-b">
-    {children}
-  </thead>
-);
-
-const TableBody = ({ children }: TableBodyProps) => (
-  <tbody className="[&_tr:last-child]:border-0">
-    {children}
-  </tbody>
-);
-
-const TableRow = ({ children, className = '' }: TableRowProps) => (
-  <tr className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${className}`}>
-    {children}
-  </tr>
-);
-
-const TableHead = ({ children, className = '' }: TableHeadProps) => (
-  <th className={`h-12 px-4 text-left align-middle font-medium text-gray-500 [&:has([role=checkbox])]:pr-0 ${className}`}>
-    {children}
-  </th>
-);
-
-const TableCell = ({ children, className = '', colSpan }: TableCellProps) => (
-  <td 
-    className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`}
-    colSpan={colSpan}
-  >
-    {children}
-  </td>
-);
-
-const Button = ({ 
-  variant = 'default', 
-  children, 
-  onClick, 
-  className = '', 
-  disabled = false,
-  type = 'button',
-  ...props 
-}: ButtonProps) => {
-  const baseClasses = "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 h-9 px-4 py-2";
-  
-  const variants = {
-    default: "bg-indigo-600 text-white shadow hover:bg-indigo-700",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200",
-    destructive: "bg-red-600 text-white shadow hover:bg-red-700",
-    outline: "border border-input bg-white shadow-sm hover:bg-gray-50",
-    ghost: "hover:bg-gray-100"
-  } as const;
-  
-  return (
-    <button
-      type={type}
-      className={`${baseClasses} ${variants[variant] || variants.default} ${className}`}
-      onClick={onClick}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-};
-
-const Input = ({ 
-  placeholder = '', 
-  value, 
-  onChange, 
-  className = '' 
-}: InputProps) => (
-  <input 
-    type="text" 
-    placeholder={placeholder} 
-    value={value} 
-    onChange={onChange} 
-    className={`flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${className}`} 
-  />
-);
-
-const DropdownMenu = ({ children }: DropdownMenuProps) => <div>{children}</div>;
-
-const DropdownMenuTrigger = ({ children, asChild }: DropdownMenuTriggerProps) => (
-  <div>{children}</div>
-);
-
-const DropdownMenuContent = ({ 
-  children, 
-  align = 'start' 
-}: DropdownMenuContentProps) => (
-  <div className="z-50 w-48 rounded-md border bg-white p-1 shadow-md">
-    {children}
-  </div>
-);
-
-const DropdownMenuItem = ({ 
-  children, 
-  onClick, 
-  className = '' 
-}: DropdownMenuItemProps) => (
-  <div 
-    onClick={onClick} 
-    className={`relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-gray-100 ${className}`}
-  >
-    {children}
-  </div>
-);
-
-const DropdownMenuLabel = ({ children }: DropdownMenuLabelProps) => (
-  <div className="px-2 py-1.5 text-sm font-semibold">
-    {children}
-  </div>
-);
-
-const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
-  if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange(false)} />
-      <div className="z-50 w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
-        {children}
-      </div>
-    </div>
-  );
-};
-
-const DialogContent = ({ children, className = '' }: DialogContentProps) => (
-  <div className={className}>
-    {children}
-  </div>
-);
-
-const DialogHeader = ({ children }: DialogHeaderProps) => (
-  <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-    {children}
-  </div>
-);
-
-const DialogTitle = ({ children }: DialogTitleProps) => (
-  <h2 className="text-lg font-semibold leading-none tracking-tight">
-    {children}
-  </h2>
-);
-
-const DialogDescription = ({ children }: DialogDescriptionProps) => (
-  <p className="text-sm text-gray-500">
-    {children}
-  </p>
-);
-
-const DialogFooter = ({ children, className = '' }: DialogFooterProps) => (
-  <div className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 ${className}`}>
-    {children}
-  </div>
-);
-
-
-// Data types
 interface Member {
   id: string;
   name: string;
   email: string;
-  membership: 'active' | 'suspended' | 'cancelled';
+  membership: MembershipStatus;
   lastVisit: string;
   joinDate: string;
   plan: string;
-  status: 'active' | 'inactive' | 'suspended' | 'pending';
+  status: UserStatus;
   phone?: string;
-  membershipType?: 'flex' | 'dedicated' | 'team' | 'enterprise';
+  membershipType?: MembershipType;
   notes?: string;
 }
 
@@ -400,22 +54,29 @@ interface MemberFormData {
   name: string;
   email: string;
   phone: string;
-  membershipType: 'flex' | 'dedicated' | 'team' | 'enterprise';
-  status: 'active' | 'inactive' | 'suspended' | 'pending';
+  membershipType: MembershipType;
+  status: UserStatus;
   joinDate: string;
   lastVisit: string;
   notes: string;
 }
 
-const mockMembers: Member[] = [
-  { id: '1', name: 'John Doe', email: 'john.doe@example.com', membership: 'active', joinDate: '2023-01-15', lastVisit: '', plan: '', status: 'active' },
-  { id: '2', name: 'Jane Smith', email: 'jane.smith@example.com', membership: 'active', joinDate: '2023-02-20', lastVisit: '', plan: '', status: 'active' },
-  { id: '3', name: 'Peter Jones', email: 'peter.jones@example.com', membership: 'suspended', joinDate: '2023-03-10', lastVisit: '', plan: '', status: 'suspended' },
-  { id: '4', name: 'Sarah Lee', email: 'sarah.lee@example.com', membership: 'cancelled', joinDate: '2023-04-05', lastVisit: '', plan: '', status: 'inactive' },
-  { id: '5', name: 'Michael Brown', email: 'michael.brown@example.com', membership: 'active', joinDate: '2023-05-12', lastVisit: '', plan: '', status: 'active' },
-];
+// Badge component for member status
+const Badge = ({ variant, children }: { variant: 'default' | 'destructive' | 'outline', children: React.ReactNode }) => {
+  const variantClasses = {
+    default: 'bg-green-100 text-green-800',
+    destructive: 'bg-red-100 text-red-800',
+    outline: 'bg-gray-100 text-gray-800 border border-gray-300'
+  };
 
-const getStatusBadge = (status: Member['membership']) => {
+  return (
+    <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${variantClasses[variant]}`}>
+      {children}
+    </div>
+  );
+};
+
+const getStatusBadge = (status: MembershipStatus) => {
   switch (status) {
     case 'active':
       return <Badge variant="default">Active</Badge>;
@@ -424,44 +85,118 @@ const getStatusBadge = (status: Member['membership']) => {
     case 'cancelled':
       return <Badge variant="outline">Cancelled</Badge>;
     default:
-      return null;
+      return <Badge variant="outline">{status}</Badge>;
   }
 };
 
 const getMemberActions = (member: Member) => {
   const actions = [];
-  if (member.membership !== 'active') {
-    actions.push({ name: 'Activate', icon: <CheckCircle className="h-4 w-4 mr-2" /> });
+  
+  if (member.status !== 'active') {
+    actions.push({ 
+      name: 'Activate', 
+      icon: <CheckCircle className="h-4 w-4 mr-2" />, 
+      action: 'activate',
+      variant: 'default'
+    });
   }
-  if (member.membership !== 'suspended') {
-    actions.push({ name: 'Suspend', icon: <XCircle className="h-4 w-4 mr-2" /> });
+  if (member.status !== 'suspended') {
+    actions.push({ 
+      name: 'Suspend', 
+      icon: <XCircle className="h-4 w-4 mr-2" />, 
+      action: 'suspend',
+      variant: 'warning'
+    });
   }
-  if (member.membership !== 'cancelled') {
-    actions.push({ name: 'Cancel', icon: <XCircle className="h-4 w-4 mr-2" /> });
+  if (member.status !== 'cancelled' && member.status !== 'inactive') {
+    actions.push({ 
+      name: 'Cancel', 
+      icon: <XCircle className="h-4 w-4 mr-2" />, 
+      action: 'cancel',
+      variant: 'destructive'
+    });
   }
   return actions;
 };
 
 // Main component, combining the original `MembersPage` and `MembersContent`
 export default function AdminMembersPage() {
-  const [isClient, setIsClient] = useState(false);
+  const router = useRouter();
   
-  // State for members list
-  const [members, setMembers] = useState<Member[] | null>(null);
+  // State for members and filtering
+  const [members, setMembers] = useState<Member[]>([]);
   const [filteredMembers, setFilteredMembers] = useState<Member[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [loading, setLoading] = useState(true);
+  
+  // State for loading and updating
+  const [isLoading, setIsLoading] = useState(true);
+  const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
+  
+  // State for dialogs and member operations
+  const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [dialogAction, setDialogAction] = useState<'activate' | 'suspend' | 'cancel' | null>(null);
   
-  // State for dialogs
-  const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
-  const [editMemberDialogOpen, setEditMemberDialogOpen] = useState(false);
-  const [deleteMemberDialogOpen, setDeleteMemberDialogOpen] = useState(false);
-  const [viewMemberDialogOpen, setViewMemberDialogOpen] = useState(false);
+  // State for member data
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  // Fetch members from the API
+  const fetchMembers = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/members');
+      if (!response.ok) throw new Error('Failed to fetch members');
+      const data = await response.json();
+      setMembers(data);
+      setFilteredMembers(data);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      toast.error('Failed to load members');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
+  // Handle member status update
+  const handleStatusUpdate = async (memberId: string, newStatus: MemberStatus) => {
+    try {
+      setUpdatingMemberId(memberId);
+      const response = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update member status');
+      
+      // Update the local state
+      setMembers(prevMembers => 
+        prevMembers.map(member => 
+          member.id === memberId 
+            ? { ...member, status: newStatus, membership: newStatus } 
+            : member
+        )
+      );
+      
+      toast.success(`Member status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Error updating member status:', error);
+      toast.error('Failed to update member status');
+    } finally {
+      setUpdatingMemberId(null);
+    }
+  };
   
+  // State for form data
   // State for form data
   const [memberForm, setMemberForm] = useState<MemberFormData>({
     id: '',
@@ -471,204 +206,273 @@ export default function AdminMembersPage() {
     membershipType: 'flex',
     status: 'active',
     joinDate: new Date().toISOString().split('T')[0],
-    lastVisit: '',
+    lastVisit: new Date().toISOString().split('T')[0],
     notes: ''
   });
-  
-  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
 
   const handleAction = (member: Member, action: 'activate' | 'suspend' | 'cancel') => {
-    setSelectedMember(member);
+    setSelectedMemberId(member.id);
     setDialogAction(action);
     setShowDialog(true);
   };
 
-  const confirmAction = () => {
-    if (selectedMember && dialogAction && members) {
-      const updatedMembers = members.map(member => {
-        if (member.id === selectedMember.id) {
-          let newStatus: Member['status'] = 'active';
-          if (dialogAction === 'suspend') {
-            newStatus = 'suspended';
-          } else if (dialogAction === 'cancel') {
-            newStatus = 'inactive';
-          }
-          return { ...member, status: newStatus };
-        }
-        return member;
-      });
-      setMembers(updatedMembers);
-      setFilteredMembers(updatedMembers);
+  const confirmAction = async () => {
+    if (!selectedMemberId || !dialogAction) return;
+    
+    try {
+      setUpdatingMemberId(selectedMemberId);
+      
+      // Map dialog action to status
+      const statusMap = {
+        activate: 'active',
+        suspend: 'suspended',
+        cancel: 'cancelled'
+      } as const;
+      
+      const newStatus = statusMap[dialogAction];
+      
+      // Update member status via API
+      await handleStatusUpdate(selectedMemberId, newStatus);
+      
+      setFilteredMembers(prev => 
+        prev.map(member => 
+          member.id === selectedMemberId 
+            ? { ...member, status: newStatus, membership: newStatus } 
+            : member
+        )
+      );
+      
+    } catch (error) {
+      console.error('Error updating member status:', error);
+    } finally {
+      setSelectedMemberId(null);
+      setDialogAction(null);
+      setShowDialog(false);
+      setUpdatingMemberId(null);
     }
-    setShowDialog(false);
-    setSelectedMember(null);
-    setDialogAction(null);
   };
 
-  // Load data on client side
-  useEffect(() => {
-    setIsClient(true);
-    // Simulate API call
-    const timer = setTimeout(() => {
-      const membersData = [...mockMembers]; // Create a copy of mock data
-      setMembers(membersData);
-      setFilteredMembers(membersData);
-      setLoading(false);
-    }, 500);
+  const handleDeleteClick = (member: Member) => {
+    setMemberToDelete(member);
+    setIsDeleteDialogOpen(true);
+  };
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Handle search and filter
-  useEffect(() => {
-    if (!members || !Array.isArray(members)) return;
-    
-    let result = [...members];
-    
-    // Apply search filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(member => 
-        member?.name?.toLowerCase().includes(term) || 
-        member?.email?.toLowerCase().includes(term) ||
-        (member?.phone && member.phone.includes(term))
-      );
+  const confirmDelete = async () => {
+    if (!memberToDelete) return;
+    try {
+      const response = await fetch(`/api/admin/members/${memberToDelete.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) throw new Error('Failed to delete member');
+      
+      // Update local state
+      setMembers(prev => prev.filter(m => m.id !== memberToDelete.id));
+      setFilteredMembers(prev => prev.filter(m => m.id !== memberToDelete.id));
+      
+      toast.success('Member deleted successfully');
+    } catch (error) {
+      console.error('Error deleting member:', error);
+      toast.error('Failed to delete member');
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setMemberToDelete(null);
     }
-    
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      result = result.filter(member => member?.status === statusFilter);
-    }
-    
-    setFilteredMembers(result);
-  }, [searchTerm, statusFilter, members]);
+  };
 
-  // Show loading state if not mounted or still loading
-  if (!isClient || loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+
+  const handleMemberSubmit = async (data: MemberFormData) => {
+    try {
+      const response = await fetch('/api/admin/members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) throw new Error('Failed to create member');
+      
+      // Refresh the members list to get the complete member data from the server
+      const newMember = await response.json();
+      setMembers(prev => [...prev, newMember]);
+      setFilteredMembers(prev => [...prev, newMember]);
+      
+      toast.success('Member created successfully');
+    } catch (error) {
+      console.error('Error creating member:', error);
+      toast.error('Failed to create member');
+    } finally {
+      setIsAddMemberOpen(false);
+      setEditingMember(null);
+    }
+  };
 
   return (
-    <DashboardLayout userRole="admin" onNavigate={() => {}}>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Members</h1>
-            <p className="text-muted-foreground">
-              Manage your coworking space members
-            </p>
-          </div>
-          <Button onClick={() => setAddMemberDialogOpen(true)}>
-            Add Member
-          </Button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Members</h1>
+          <p className="text-muted-foreground">
+            Manage your coworking space members and their memberships
+          </p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col justify-between space-y-4 md:flex-row md:items-center md:space-y-0">
-              <div className="flex-1">
-                <Input
-                  placeholder="Search members..."
-                  value={searchTerm}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-                  className="max-w-sm"
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <select
-                  className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  value={statusFilter}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="pending">Pending</option>
-                </select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {!members ? (
-              <p className="text-center text-gray-500">Failed to load members</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Membership</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredMembers.length > 0 ? (
-                    (filteredMembers || []).map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell className="font-medium">{member.name}</TableCell>
-                        <TableCell>{member.email}</TableCell>
-                        <TableCell>{getStatusBadge(member.membership)}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <EllipsisVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              {getMemberActions(member).map((action, index) => (
-                                <DropdownMenuItem key={index} onClick={() => handleAction(member, action.name.toLowerCase() as any)}>
-                                  {action.icon}
-                                  {action.name}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
-                        No members found.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        <Button onClick={() => setIsAddMemberOpen(true)}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Add Member
+        </Button>
       </div>
 
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <div className="rounded-md border">
+        <div className="p-4 border-b">
+          <div className="flex items-center justify-between">
+            <div className="relative w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search members..."
+                className="w-full pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="sm">
+                Filter
+              </Button>
+              <Button variant="outline" size="sm">
+                Export
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Membership</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Last Visit</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredMembers.map((member) => (
+              <TableRow key={member.id}>
+                <TableCell className="font-medium">{member.name}</TableCell>
+                <TableCell>{member.email}</TableCell>
+                <TableCell>{member.plan}</TableCell>
+                <TableCell>
+                  {getStatusBadge(member.membership)}
+                </TableCell>
+                <TableCell>
+                  {member.lastVisit ? format(new Date(member.lastVisit), 'MMM d, yyyy') : 'Never'}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        <EllipsisVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {getMemberActions(member).map((action) => (
+                        <DropdownMenuItem 
+                          key={action.name}
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            if (action.action === 'activate') {
+                              handleStatusUpdate(member.id, 'active');
+                            } else if (action.action === 'suspend') {
+                              handleStatusUpdate(member.id, 'suspended');
+                            } else if (action.action === 'cancel') {
+                              handleStatusUpdate(member.id, 'cancelled');
+                            }
+                          }}
+                          disabled={updatingMemberId === member.id}
+                          className="flex items-center gap-2"
+                        >
+                          {updatingMemberId === member.id && action.name.toLowerCase() === member.status ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            action.icon
+                          )}
+                          {action.name}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuItem 
+                        onClick={() => {
+                          setEditingMember(member);
+                          setIsAddMemberOpen(true);
+                        }}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        onClick={() => handleDeleteClick(member)}
+                        className="text-red-600 hover:bg-red-50"
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {isAddMemberOpen && (
+        <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{editingMember ? 'Edit Member' : 'Add New Member'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              {/* Add your form fields here */}
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label htmlFor="name" className="text-right">Name</label>
+                  <Input
+                    id="name"
+                    defaultValue={editingMember?.name || ''}
+                    className="col-span-3"
+                  />
+                </div>
+                {/* Add more form fields as needed */}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddMemberOpen(false)}>Cancel</Button>
+              <Button type="submit">Save changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogTitle>Are you sure?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to {dialogAction} {selectedMember?.name}'s membership?
+              This will permanently delete {memberToDelete?.name}'s account and all associated data.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
             <Button 
-              variant={dialogAction === 'cancel' ? 'destructive' : 'default'} 
-              onClick={confirmAction}
+              variant="destructive" 
+              onClick={confirmDelete}
             >
-              {dialogAction === 'activate' ? 'Activate' : dialogAction === 'suspend' ? 'Suspend' : 'Cancel'} Membership
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </div>
   );
 }

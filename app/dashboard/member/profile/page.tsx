@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'next-auth/react';
 import { UserRole } from '@/lib/auth-types';
+import { UserBookings } from '@/components/user-bookings';
 
 interface SessionUser {
   id: string;
@@ -83,6 +84,9 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* User's Bookings */}
+      <UserBookings />
     </div>
   );
 }

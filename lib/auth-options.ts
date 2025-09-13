@@ -296,53 +296,32 @@ export const authOptions: NextAuthOptions = {
     },
     
     async redirect({ url, baseUrl, token }: { url?: string; baseUrl: string; token?: { role?: UserRole } }) {
-      // Helper to clean and validate URLs
-      const getSafeRedirectUrl = (inputUrl: string | undefined) => {
-        if (!inputUrl) return null;
+      // If this is a sign-in callback, redirect to the dashboard if authenticated
+      if (url?.includes('/api/auth/signin')) {
+        return token?.role ? `${baseUrl}${getDashboardPath(token.role)}` : `${baseUrl}/auth/login`;
+      }
+
+      // For all other cases, respect the callback URL or redirect to the dashboard
+      if (url?.startsWith(baseUrl) || !url?.startsWith('http')) {
+        // If there's a valid callback URL, use it
+        const callbackUrl = new URL(url || '/', baseUrl);
+        const callbackPath = callbackUrl.pathname;
         
-        try {
-          // Decode the URL first
-          let decodedUrl = decodeURIComponent(inputUrl);
-          
-          // If the URL contains auth routes, it's likely part of a loop
-          if (decodedUrl.includes('/auth/')) {
-            // Try to extract the final destination if it's a nested callback
-            const match = decodedUrl.match(/callbackUrl=([^&]*)/);
-            if (match && match[1]) {
-              const nestedUrl = decodeURIComponent(match[1]);
-              if (!nestedUrl.includes('/auth/')) {
-                return nestedUrl.startsWith(baseUrl) ? nestedUrl : `${baseUrl}${nestedUrl}`;
-              }
-            }
-            return null;
-          }
-          
-          // If it's a relative URL, prepend the base URL
-          if (decodedUrl.startsWith('/')) {
-            return `${baseUrl}${decodedUrl}`;
-          }
-          
-          // If it's an absolute URL, ensure it's from the same origin
-          if (decodedUrl.startsWith('http')) {
-            const urlObj = new URL(decodedUrl);
-            if (urlObj.origin === baseUrl) {
-              return decodedUrl;
-            }
-          }
-          
-          return null;
-        } catch (e) {
-          console.error('Error processing redirect URL:', e);
-          return null;
+        // Don't redirect back to auth pages if already authenticated
+        if (token?.role && callbackPath.startsWith('/auth/')) {
+          return `${baseUrl}${getDashboardPath(token.role)}`;
         }
-      };
-
-      // Try to get a safe redirect URL
-      const safeUrl = getSafeRedirectUrl(url) || 
-                     (token?.role ? `${baseUrl}${getDashboardPath(token.role)}` : baseUrl);
-
-      console.log('Auth redirect:', { originalUrl: url, safeUrl });
-      return safeUrl;
+        
+        // Otherwise, use the callback URL or go to dashboard
+        return token?.role && callbackPath === '/'
+          ? `${baseUrl}${getDashboardPath(token.role)}`
+          : callbackUrl.toString();
+      }
+      
+      // Fallback to the dashboard if authenticated, or home if not
+      return token?.role 
+        ? `${baseUrl}${getDashboardPath(token.role)}`
+        : `${baseUrl}/home`;
     }
   },
   

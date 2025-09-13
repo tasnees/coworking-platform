@@ -46,9 +46,12 @@ model User {
   image         String?
   password      String?
   role          String    @default("member")
+  status        String    @default("active") // active, suspended, cancelled
+  membershipEndDate DateTime?
   accounts          Account[]
   sessions          Session[]
   scheduledCheckIns ScheduledCheckIn[]
+  bookings         Booking[]
 }
 
 model VerificationToken {
@@ -84,5 +87,21 @@ model ScheduledCheckIn {
   
   @@index([userId])
   @@index([checkInTime])
+  @@index([status])
+}
+
+model Booking {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id])
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("confirmed") // "confirmed", "cancelled", "completed"
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([startTime])
   @@index([status])
 }
