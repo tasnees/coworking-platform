@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 // Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
-import DashboardLayout from "@/components/dashboard-layout";
 
 export default function AnalyticsPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -170,92 +169,97 @@ export default function AnalyticsPage() {
     },
   };
   return (
-    <DashboardLayout userRole="admin">
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
-          <p className="text-muted-foreground">Key metrics and trends for your coworking space</p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+        <div className="text-sm text-muted-foreground">
+          Last updated: {new Date().toLocaleString()}
         </div>
-        <div className="grid gap-6 md:grid-cols-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Members</CardTitle>
-              <CardDescription>Current active members</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-primary" />
-                <span className="text-2xl font-bold">{stats.totalMembers}</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                +{stats.newMembersThisMonth} new this month
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Total Revenue</CardTitle>
-              <CardDescription>This month</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-6 w-6 text-green-600" />
-                <span className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                <span className={stats.revenueChange >= 0 ? "text-green-600" : "text-red-600"}>
-                  {stats.revenueChange >= 0 ? "+" : ""}
-                  {stats.revenueChange}%
-                </span>{" "}
-                from last month
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Occupancy Rate</CardTitle>
-              <CardDescription>Workspace utilization</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-blue-600" />
-                <span className="text-2xl font-bold">{stats.occupancyRate}%</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                Peak: {stats.peakDay} at {stats.peakHour}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Avg. Daily Check-ins</CardTitle>
-              <CardDescription>Member activity</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-6 w-6 text-purple-600" />
-                <span className="text-2xl font-bold">{stats.avgDailyCheckins}</span>
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                Churn rate: {stats.churnRate}%
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Trends</CardTitle>
-            <CardDescription>
-              Track check-ins and revenue for the past week
-            </CardDescription>
+            <CardTitle>Total Members</CardTitle>
+            <CardDescription>Active members</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="w-full h-[350px]">
-              <Line data={lineData} options={lineOptions} />
+            <div className="flex items-center gap-2">
+              <Users className="h-6 w-6 text-primary" />
+              <span className="text-2xl font-bold">{stats.totalMembers}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              +{stats.newMembersThisMonth} new this month
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Total Revenue</CardTitle>
+            <CardDescription>This month</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-green-600" />
+              <span className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              <span className={stats.revenueChange >= 0 ? "text-green-600" : "text-red-600"}>
+                {stats.revenueChange >= 0 ? "+" : ""}
+                {stats.revenueChange}%
+              </span>{" "}
+              from last month
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Occupancy Rate</CardTitle>
+            <CardDescription>Workspace utilization</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-blue-600" />
+              <span className="text-2xl font-bold">{stats.occupancyRate}%</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              Peak: {stats.peakDay} at {stats.peakHour}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Avg. Daily Check-ins</CardTitle>
+            <CardDescription>Member activity</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <Calendar className="h-6 w-6 text-purple-600" />
+              <span className="text-2xl font-bold">{stats.avgDailyCheckins}</span>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2">
+              Churn rate: {stats.churnRate}%
             </div>
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Weekly Trends</CardTitle>
+          <CardDescription>
+            Track check-ins and revenue for the past week
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="w-full h-[350px]">
+            <Line data={lineData} options={lineOptions} />
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

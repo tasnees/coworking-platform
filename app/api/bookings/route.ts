@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
+
+// Helper function to calculate booking price
+function calculateBookingPrice(start: Date, end: Date, rate: number): number {
+  const diffInMs = end.getTime() - start.getTime();
+  const hours = diffInMs / (1000 * 60 * 60);
+  return parseFloat((hours * rate).toFixed(2));
+}
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +23,23 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const { userId, startTime, endTime, notes, status = 'confirmed' } = data;
+    const { 
+      userId, 
+      resourceId, 
+      resourceName,
+      startTime, 
+      endTime, 
+      notes, 
+      status = 'confirmed' 
+    } = data;
+    
+    // Validate required fields
+    if (!userId || !resourceId || !resourceName || !startTime || !endTime) {
+      return NextResponse.json(
+        { message: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
 
     // Validate required fields
     if (!userId || !startTime || !endTime) {
@@ -25,10 +49,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user exists
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    // Check if user and resource exist
+    const [user, resource] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, name: true, email: true }
+      }),
+      prisma.resource.findUnique({
+        where: { id: resourceId }
+      })
+    ]) as [
+      { id: string; name: string | null; email: string | null } | null,
+      { id: string; name: string; type: string; hourlyRate: number } | null
+    ];
 
     if (!user) {
       return NextResponse.json(
@@ -36,32 +69,42 @@ export async function POST(request: Request) {
         { status: 404 }
       );
     }
+    
+    if (!resource) {
+      return NextResponse.json(
+        { message: 'Resource not found' },
+        { status: 404 }
+      );
+    }
 
-    // Check for time conflicts
+    // Check for time conflicts for the resource
     const conflictingBooking = await prisma.booking.findFirst({
       where: {
-        userId,
+        resourceId,
+        status: { not: 'cancelled' },
         OR: [
+          // Existing booking starts during new booking
           {
             AND: [
               { startTime: { lte: new Date(startTime) } },
               { endTime: { gt: new Date(startTime) } },
             ],
           },
+          // Existing booking ends during new booking
           {
             AND: [
               { startTime: { lt: new Date(endTime) } },
               { endTime: { gte: new Date(endTime) } },
             ],
           },
+          // New booking is within existing booking
           {
             AND: [
-              { startTime: { gte: new Date(startTime) } },
-              { endTime: { lte: new Date(endTime) } },
+              { startTime: { lte: new Date(startTime) } },
+              { endTime: { gte: new Date(endTime) } },
             ],
           },
         ],
-        status: { not: 'cancelled' },
       },
     });
 
@@ -72,23 +115,33 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create the booking
+    // Create the booking with resource information
     const booking = await prisma.booking.create({
       data: {
         userId,
+        resourceId,
+        resourceName: resourceName || resource.name,
+        resourceType: resource.type,
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         status,
         notes,
+        price: calculateBookingPrice(
+          new Date(startTime),
+          new Date(endTime),
+          resource.hourlyRate || 0
+        ),
+        paid: false
       },
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             email: true,
           },
         },
-      },
+      }
     });
 
     return NextResponse.json(booking, { status: 201 });

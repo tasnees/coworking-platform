@@ -75,26 +75,64 @@ export default function BookingsPage() {
     { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
   ]);
   
-  // Mock members - in a real app, this would come from an API
-  const [members] = useState([
-    { id: "1", name: "John Doe", email: "john@example.com" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com" },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com" },
-  ]);
+  // State for members
+  const [members, setMembers] = useState<Array<{ id: string; name: string; email: string }>>([]);
+  
+  // Fetch members from API
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) throw new Error('Failed to fetch members');
+        const data = await response.json();
+        setMembers(data);
+      } catch (error) {
+        console.error('Error fetching members:', error);
+        toast.error('Failed to load members');
+      }
+    };
+    
+    fetchMembers();
+  }, []);
   // Load data on component mount
   useEffect(() => {
     // This effect only runs on the client side
     setIsMounted(true);
-    const fetchBookings = async () => {
+    
+    const loadData = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/bookings');
-        if (!response.ok) throw new Error('Failed to fetch bookings');
-        const data = await response.json();
-        setBookings(data);
+        
+        // Fetch bookings
+        const [bookingsRes, resourcesRes] = await Promise.all([
+          fetch('/api/bookings'),
+          fetch('/api/resources') // Assuming you have an endpoint to fetch resources
+        ]);
+        
+        if (!bookingsRes.ok) throw new Error('Failed to fetch bookings');
+        if (!resourcesRes.ok) throw new Error('Failed to fetch resources');
+        
+        const [bookingsData, resourcesData] = await Promise.all([
+          bookingsRes.json(),
+          resourcesRes.json()
+        ]);
+        
+        // Transform bookings data to match the expected format
+        const formattedBookings = bookingsData.map((booking: any) => ({
+          id: booking.id,
+          member: booking.user?.name || 'Unknown',
+          resource: booking.resourceName || 'Unknown',
+          type: booking.resourceType || 'Unknown',
+          status: booking.status || 'confirmed',
+          date: new Date(booking.startTime).toISOString().split('T')[0],
+          startTime: new Date(booking.startTime).toTimeString().slice(0, 5),
+          endTime: new Date(booking.endTime).toTimeString().slice(0, 5),
+        }));
+        
+        setBookings(formattedBookings);
         setError(null);
       } catch (err) {
-        console.error('Error fetching bookings:', err);
+        console.error('Error fetching data:', err);
         // Fallback to mock data if API fails
         const mockBookings = [
           {
@@ -134,7 +172,9 @@ export default function BookingsPage() {
         setIsLoading(false);
       }
     };
-    fetchBookings();
+    
+    loadData();
+    
     // Cleanup function
     return () => {
       // Any cleanup if needed
@@ -199,35 +239,58 @@ export default function BookingsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Validate form
-    const errors: Record<string, string> = {};
-    if (!formData.member) errors.member = 'Member is required';
-    if (!formData.resource) errors.resource = 'Resource is required';
-    if (!formData.date) errors.date = 'Date is required';
-    if (!formData.startTime) errors.startTime = 'Start time is required';
-    if (!formData.endTime) errors.endTime = 'End time is required';
-    
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      setIsSubmitting(false);
-      return;
-    }
-    
     try {
+      // Validate form
+      const errors: Record<string, string> = {};
+      if (!formData.member) errors.member = 'Member is required';
+      if (!formData.resource) errors.resource = 'Resource is required';
+      if (!formData.date) errors.date = 'Date is required';
+      if (!formData.startTime) errors.startTime = 'Start time is required';
+      if (!formData.endTime) errors.endTime = 'End time is required';
+      
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create start and end datetime objects
+      const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+      const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+
+      // Validate time range
+      if (startDateTime >= endDateTime) {
+        setFormErrors({
+          ...formErrors,
+          endTime: 'End time must be after start time'
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Get the selected resource
+      const selectedResource = resources.find(r => r.id === formData.resource);
+      if (!selectedResource) {
+        throw new Error('Selected resource not found');
+      }
+
+      // Prepare booking data
+      const bookingData = {
+        userId: formData.member,
+        resourceId: formData.resource,
+        resourceName: selectedResource.name,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+        status: 'confirmed',
+        notes: formData.notes,
+      };
+
       const response = await fetch('/api/bookings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          memberId: formData.member,
-          resourceId: formData.resource,
-          date: formData.date,
-          startTime: formData.startTime,
-          endTime: formData.endTime,
-          notes: formData.notes,
-          status: 'confirmed',
-        }),
+        body: JSON.stringify(bookingData),
       });
       
       if (!response.ok) {
@@ -236,7 +299,19 @@ export default function BookingsPage() {
       }
       
       const newBooking = await response.json();
-      setBookings(prev => [...prev, newBooking]);
+      
+      // Update local state with the new booking
+      setBookings(prev => [{
+        ...newBooking,
+        member: members.find(m => m.id === formData.member)?.name || 'Unknown',
+        resource: selectedResource.name,
+        type: selectedResource.type,
+        status: 'confirmed',
+        date: formData.date,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+      }, ...prev]);
+      
       toast.success('Booking created successfully');
       
       // Reset form

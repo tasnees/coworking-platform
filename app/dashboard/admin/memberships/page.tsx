@@ -153,29 +153,35 @@ function MembershipsContent() {
 
   const handleToggleStatus = async (planId: string, currentStatus: boolean) => {
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/memberships/${planId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({ active: !currentStatus }),
       });
 
-      if (!response.ok) throw new Error('Failed to update plan status');
-      
-      // Update local state
-      setMembershipPlans(prev => 
-        prev.map(plan => 
-          plan.id === planId 
-            ? { ...plan, active: !currentStatus } 
-            : plan
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update plan status');
+      }
+
+      // Update the local state to reflect the change
+      setMembershipPlans(prevPlans =>
+        prevPlans.map(plan =>
+          plan.id === planId ? { ...plan, active: !currentStatus } : plan
         )
       );
       
-      toast.success(`Plan ${currentStatus ? 'deactivated' : 'activated'} successfully`);
+      toast.success(`Plan ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
       console.error('Error updating plan status:', error);
-      toast.error('Failed to update plan status');
+      toast.error(error instanceof Error ? error.message : 'Failed to update plan status');
+    } finally {
+      setIsLoading(false);
     }
   };
 

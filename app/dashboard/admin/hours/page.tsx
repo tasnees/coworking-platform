@@ -36,7 +36,8 @@ import {
   Plus, 
   Save, 
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Check
 } from "lucide-react"
 
 // Define types for better type safety
@@ -74,6 +75,8 @@ function HoursContent() {
   const [membershipAccess, setMembershipAccess] = useState<MembershipAccess[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Mock data for regular hours
   const mockRegularHours: Weekday[] = [
@@ -153,10 +156,60 @@ function HoursContent() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button>
-            <Save className="mr-2 h-4 w-4" />
-            Save Changes
+          <Button 
+            onClick={async () => {
+              try {
+                setIsSaving(true);
+                setError(null);
+                
+                // In a real app, you would make an API call here to save the data
+                // For example:
+                // const response = await fetch('/api/hours', {
+                //   method: 'POST',
+                //   headers: { 'Content-Type': 'application/json' },
+                //   body: JSON.stringify({
+                //     regularHours,
+                //     specialHours,
+                //     membershipAccess
+                //   })
+                // });
+                // if (!response.ok) throw new Error('Failed to save changes');
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Show success message
+                setSaveSuccess(true);
+                setTimeout(() => setSaveSuccess(false), 3000);
+                
+                console.log('Saved changes:', { regularHours, specialHours, membershipAccess });
+              } catch (err) {
+                console.error('Error saving changes:', err);
+                setError('Failed to save changes. Please try again.');
+              } finally {
+                setIsSaving(false);
+              }
+            }}
+            disabled={isSaving}
+          >
+            {isSaving ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
           </Button>
+          {saveSuccess && (
+            <div className="ml-2 flex items-center text-sm text-green-600">
+              <Check className="mr-1 h-4 w-4" />
+              Changes saved successfully!
+            </div>
+          )}
         </div>
       </div>
 

@@ -524,11 +524,5 @@ function StaffBookingsPage() {
   );
 }
 
-// Wrap the page with the dashboard layout
-export default function Page() {
-  return (
-    <DashboardLayout userRole="staff">
-      <StaffBookingsPage />
-    </DashboardLayout>
-  );
-}
+// Export the page component directly - layout is already handled by the root dashboard layout
+export default StaffBookingsPage;

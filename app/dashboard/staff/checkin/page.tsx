@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { format, isToday } from "date-fns";
-import { Check, User, Clock, QrCode } from "lucide-react";
+import { Check, User, Clock, QrCode, X, Search, Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 // Assuming DashboardLayout, Card, Table, and Button components are available
 // from a UI library like shadcn/ui.
 // For this self-contained example, we will create mock components.
@@ -12,6 +13,13 @@ import { Check, User, Clock, QrCode } from "lucide-react";
 interface DashboardLayoutProps {
   children: React.ReactNode;
   userRole: string;
+}
+
+interface DialogProps {
+  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  className?: string;
 }
 
 interface CardProps {
@@ -84,6 +92,24 @@ const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => (
     <div className="max-w-7xl mx-auto">{children}</div>
   </div>
 );
+
+const Dialog = ({ children, open, onOpenChange, className = '' }: DialogProps) => {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className={`bg-white rounded-lg p-6 shadow-xl w-full max-w-md mx-4 ${className}`}>
+        {children}
+        <button
+          onClick={() => onOpenChange(false)}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const Card = ({ children, className = "" }: CardProps) => (
   <div className={`rounded-xl border bg-card text-card-foreground shadow ${className}`}>
@@ -202,7 +228,6 @@ const Badge = ({ children, variant = 'default' }: BadgeProps) => {
   );
 };
 
-
 // Data types
 interface CheckInHistory {
   id: string;
@@ -246,6 +271,13 @@ export default function StaffCheckinPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [showManualCheckin, setShowManualCheckin] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // Initialize with empty data for SSR
   const safeMembers = isClient ? members : [];
@@ -315,6 +347,78 @@ export default function StaffCheckinPage() {
     return format(new Date(timestamp), 'h:mm a');
   };
 
+  const handleManualCheckin = async (member: Member) => {
+    try {
+      setIsProcessing(true);
+      // In a real app, you would make an API call here
+      // await fetch(`/api/members/${member.id}/checkin`, { method: 'POST' });
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update local state
+      const updatedMembers = members.map(m => 
+        m.id === member.id ? { ...m, status: 'checkedIn' as const } : m
+      );
+      setMembers(updatedMembers);
+      
+      // Add to check-in history
+      const newCheckin: CheckInHistory = {
+        id: `checkin-${Date.now()}`,
+        memberId: member.id,
+        memberName: member.name,
+        timestamp: new Date().toISOString(),
+        location: 'Manual Check-in'
+      };
+      
+      setCheckedInToday(prev => [newCheckin, ...prev]);
+      setTotalCheckins(prev => prev + 1);
+      
+      toast.success(`Successfully checked in ${member.name}`);
+      setShowManualCheckin(false);
+    } catch (error) {
+      console.error('Error during check-in:', error);
+      toast.error('Failed to process check-in');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const startQRScanner = async () => {
+    try {
+      setShowQRScanner(true);
+      // In a real app, you would implement QR code scanning logic here
+      // This is a simplified version
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        streamRef.current = stream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      toast.error('Could not access camera. Please check permissions.');
+      setShowQRScanner(false);
+    }
+  };
+
+  const stopQRScanner = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setShowQRScanner(false);
+  };
+
+  const filteredMembers = searchQuery
+    ? members.filter(member => 
+        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : [];
+
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">
@@ -358,7 +462,12 @@ export default function StaffCheckinPage() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <Button className="w-full">
+              <Button 
+                className="w-full"
+                onClick={() => setShowManualCheckin(true)}
+                disabled={isProcessing}
+              >
+                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Manual Check-in
               </Button>
             </CardContent>
@@ -369,7 +478,13 @@ export default function StaffCheckinPage() {
               <QrCode className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline">
+              <Button 
+                className="w-full" 
+                variant="outline"
+                onClick={startQRScanner}
+                disabled={isProcessing}
+              >
+                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Open QR Scanner
               </Button>
             </CardContent>
@@ -464,6 +579,114 @@ export default function StaffCheckinPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Manual Check-in Dialog */}
+      <Dialog open={showManualCheckin} onOpenChange={setShowManualCheckin}>
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <input
+              placeholder="Search members by name or email..."
+              className="pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <div className="max-h-60 overflow-y-auto border rounded-md">
+            {searchQuery && filteredMembers.length > 0 ? (
+              <Table>
+                <TableBody>
+                  {filteredMembers.map((member) => (
+                    <TableRow 
+                      key={member.id} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedMember(member)}
+                    >
+                      <TableCell className="font-medium">{member.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          size="sm" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleManualCheckin(member);
+                          }}
+                          disabled={isProcessing}
+                        >
+                          {isProcessing && selectedMember?.id === member.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : null}
+                          Check In
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : searchQuery ? (
+              <div className="p-4 text-center text-muted-foreground">
+                No members found
+              </div>
+            ) : (
+              <div className="p-4 text-center text-muted-foreground">
+                Start typing to search for members
+              </div>
+            )}
+          </div>
+        </div>
+      </Dialog>
+
+      {/* QR Scanner Dialog */}
+      <Dialog open={showQRScanner} onOpenChange={setShowQRScanner}>
+        <div className="sm:max-w-[425px]">
+          <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-black">
+            {showQRScanner ? (
+              <video
+                ref={videoRef}
+                className="h-full w-full object-cover"
+                autoPlay
+                playsInline
+                muted
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-white">
+                <p>Camera not available</p>
+              </div>
+            )}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="h-64 w-64 rounded-lg border-4 border-white/50"></div>
+            </div>
+          </div>
+          <div className="text-center text-sm text-muted-foreground">
+            Position the QR code within the frame to scan
+          </div>
+          <div className="flex justify-center gap-4 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={stopQRScanner}
+              className="flex-1"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Cancel
+            </Button>
+            <Button 
+              className="flex-1"
+              disabled={isProcessing}
+              onClick={() => {
+                // In a real app, this would process the scanned QR code
+                toast.success('QR code scanned successfully!');
+                stopQRScanner();
+              }}
+            >
+              {isProcessing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : null}
+              Simulate Scan
+            </Button>
+          </div>
+        </div>
+      </Dialog>
     </DashboardLayout>
   );
 }

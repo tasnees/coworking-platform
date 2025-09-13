@@ -9,18 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Search, Plus, Eye, Edit, Trash2, User, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
-// Simple loading component
+import { Search, Plus, Eye, Edit, Trash2, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
+import { User } from "lucide-react"
+// Loading component for the page
 const LoadingSpinner = () => (
   <div className="flex h-screen w-full items-center justify-center">
     <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
   </div>
-);
-
-// Dynamically import the dashboard layout with SSR disabled
-const DashboardLayout = dynamic<React.ComponentProps<typeof import('@/components/dashboard-layout').default>>(
-  () => import('@/components/dashboard-layout').then((mod) => mod.default),
-  { ssr: false, loading: () => <LoadingSpinner /> }
 );
 interface Member {
   id: string;
@@ -403,53 +398,52 @@ export default function StaffMembersPage() {
     )
   }
   return (
-    <DashboardLayout userRole="staff">
-      <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Member Management</h1>
-          <p className="text-muted-foreground">Manage all coworking space members and their information</p>
-        </div>
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Members</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalMembers}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Members</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeMembers}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">New This Month</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{newMembersThisMonth}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Suspended</CardTitle>
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{suspendedMembers}</div>
-            </CardContent>
-          </Card>
-        </div>
-        {/* Filters and Actions */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Member Management</h1>
+        <p className="text-muted-foreground">Manage all coworking space members and their information</p>
+      </div>
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <User className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalMembers}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Members</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{activeMembers}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New This Month</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{newMembersThisMonth}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Suspended</CardTitle>
+            <XCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{suspendedMembers}</div>
+          </CardContent>
+        </Card>
+      </div>
+      {/* Filters and Actions */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -748,6 +742,5 @@ export default function StaffMembersPage() {
           </DialogContent>
         </Dialog>
       </div>
-    </DashboardLayout>
   )
 }

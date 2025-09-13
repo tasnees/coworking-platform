@@ -883,12 +883,5 @@ Thank you for your business!
   )
 };
 
-const App = () => {
-  return (
-    <DashboardLayout onNavigate={() => {}}>
-      <MembershipsPage />
-    </DashboardLayout>
-  );
-};
-
-export default App;
+// Export the page component directly - layout is already handled by the root dashboard layout
+export default MembershipsPage;
