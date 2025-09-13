@@ -82,10 +82,9 @@ export default function MemberDashboard() {
     )
   }
   return (
-    <DashboardLayout userRole="member">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
           <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
           <p className="text-muted-foreground">Welcome! Here’s your coworking activity and quick access to your tools.</p>
         </div>
@@ -250,6 +249,5 @@ export default function MemberDashboard() {
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
   )
 }

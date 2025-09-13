@@ -296,6 +296,38 @@ export default function MembershipsPage() {
     return Math.min((used / total) * 100, 100);
   };
 
+  // Handle plan upgrade
+  const handleUpgradeToPlan = async (plan: MembershipPlan) => {
+    if (!plan) return;
+    
+    try {
+      // In a real app, you would make an API call to update the membership
+      // const response = await fetch('/api/membership/upgrade', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ planId: plan.id })
+      // });
+      // const data = await response.json();
+      
+      // For demo purposes, we'll just update the local state
+      setCurrentMembership({
+        ...plan,
+        status: 'active',
+        startDate: new Date().toISOString(),
+        autoRenew: true
+      });
+      
+      // Show success message
+      alert(`Successfully upgraded to ${plan.name}!`);
+      setShowUpgradeDialog(false);
+      setSelectedPlanForUpgrade(null);
+      
+    } catch (error) {
+      console.error('Error upgrading plan:', error);
+      alert('Failed to upgrade plan. Please try again.');
+    }
+  };
+
   // Event handlers
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
     if (!currentMembership) return;
@@ -660,24 +692,66 @@ Thank you for your business!
             </DialogHeader>
             <div className="space-y-4 py-4">
               {availablePlans.map((plan) => (
-                <Card key={plan.id} className="p-4">
+                <Card 
+                  key={plan.id} 
+                  className={`p-4 cursor-pointer transition-colors ${
+                    selectedPlanForUpgrade?.id === plan.id ? 'border-2 border-primary' : ''
+                  }`}
+                  onClick={() => setSelectedPlanForUpgrade(plan)}
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-semibold">{plan.name}</div>
                       <div className="text-sm text-muted-foreground">
                         {formatCurrency(plan.price)} / {plan.billingCycle}
                       </div>
+                      <ul className="mt-2 text-sm space-y-1 text-muted-foreground">
+                        {plan.features.slice(0, 3).map((feature, i) => (
+                          <li key={i} className="flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3 text-green-500" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                     <Button
                       size="sm"
                       disabled={currentMembership && plan.type === currentMembership.type}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUpgradeToPlan(plan);
+                      }}
                     >
-                      {currentMembership && plan.type === currentMembership.type ? "Current" : "Select"}
+                      {currentMembership && plan.type === currentMembership.type 
+                        ? "Current" 
+                        : selectedPlanForUpgrade?.id === plan.id 
+                          ? "Confirm Upgrade" 
+                          : "Select"
+                      }
                     </Button>
                   </div>
                 </Card>
               ))}
             </div>
+            {selectedPlanForUpgrade && (
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSelectedPlanForUpgrade(null);
+                    setShowUpgradeDialog(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => handleUpgradeToPlan(selectedPlanForUpgrade)}
+                  disabled={!selectedPlanForUpgrade}
+                >
+                  Upgrade to {selectedPlanForUpgrade.name}
+                </Button>
+              </DialogFooter>
+            )}
           </DialogContent>
         </Dialog>
         {/* Auto-Renewal Confirmation Dialog */}
