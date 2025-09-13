@@ -27,6 +27,7 @@ import {
   Bell,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -128,11 +129,6 @@ export default function DashboardLayout({
   // Don't render anything if not authenticated - will be handled by the useEffect
   if (!user) {
     return null;
-  }
-
-  const handleLogout = async () => {
-    await logout()
-    router.push("/auth/login")
   }
 
 
@@ -271,10 +267,12 @@ export default function DashboardLayout({
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
+                  <div className="w-full">
+                    <LogoutButton 
+                      className="w-full justify-start px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                      redirectPath="/auth/login"
+                    />
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
