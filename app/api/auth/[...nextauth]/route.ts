@@ -96,7 +96,7 @@ export const authOptions: NextAuthOptions = {
       // Initial sign in
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.role = user.role || 'member'; // Default to 'member' if role is not set
         token.email = user.email;
         // Add token version for refresh token rotation
         (token as any).tokenVersion = (user as any).tokenVersion || 0;
@@ -113,12 +113,14 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       logDebug('Session Callback', { session, token });
       
-      // Add user info to session
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as UserRole;
+        // Ensure role is one of the valid roles, default to 'member' if not
+        const validRoles: UserRole[] = ['admin', 'staff', 'member'];
+        session.user.role = (validRoles.includes(token.role as UserRole) 
+          ? token.role 
+          : 'member') as UserRole;
         session.user.email = token.email as string;
-        // Add token version to session
         (session as any).tokenVersion = (token as any).tokenVersion || 0;
       }
       
@@ -130,21 +132,35 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     
-    async redirect({ url, baseUrl }) {
-      // If there's a specific URL to redirect to, use it
-      if (url) {
-        // Handle relative URLs
-        if (url.startsWith('/')) {
-          // Don't redirect to auth routes if already authenticated
-          if (url.startsWith('/auth/')) {
-            return `${baseUrl}/dashboard`;
-          }
-          return `${baseUrl}${url}`;
-        }
-        // Allows callback URLs on the same origin
-        if (new URL(url).origin === baseUrl) return url;
+    async redirect({ url, baseUrl, token }: { url: string; baseUrl: string; token?: JWT }) {
+      logDebug('Redirect Callback', { url, baseUrl, token });
+      
+      // If there's a return URL, use it if it's a relative URL
+      if (url.startsWith('/') && !url.startsWith('/auth')) {
+        return url;
       }
-      return baseUrl;
+      
+      // If the URL is a full URL that's on our domain, use it
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.origin === baseUrl && !urlObj.pathname.startsWith('/auth')) {
+          return url;
+        }
+      } catch (e) {
+        // Invalid URL, fall through to default
+      }
+      
+      // Default to the role-based dashboard if we have a token with role
+      if (token?.role) {
+        const role = token.role as UserRole;
+        const dashboardPath = role === 'admin' ? '/dashboard/admin' :
+                            role === 'staff' ? '/dashboard/staff' :
+                            '/dashboard/member';
+        return `${baseUrl}${dashboardPath}`;
+      }
+      
+      // Fallback to member dashboard
+      return `${baseUrl}/dashboard/member`;
     },
   },
   cookies: {

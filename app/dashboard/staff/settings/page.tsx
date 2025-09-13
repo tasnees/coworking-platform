@@ -1,18 +1,5 @@
 "use client"
 import { useState, useEffect } from "react"
-import dynamic from 'next/dynamic'
-// Dynamically import the dashboard layout with SSR disabled
-const DynamicDashboardLayout = dynamic(
-  () => import('@/components/dashboard-layout'),
-  { 
-    ssr: false, 
-    loading: () => (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-      </div>
-    ) 
-  }
-)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,6 +37,7 @@ interface StaffProfile {
   avatar: string
   bio: string
 }
+
 interface StaffPreferences {
   emailNotifications: boolean
   bookingReminders: boolean
@@ -57,12 +45,14 @@ interface StaffPreferences {
   twoFactorEnabled: boolean
   language: string
 }
-function StaffSettingsContent() {
+
+export default function StaffSettingsContent() {
   const [isMounted, setIsMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const [isEditing, setIsEditing] = useState(false)
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+
   // Mock staff profile data
   const [profile, setProfile] = useState<StaffProfile>({
     id: "staff-001",
@@ -77,6 +67,7 @@ function StaffSettingsContent() {
     avatar: "",
     bio: "Dedicated staff member focused on providing excellent member support and maintaining smooth daily operations."
   })
+
   const [preferences, setPreferences] = useState<StaffPreferences>({
     emailNotifications: true,
     bookingReminders: true,
@@ -84,19 +75,23 @@ function StaffSettingsContent() {
     twoFactorEnabled: true,
     language: "English"
   })
+
   const [editedProfile, setEditedProfile] = useState(profile)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+
   const handleSaveProfile = () => {
     setProfile(editedProfile)
     setIsEditing(false)
     // In real app, this would make API call
   }
+
   const handleCancelEdit = () => {
     setEditedProfile(profile)
     setIsEditing(false)
   }
+
   const handlePasswordChange = () => {
     if (newPassword === confirmPassword && newPassword.length >= 8) {
       // In real app, this would make API call
@@ -106,13 +101,16 @@ function StaffSettingsContent() {
       setConfirmPassword("")
     }
   }
+
   const handlePreferenceChange = (key: keyof StaffPreferences, value: boolean | string) => {
     setPreferences(prev => ({ ...prev, [key]: value }))
     // In real app, this would make API call
   }
+
   useEffect(() => {
     setIsMounted(true)
   }, [])
+
   // Show loading state until component is mounted
   if (!isMounted) {
     return (
@@ -121,51 +119,54 @@ function StaffSettingsContent() {
       </div>
     )
   }
+
   return (
-    <DynamicDashboardLayout userRole="staff">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff Profile</h1>
-          <p className="text-muted-foreground">Manage your personal information and preferences</p>
-        </div>
-        {/* Profile Summary Card */}
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={profile.avatar} alt={profile.name} />
-                <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
-                  {profile.name.split(' ').map(n => n[0]).join('')}
-                </AvatarFallback>
-              </Avatar>
-              <div className="space-y-1">
-                <h2 className="text-2xl font-bold">{profile.name}</h2>
-                <p className="text-muted-foreground">{profile.role}</p>
-                <div className="flex items-center space-x-2">
-                  <Badge variant="secondary">{profile.department}</Badge>
-                  <Badge variant="outline">{profile.employeeId}</Badge>
-                </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Staff Profile</h1>
+        <p className="text-muted-foreground">Manage your personal information and preferences</p>
+      </div>
+
+      {/* Profile Summary Card */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center space-x-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={profile.avatar} alt={profile.name} />
+              <AvatarFallback className="text-2xl font-bold bg-primary text-primary-foreground">
+                {profile.name.split(' ').map(n => n[0]).join('')}
+              </AvatarFallback>
+            </Avatar>
+            <div className="space-y-1">
+              <h2 className="text-2xl font-bold">{profile.name}</h2>
+              <p className="text-muted-foreground">{profile.role}</p>
+              <div className="flex items-center space-x-2">
+                <Badge variant="secondary">{profile.department}</Badge>
+                <Badge variant="outline">{profile.employeeId}</Badge>
               </div>
             </div>
-          </CardContent>
-        </Card>
-        {/* Main Content */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="preferences">Preferences</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
-          </TabsList>
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Personal Information</CardTitle>
-                    <CardDescription>Update your personal details and contact information</CardDescription>
-                  </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+        </TabsList>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Personal Information</CardTitle>
+                  <CardDescription>Update your personal details and contact information</CardDescription>
+                </div>
                   {!isEditing && (
                     <Button onClick={() => setIsEditing(true)} size="sm">
                       <Edit3 className="h-4 w-4 mr-2" />
@@ -442,8 +443,6 @@ function StaffSettingsContent() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
-    </DynamicDashboardLayout>
+    </div>
   )
 }
-export default StaffSettingsContent

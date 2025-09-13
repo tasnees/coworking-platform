@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import DashboardLayout from "@/components/dashboard-layout"
 import { Users, Calendar, DollarSign, TrendingUp, MapPin, Clock, Wifi, Coffee, BarChart, Settings, LogOut } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -40,9 +39,44 @@ export default function AdminDashboard() {
   const [spaceStatus, setSpaceStatus] = useState<SpaceStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
+  // Mock stats data
+  const mockStats: Stat[] = [
+    {
+      title: 'Total Members',
+      value: '124',
+      change: '+12%',
+      changeType: 'positive',
+      icon: Users
+    },
+    {
+      title: 'Active Bookings',
+      value: '24',
+      change: '+4%',
+      changeType: 'positive',
+      icon: Calendar
+    },
+    {
+      title: 'Revenue',
+      value: '$12,450',
+      change: '+8.2%',
+      changeType: 'positive',
+      icon: DollarSign
+    },
+    {
+      title: 'Available Spaces',
+      value: '18/30',
+      change: '-2',
+      changeType: 'negative',
+      icon: MapPin
+    }
+  ]
+
   useEffect(() => {
     // Only run on client
     setIsClient(true)
+    
+    // Set mock data
+    setStats(mockStats)
     
     // Simulate data fetching
     const loadData = async () => {
@@ -114,26 +148,25 @@ export default function AdminDashboard() {
   // Show loading state during initial data load
   if (!isClient || isLoading) {
     return (
-      <DashboardLayout userRole="admin">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </DashboardLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
     )
   }
 
   return (
-    <DashboardLayout userRole="admin">
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back! Here's what's happening at your coworking space today.</p>
-        </div>
-        {/* Stats Grid */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat) => (
-            <Card key={stat.title}>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p className="text-muted-foreground">Welcome back! Here's what's happening at your coworking space today.</p>
+      </div>
+      
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.length > 0 ? (
+          stats.map((stat, index) => (
+            <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
@@ -148,15 +181,20 @@ export default function AdminDashboard() {
                 </p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Recent Bookings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Bookings</CardTitle>
-              <CardDescription>Latest space reservations</CardDescription>
-            </CardHeader>
+          ))
+        ) : (
+          <div className="col-span-4 text-center py-8">
+            <p className="text-muted-foreground">Loading stats...</p>
+          </div>
+        )}
+      
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* Recent Bookings */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Bookings</CardTitle>
+            <CardDescription>Latest space reservations</CardDescription>
+          </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {Array.isArray(recentBookings) && recentBookings.length > 0 ? (
@@ -264,14 +302,15 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
-        {/* Logout Button */}
-        <div className="flex justify-end">
-          <Button variant="outline" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-1" />
-            Sign Out
-          </Button>
-        </div>
       </div>
-    </DashboardLayout>
+      
+      {/* Logout Button */}
+      <div className="flex justify-end">
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="h-4 w-4 mr-1" />
+          Sign Out
+        </Button>
+      </div>
+    </div>
   )
 }

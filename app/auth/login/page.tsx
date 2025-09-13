@@ -38,8 +38,9 @@ function LoginForm() {
   
   // Redirect if already authenticated
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role) {
-      const role = session.user.role.toLowerCase() as UserRole;
+    if (status === 'authenticated' && session?.user) {
+      // Ensure we have a valid role, default to 'member' if not set
+      const role = (session.user.role?.toLowerCase() || 'member') as UserRole;
       console.log('User authenticated with role:', role);
       
       // Get the intended URL from the callbackUrl or use the role-based dashboard
@@ -48,12 +49,19 @@ function LoginForm() {
       
       // Validate callback URL to prevent open redirects
       let targetPath = defaultPath;
-      if (callbackUrl && 
-          !callbackUrl.startsWith('/auth') && 
-          (callbackUrl.startsWith('/dashboard') || callbackUrl === '/')) {
-        targetPath = callbackUrl;
+      if (callbackUrl) {
+        try {
+          const url = new URL(callbackUrl, window.location.origin);
+          // Only allow redirects to dashboard paths or root
+          if (url.pathname.startsWith('/dashboard') || url.pathname === '/') {
+            targetPath = url.pathname + url.search;
+          }
+        } catch (e) {
+          console.warn('Invalid callback URL:', callbackUrl);
+        }
       }
       
+      console.log('Redirecting to:', targetPath);
       // Use Next.js router for client-side navigation
       router.replace(targetPath);
     }
@@ -80,42 +88,54 @@ function LoginForm() {
     try {
       console.log('Attempting to sign in with email:', email);
       
-      // Get and clean the callback URL
-      let callbackUrl = searchParams?.get('callbackUrl') || '';
-      let redirectTo = '/dashboard';
+      // Get the callback URL if it exists
+      const callbackUrl = searchParams?.get('callbackUrl') || '';
+      let redirectTo = '';
       
-      try {
-        // Decode the URL to handle encoded characters
-        if (callbackUrl) {
-          callbackUrl = decodeURIComponent(callbackUrl);
-          
-          // If the URL contains auth/login, extract the final redirect URL
-          if (callbackUrl.includes('/auth/login')) {
-            const finalUrlMatch = callbackUrl.match(/callbackUrl=([^&]*)/);
-            if (finalUrlMatch && finalUrlMatch[1]) {
-              redirectTo = decodeURIComponent(finalUrlMatch[1]);
-            }
-          } else if (callbackUrl.startsWith('/') && !callbackUrl.startsWith('/auth/')) {
-            redirectTo = callbackUrl;
+      // Validate callback URL to prevent open redirects
+      if (callbackUrl) {
+        try {
+          const url = new URL(callbackUrl, window.location.origin);
+          // Only allow redirects to dashboard paths or root
+          if (url.pathname.startsWith('/dashboard') || url.pathname === '/') {
+            redirectTo = url.pathname + url.search;
+          } else {
+            console.warn('Invalid callback URL path:', url.pathname);
           }
+        } catch (e) {
+          console.warn('Invalid callback URL:', callbackUrl);
         }
-      } catch (e) {
-        console.error('Error processing callback URL:', e);
       }
       
       console.log('Final redirect URL:', redirectTo);
       
-      // Sign in with credentials - let NextAuth handle the redirect
-      await signIn('credentials', {
-        redirect: true,
+      // Call NextAuth signIn with credentials
+      const result = await signIn('credentials', {
+        redirect: false,
         email,
         password,
-        callbackUrl: redirectTo,
+        callbackUrl: redirectTo || undefined,
       });
-      
-      // If we get here, the redirect didn't happen as expected
-      console.warn('Sign in successful but no redirect occurred, forcing redirect');
-      window.location.href = redirectTo;
+
+      if (result?.error) {
+        console.error('Sign in error:', result.error);
+        toast({
+          title: 'Error',
+          description: result.error === 'CredentialsSignin' 
+            ? 'Invalid email or password' 
+            : 'Failed to sign in. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        // The session callback will handle the redirect based on the user's role
+        // We don't need to handle it here to prevent race conditions
+        if (result?.url) {
+          window.location.href = result.url;
+        } else {
+          // Fallback to default dashboard (will be redirected by the session check)
+          window.location.href = '/dashboard';
+        }
+      }
       
     } catch (error) {
       console.error('Login error:', error);

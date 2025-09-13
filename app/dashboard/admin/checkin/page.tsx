@@ -1,424 +1,282 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { Calendar, Clock, CheckCircle, XCircle, Clock as ClockIcon, MoreVertical } from 'lucide-react';
+// Using relative paths to the UI components
+import { Button } from '../../../../components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../../../../components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
+import { Badge } from '../../../../components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../../../components/ui/dropdown-menu';
+import { useToast } from '../../../../components/ui/use-toast';
 
-// Extend the Window interface to include our custom property
-declare global {
-  interface Window {
-    toastTimeout?: number; // In browsers, setTimeout returns a number
-  }
+// Types
+type CheckInStatus = 'scheduled' | 'completed' | 'cancelled' | 'missed';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
 }
 
-// The following imports are not available in this environment.
-// They have been replaced with standard HTML elements and Tailwind CSS.
-// import { Button } from './shadcn/Button';
-// import { Input } from './shadcn/Input';
-// import { Label } from './shadcn/Label';
-// import { Card, CardContent, CardHeader, CardTitle } from './shadcn/Card';
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from './shadcn/Tabs';
-// import { Badge } from './shadcn/Badge';
-// import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './shadcn/Dialog';
-// import { toast } from './shadcn/Toast';
-// import { Toaster } from './shadcn/Toaster';
-
-// Define a type for the code history items to resolve TypeScript errors
-interface HistoryItem {
-  prompt: string;
-  language: string;
-  code: string;
+interface ScheduledCheckIn {
+  id: string;
+  user: User;
+  checkInTime: string;
+  status: CheckInStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Main CheckInPage component
 export default function CheckInPage() {
-  // Only render on client-side to avoid hydration mismatches
   const [isMounted, setIsMounted] = useState(false);
+  const [activeTab, setActiveTab] = useState('upcoming');
+  const [checkIns, setCheckIns] = useState<ScheduledCheckIn[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  
+  // Fetch check-ins based on the active tab
+  useEffect(() => {
+    const fetchCheckIns = async () => {
+      try {
+        setIsLoading(true);
+        // In a real app, you would fetch this from your API
+        // const response = await fetch(`/api/admin/check-ins?status=${activeTab}`);
+        // const data = await response.json();
+        
+        // Mock data for demonstration
+        const mockCheckIns: ScheduledCheckIn[] = [
+          {
+            id: '1',
+            user: { id: '1', name: 'John Doe', email: 'john@example.com' },
+            checkInTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
+            status: 'scheduled',
+            notes: 'Initial consultation',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: '2',
+            user: { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
+            checkInTime: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
+            status: 'scheduled',
+            notes: 'Follow-up meeting',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          {
+            id: '3',
+            user: { id: '3', name: 'Bob Johnson', email: 'bob@example.com' },
+            checkInTime: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+            status: 'completed',
+            notes: 'Completed successfully',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ];
+        
+        setCheckIns(mockCheckIns.filter(checkIn => {
+          if (activeTab === 'upcoming') return checkIn.status === 'scheduled';
+          if (activeTab === 'completed') return checkIn.status === 'completed';
+          if (activeTab === 'cancelled') return checkIn.status === 'cancelled';
+          if (activeTab === 'missed') return checkIn.status === 'missed';
+          return true;
+        }));
+      } catch (error) {
+        console.error('Error fetching check-ins:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load check-ins. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    if (isMounted) {
+      fetchCheckIns();
+    }
+  }, [activeTab, isMounted, toast]);
   
   useEffect(() => {
     setIsMounted(true);
+    return () => setIsMounted(false);
   }, []);
+  
+  const handleStatusChange = async (checkInId: string, newStatus: CheckInStatus) => {
+    try {
+      // In a real app, you would make an API call to update the status
+      // await fetch(`/api/admin/check-ins/${checkInId}`, {
+      //   method: 'PATCH',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ status: newStatus }),
+      // });
+      
+      // Update local state for demo
+      setCheckIns(prev => 
+        prev.map(checkIn => 
+          checkIn.id === checkInId 
+            ? { ...checkIn, status: newStatus, updatedAt: new Date().toISOString() } 
+            : checkIn
+        )
+      );
+      
+      toast({
+        title: 'Success',
+        description: `Check-in ${newStatus} successfully.`,
+      });
+    } catch (error) {
+      console.error('Error updating check-in status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update check-in status. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  const getStatusBadge = (status: CheckInStatus) => {
+    const statusConfig = {
+      scheduled: { label: 'Scheduled', variant: 'default' as const, icon: <ClockIcon className="h-4 w-4 mr-1" /> },
+      completed: { label: 'Completed', variant: 'secondary' as const, icon: <CheckCircle className="h-4 w-4 mr-1" /> },
+      cancelled: { label: 'Cancelled', variant: 'destructive' as const, icon: <XCircle className="h-4 w-4 mr-1" /> },
+      missed: { label: 'Missed', variant: 'outline' as const, icon: <ClockIcon className="h-4 w-4 mr-1" /> },
+    };
+    
+    const config = statusConfig[status] || statusConfig.scheduled;
+    
+    return (
+      <Badge variant={config.variant} className="flex items-center">
+        {config.icon}
+        {config.label}
+      </Badge>
+    );
+  };
   
   if (!isMounted) {
-    return <div className="p-6">Loading check-in system...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
-  return <CheckInApp />;
-}
-
-// Main app component that runs only on client-side
-function CheckInApp() {
-  const [prompt, setPrompt] = useState('');
-  const [language, setLanguage] = useState('javascript');
-  const [generatedCode, setGeneratedCode] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('write');
-  const [showDialog, setShowDialog] = useState(false);
-  const [toastMessage, setToastMessage] = useState<{ visible: boolean; message: string; type: string }>({ visible: false, message: '', type: 'success' });
-  // Explicitly type the history array with the HistoryItem interface
-  const [codeHistory, setCodeHistory] = useState<HistoryItem[]>([]);
-  // Client-side state
-  const [isClient, setIsClient] = useState(false);
-
-  // Set isClient to true when component mounts (client-side only)
-  useEffect(() => {
-    setIsClient(true);
-    
-    // Load saved history from localStorage if available (client-side only)
-    if (typeof window !== 'undefined') {
-      try {
-        const savedHistory = window.localStorage?.getItem('codeHistory');
-        if (savedHistory) {
-          setCodeHistory(JSON.parse(savedHistory));
-        }
-      } catch (error) {
-        console.error('Error loading history from localStorage:', error);
-      }
-    }
-  }, []);
-  
-  // Save history to localStorage when it changes (client-side only)
-  useEffect(() => {
-    if (typeof window !== 'undefined' && codeHistory.length > 0) {
-      try {
-        window.localStorage?.setItem('codeHistory', JSON.stringify(codeHistory));
-      } catch (error) {
-        console.error('Error saving history to localStorage:', error);
-      }
-    }
-  }, [codeHistory]);
-
-  // Simple toast/message box implementation with cleanup
-  const showToast = (message: string, type = 'success') => {
-    // Only run on client
-    if (typeof window === 'undefined') return;
-    
-    // Clear any existing timeout
-    if (window.toastTimeout) {
-      clearTimeout(window.toastTimeout);
-    }
-    
-    setToastMessage({ visible: true, message, type });
-    
-    // Set timeout to hide toast
-    window.toastTimeout = window.setTimeout(() => {
-      setToastMessage(prev => ({ ...prev, visible: false }));
-    }, 3000);
-  };
-  
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if ((window as any).toastTimeout) {
-        clearTimeout((window as any).toastTimeout);
-      }
-    };
-  }, []);
-
-  const copyToClipboard = () => {
-    if (typeof window === 'undefined' || !generatedCode) return;
-    
-    try {
-      const textarea = document.createElement('textarea');
-      textarea.value = generatedCode;
-      document.body.appendChild(textarea);
-      textarea.select();
-      
-      let success = false;
-      try {
-        success = document.execCommand('copy');
-      } catch (err) {
-        console.error('Failed to copy using execCommand:', err);
-      }
-      
-      if (!success) {
-        // Fallback to modern Clipboard API
-        navigator.clipboard.writeText(generatedCode).then(
-          () => showToast('Code copied to clipboard!', 'success'),
-          () => {
-            console.error('Failed to copy using Clipboard API');
-            showToast('Failed to copy code.', 'error');
-          }
-        );
-      } else {
-        showToast('Code copied to clipboard!', 'success');
-      }
-      
-      document.body.removeChild(textarea);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-      showToast('Failed to copy code.', 'error');
-    }
-  };
-
-  const generateCode = async (retries = 3) => {
-    if (!prompt) {
-      showToast('Please enter a prompt.', 'error');
-      return;
-    }
-
-    setIsLoading(true);
-    setGeneratedCode('');
-    let attempt = 0;
-    const maxRetries = retries;
-
-    while (attempt < maxRetries) {
-      try {
-        const chatHistory = [];
-        chatHistory.push({
-          role: 'user',
-          parts: [{ text: `Generate a complete and runnable code snippet in ${language} for the following prompt: "${prompt}". Do not provide any conversational text, only the code.` }],
-        });
-
-        const payload = {
-          contents: chatHistory,
-        };
-
-        const apiKey = "";
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        const result = await response.json();
-        const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (text) {
-          setGeneratedCode(text);
-          // Add to history with the correct type
-          setCodeHistory(prevHistory => [...prevHistory, { prompt, language, code: text }]);
-        } else {
-          showToast('Failed to generate code. Please try again.', 'error');
-        }
-
-        setIsLoading(false);
-        break; // Exit the loop on success
-      } catch (error) {
-        console.error('API call failed:', error);
-        attempt++;
-        if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
-          console.log(`Retrying API call... attempt ${attempt + 1}`);
-        } else {
-          showToast('Failed to generate code after multiple attempts. Please check your network.', 'error');
-          setIsLoading(false);
-        }
-      }
-    }
-  };
-
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLanguage(e.target.value);
-  };
-
-  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPrompt(e.target.value);
-  };
-
-  const handleClear = () => {
-    setPrompt('');
-    setGeneratedCode('');
-    showToast('Cleared!', 'success');
-  };
-
-  // Custom SVG loader
-  const TailSpinLoader = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 38 38" stroke="#ffffff" className="animate-spin">
-      <g fill="none" fillRule="evenodd">
-        <g transform="translate(1 1)" strokeWidth="2">
-          <circle strokeOpacity=".5" cx="18" cy="18" r="18" />
-          <path d="M36 18c0-9.94-8.06-18-18-18">
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              from="0 18 18"
-              to="360 18 18"
-              dur="1s"
-              repeatCount="indefinite"
-            />
-          </path>
-        </g>
-      </g>
-    </svg>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 p-8 flex items-center justify-center font-sans">
-      <div className="w-full max-w-4xl space-y-8">
-        {/* Toast Notification */}
-        {toastMessage.visible && (
-          <div className={`fixed top-4 right-4 p-4 rounded-md shadow-lg transition-all duration-300 ${toastMessage.type === 'success' ? 'bg-green-600' : 'bg-red-600'} text-white`}>
-            {toastMessage.message}
-          </div>
-        )}
-
-        {/* Card and Tabs */}
-        <div className="bg-gray-800 rounded-lg shadow-xl overflow-hidden border border-gray-700">
-          <div className="flex justify-center p-4 border-b border-gray-700">
-            <div className="flex space-x-2 bg-gray-700 p-1 rounded-full">
-              <button
-                onClick={() => setActiveTab('write')}
-                className={`py-2 px-6 rounded-full text-sm font-medium transition-colors ${
-                  activeTab === 'write' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Write
-              </button>
-              <button
-                onClick={() => setActiveTab('history')}
-                className={`py-2 px-6 rounded-full text-sm font-medium transition-colors ${
-                  activeTab === 'history' ? 'bg-indigo-600 text-white shadow' : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                History
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {activeTab === 'write' && (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <label htmlFor="prompt" className="text-gray-300 block text-sm font-medium">Prompt</label>
-                  <textarea
-                    id="prompt"
-                    value={prompt}
-                    onChange={handlePromptChange}
-                    placeholder="e.g., 'A React component for a multi-step form with validation'"
-                    className="w-full h-32 p-3 bg-gray-700 border border-gray-600 rounded-md text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="language" className="text-gray-300 block text-sm font-medium">Language</label>
-                  <select
-                    id="language"
-                    value={language}
-                    onChange={handleLanguageChange}
-                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-md text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
-                  >
-                    <option value="javascript">JavaScript</option>
-                    <option value="python">Python</option>
-                    <option value="html">HTML</option>
-                    <option value="java">Java</option>
-                    <option value="c++">C++</option>
-                  </select>
-                </div>
-
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => generateCode()}
-                    disabled={isLoading}
-                    className="flex-1 py-3 px-6 bg-indigo-600 text-white font-bold rounded-lg shadow-md hover:bg-indigo-700 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                  >
-                    {isLoading ? (
-                      <>
-                        <TailSpinLoader />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      'Generate Code'
-                    )}
-                  </button>
-                  <button
-                    onClick={handleClear}
-                    className="py-3 px-6 bg-gray-600 text-white font-bold rounded-lg shadow-md hover:bg-gray-700 transition-colors"
-                  >
-                    Clear
-                  </button>
-                </div>
-
-                {generatedCode && (
-                  <div className="relative mt-6 p-4 bg-gray-700 rounded-md shadow-inner group">
-                    <pre className="overflow-x-auto text-sm text-gray-200 p-2">
-                      <code>{generatedCode}</code>
-                    </pre>
-                    <button
-                      onClick={copyToClipboard}
-                      className="absolute top-2 right-2 p-2 bg-gray-600 text-gray-300 rounded-md hover:bg-gray-500 transition-colors opacity-0 group-hover:opacity-100"
-                      aria-label="Copy code to clipboard"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                      </svg>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'history' && (
-              <div className="space-y-4">
-                {isClient && codeHistory.length > 0 ? (
-                  codeHistory.map((item, index) => (
-                    <div key={index} className="bg-gray-700 p-4 rounded-md border border-gray-600">
-                      <div className="flex justify-between items-center mb-2">
-                        {/* TypeScript now recognizes item.prompt and item.language */}
-                        <h4 className="text-sm font-semibold text-gray-300 truncate">{item.prompt}</h4>
-                        <span className="text-xs px-2 py-1 rounded-full bg-indigo-500 text-white font-medium">
-                          {item.language}
-                        </span>
-                      </div>
-                      <pre className="text-sm text-gray-200 overflow-x-auto p-2 bg-gray-800 rounded-md">
-                        {/* TypeScript now recognizes item.code */}
-                        <code>{item.code.substring(0, 100)}...</code>
-                      </pre>
-                      <button
-                        onClick={() => {
-                          setGeneratedCode(item.code);
-                          setPrompt(item.prompt);
-                          setLanguage(item.language);
-                          setActiveTab('write');
-                          showToast('Loaded from history!', 'success');
-                        }}
-                        className="mt-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium"
-                      >
-                        Load to Editor
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-400 py-8">
-                    {isClient ? 'Your generation history is empty.' : 'Loading history...'}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">Scheduled Check-ins</h1>
+          <p className="text-muted-foreground">
+            View and manage all scheduled check-ins
+          </p>
         </div>
-
-        {/* Dialog/Modal */}
-        {showDialog && (
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4">
-            <div className="bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full space-y-4 border border-gray-700">
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-gray-100">About this App</h3>
-                <p className="text-sm text-gray-400">
-                  This is a simple code generation app built with React and Tailwind CSS. It uses the Gemini API to
-                  generate code snippets based on your prompts.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowDialog(false)}
-                className="w-full py-2 px-4 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-              >
-                Got it!
-              </button>
-            </div>
-          </div>
-        )}
-
-        <div className="text-center text-sm text-gray-400">
-          <button onClick={() => setShowDialog(true)} className="hover:text-gray-200 transition-colors">
-            About
-          </button>
-        </div>
+        <Button>
+          Schedule New Check-in
+        </Button>
       </div>
+      
+      <Tabs defaultValue="upcoming" onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+          <TabsTrigger value="missed">Missed</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value={activeTab} className="space-y-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center p-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            </div>
+          ) : checkIns.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No {activeTab} check-ins found.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {checkIns.map((checkIn) => (
+                <Card key={checkIn.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <CardTitle className="text-lg">
+                          {checkIn.user.name}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          {checkIn.user.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        {getStatusBadge(checkIn.status)}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 ml-2">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {checkIn.status === 'scheduled' && (
+                              <>
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(checkIn.id, 'completed')}
+                                  className="text-green-600"
+                                >
+                                  Mark as Completed
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => handleStatusChange(checkIn.id, 'cancelled')}
+                                  className="text-destructive"
+                                >
+                                  Cancel Check-in
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      {format(new Date(checkIn.checkInTime), 'PPP')}
+                    </div>
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-2" />
+                      {format(new Date(checkIn.checkInTime), 'p')}
+                      <span className="mx-2">•</span>
+                      {formatDistanceToNow(new Date(checkIn.checkInTime), { addSuffix: true })}
+                    </div>
+                    {checkIn.notes && (
+                      <div className="pt-2 border-t mt-2">
+                        <p className="text-sm text-muted-foreground">
+                          {checkIn.notes}
+                        </p>
+                      </div>
+                    )}
+                  </CardContent>
+                  <CardFooter className="bg-muted/50 p-4 border-t">
+                    <div className="flex justify-between w-full items-center">
+                      <span className="text-xs text-muted-foreground">
+                        Created {formatDistanceToNow(new Date(checkIn.createdAt), { addSuffix: true })}
+                      </span>
+                      <Button variant="outline" size="sm">
+                        View Profile
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
-
-
