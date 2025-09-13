@@ -58,3 +58,15 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model MembershipPlan {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  type        String   // daily, weekly, monthly, etc.
+  price       Float
+  features   String[] // Array of features
+  active      Boolean  @default(true)
+  members     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

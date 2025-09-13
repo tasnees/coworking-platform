@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable App Router
+  // Experimental features
   experimental: {
-    appDir: true,
     serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
+    // appDir is now stable and enabled by default in Next.js 14+
   },
   // Environment variables that should be exposed to the browser
   env: {
@@ -54,8 +54,10 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Apply these headers to all routes
         source: '/(.*)',
         headers: [
+          // Security Headers
           {
             key: 'X-Content-Type-Options',
             value: 'nosniff',
@@ -67,6 +69,25 @@ const nextConfig = {
           {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
+          },
+          // CORS Headers
+          {
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: process.env.NODE_ENV === 'production' 
+              ? 'https://coworking-platform.onrender.com' 
+              : 'http://localhost:3001',
+          },
+          {
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET,OPTIONS,PATCH,DELETE,POST,PUT',
+          },
+          {
+            key: 'Access-Control-Allow-Headers',
+            value: 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
           },
         ],
       },
