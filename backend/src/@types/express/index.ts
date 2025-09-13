@@ -1,16 +1,14 @@
 import { IUserDocument } from '../../models/User';
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: IUserDocument;
-    }
-    
-    interface Response {
-      cookie(name: string, value: string, options?: CookieOptions): this;
-      clearCookie(name: string, options?: Omit<CookieOptions, 'maxAge' | 'expires'>): this;
-    }
-  }
+// Extend Express Request type
+export interface AuthenticatedRequest extends Express.Request {
+  user?: IUserDocument;
+}
+
+// Extend Express Response type
+export interface CustomResponse extends Express.Response {
+  cookie(name: string, value: string, options?: CookieOptions): this;
+  clearCookie(name: string, options?: Omit<CookieOptions, 'maxAge' | 'expires'>): this;
 }
 
 export interface CookieOptions {
@@ -18,9 +16,9 @@ export interface CookieOptions {
   secure?: boolean;
   sameSite?: 'strict' | 'lax' | 'none' | boolean;
   maxAge?: number;
+  expires?: Date;
   path?: string;
   domain?: string;
-  expires?: Date;
 }
 
 export {};
