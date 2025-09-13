@@ -1,202 +1,144 @@
-"use client"
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { useRouter } from "next/navigation"
-import dynamic from 'next/dynamic'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar, Clock, Users, CreditCard, Filter, Search, Plus, Eye, Edit, Trash2, CheckCircle } from "lucide-react"
-import { useAuth } from "@/contexts/AuthContext"
+"use client";
+import { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import dynamic from 'next/dynamic';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar, Clock, Users, CreditCard, Search, Plus, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Import the DashboardLayout directly to avoid SSR issues
-import DashboardLayout from "@/components/dashboard-layout";
+// Import the DashboardLayout with SSR disabled
+const DashboardLayout = dynamic(
+  () => import('@/components/dashboard-layout'),
+  { ssr: false }
+);
+
 // ---
-// DATA INTERFACES & MOCK DATA
+// DATA INTERFACES
 // ---
 interface Booking {
-  id: string
-  memberName: string
-  memberEmail: string
-  resourceType: "desk" | "meeting_room" | "phone_booth" | "event_space"
-  resourceName: string
-  date: string
-  startTime: string
-  endTime: string
-  status: "confirmed" | "pending" | "cancelled" | "completed"
-  duration: number
-  price: number
-  notes?: string
-  createdAt: string
+  id: string;
+  memberName: string;
+  memberEmail: string;
+  resourceType: "desk" | "meeting_room" | "phone_booth" | "event_space";
+  resourceName: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  status: "confirmed" | "pending" | "cancelled" | "completed";
+  duration: number;
+  price: number;
+  notes?: string;
+  createdAt: string;
 }
 
 interface Member {
-  id: string
-  name: string
-  email: string
+  id: string;
+  name: string;
+  email: string;
 }
 
 interface Resource {
-  id: string
-  name: string
-  type: "desk" | "meeting_room" | "phone_booth" | "event_space"
-  hourlyRate: number
+  id: string;
+  name: string;
+  type: "desk" | "meeting_room" | "phone_booth" | "event_space";
+  hourlyRate: number;
 }
 
 // Mock data (can be replaced with API calls)
 const mockBookings: Booking[] = [
   {
     id: "1",
-    memberName: "Alice Johnson",
-    memberEmail: "alice@example.com",
-    resourceType: "meeting_room",
-    resourceName: "Conference Room A",
-    date: "2024-07-28",
-    startTime: "09:00",
-    endTime: "11:00",
-    status: "confirmed",
-    duration: 2,
-    price: 60,
-    notes: "Team meeting with clients",
-    createdAt: "2024-07-27T10:00:00Z"
-  },
-  {
-    id: "2",
-    memberName: "Bob Smith",
-    memberEmail: "bob@example.com",
+    memberName: "John Doe",
+    memberEmail: "john@example.com",
     resourceType: "desk",
-    resourceName: "Hot Desk 5",
-    date: "2024-07-28",
-    startTime: "10:00",
-    endTime: "18:00",
-    status: "pending",
+    resourceName: "Hot Desk A1",
+    date: "2023-06-15",
+    startTime: "09:00",
+    endTime: "17:00",
+    status: "confirmed",
     duration: 8,
     price: 80,
-    createdAt: "2024-07-27T14:30:00Z"
+    notes: "Regular workday",
+    createdAt: "2023-06-10T10:30:00Z"
   },
-  {
-    id: "3",
-    memberName: "Carol Davis",
-    memberEmail: "carol@example.com",
-    resourceType: "phone_booth",
-    resourceName: "Phone Booth 1",
-    date: "2024-07-29",
-    startTime: "14:00",
-    endTime: "15:00",
-    status: "confirmed",
-    duration: 1,
-    price: 15,
-    notes: "Client call",
-    createdAt: "2024-07-27T09:15:00Z"
-  },
-  {
-    id: "4",
-    memberName: "David Wilson",
-    memberEmail: "david@example.com",
-    resourceType: "event_space",
-    resourceName: "Main Event Hall",
-    date: "2024-07-30",
-    startTime: "09:00",
-    endTime: "17:00",
-    status: "confirmed",
-    duration: 8,
-    price: 400,
-    notes: "Workshop event",
-    createdAt: "2024-07-26T16:45:00Z"
-  },
-  {
-    id: "5",
-    memberName: "Eva Martinez",
-    memberEmail: "eva@example.com",
-    resourceType: "desk",
-    resourceName: "Dedicated Desk 3",
-    date: "2024-07-28",
-    startTime: "08:00",
-    endTime: "17:00",
-    status: "completed",
-    duration: 9,
-    price: 90,
-    createdAt: "2024-07-27T08:00:00Z"
-  }
-]
+  // Add more mock bookings as needed
+];
 
 const mockMembers: Member[] = [
-  { id: "1", name: "Alice Johnson", email: "alice@example.com" },
-  { id: "2", name: "Bob Smith", email: "bob@example.com" },
-  { id: "3", name: "Carol Davis", email: "carol@example.com" },
-  { id: "4", name: "David Wilson", email: "david@example.com" },
-  { id: "5", name: "Eva Martinez", email: "eva@example.com" }
-]
+  { id: "1", name: "John Doe", email: "john@example.com" },
+  { id: "2", name: "Jane Smith", email: "jane@example.com" },
+];
 
 const mockResources: Resource[] = [
-  { id: "1", name: "Conference Room A", type: "meeting_room", hourlyRate: 30 },
-  { id: "2", name: "Hot Desk 5", type: "desk", hourlyRate: 10 },
+  { id: "1", name: "Hot Desk A1", type: "desk", hourlyRate: 10 },
+  { id: "2", name: "Meeting Room 1", type: "meeting_room", hourlyRate: 30 },
   { id: "3", name: "Phone Booth 1", type: "phone_booth", hourlyRate: 15 },
-  { id: "4", name: "Main Event Hall", type: "event_space", hourlyRate: 50 },
-  { id: "5", name: "Dedicated Desk 3", type: "desk", hourlyRate: 10 }
-]
+  { id: "4", name: "Event Space", type: "event_space", hourlyRate: 100 },
+];
 
 // ---
 // HELPER FUNCTIONS
 // ---
-const formatCurrency = (amount: number) => {
+const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
-  }).format(amount)
-}
+  }).format(amount);
+};
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: string): string => {
   switch (status) {
     case 'confirmed':
-      return 'bg-green-100 text-green-800'
+      return 'bg-green-100 text-green-800';
     case 'pending':
-      return 'bg-yellow-100 text-yellow-800'
+      return 'bg-yellow-100 text-yellow-800';
     case 'cancelled':
-      return 'bg-red-100 text-red-800'
+      return 'bg-red-100 text-red-800';
     case 'completed':
-      return 'bg-blue-100 text-blue-800'
+      return 'bg-blue-100 text-blue-800';
     default:
-      return 'bg-gray-100 text-gray-800'
+      return 'bg-gray-100 text-gray-800';
   }
-}
+};
 
-const getResourceIcon = (type: string) => {
+const getResourceIcon = (type: string): string => {
   switch (type) {
     case 'desk':
-      return '🖥️'
+      return '💻';
     case 'meeting_room':
-      return '🏢'
+      return '👥';
     case 'phone_booth':
-      return '📞'
+      return '📞';
     case 'event_space':
-      return '🎪'
+      return '🎪';
     default:
-      return '📍'
+      return '📍';
   }
-}
+};
 
 // ---
 // MAIN COMPONENT
 // ---
-export default function StaffBookingsPage() {
-  const { isAuthenticated } = useAuth()
-  const router = useRouter()
-  const [isClient, setIsClient] = useState(false)
-  const [bookings, setBookings] = useState<Booking[] | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all")
+function StaffBookingsPage() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+  const [isClient, setIsClient] = useState(false);
+  const [bookings, setBookings] = useState<Booking[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [resourceTypeFilter, setResourceTypeFilter] = useState<string>("all");
   
-  // This effect runs only on the client side after the component mounts
   useEffect(() => {
     setIsClient(true);
     if (isAuthenticated === false) {
@@ -209,16 +151,7 @@ export default function StaffBookingsPage() {
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [isAuthenticated, router]);
-
-  // Show loading state until authentication status is determined, client has mounted, and data is loaded
-  if (isAuthenticated === null || !isClient || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
+  }, [isAuthenticated, router, bookings]);
 
   // Filter bookings based on search and filters
   const filteredBookings = useMemo(() => {
@@ -246,40 +179,8 @@ export default function StaffBookingsPage() {
       return matchesSearch && matchesStatus && matchesResource;
     });
   }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
-  
-  // Handler functions for CRUD operations (unchanged)
-  const handleDeleteBooking = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this booking?') && bookings) {
-      setBookings(bookings.filter(b => b?.id !== id));
-    }
-  }
 
-  const handleCreateBooking = (bookingData: Partial<Booking>) => {
-    const newBooking: Booking = {
-      id: Date.now().toString(),
-      memberName: bookingData.memberName || '',
-      memberEmail: bookingData.memberEmail || '',
-      resourceType: bookingData.resourceType || 'desk',
-      resourceName: bookingData.resourceName || '',
-      date: bookingData.date || '',
-      startTime: bookingData.startTime || '',
-      endTime: bookingData.endTime || '',
-      status: bookingData.status || 'pending',
-      duration: bookingData.duration || 1,
-      price: bookingData.price || 0,
-      notes: bookingData.notes,
-      createdAt: new Date().toISOString()
-    };
-    setBookings(prev => [newBooking, ...(prev || [])]);
-    setShowCreateDialog(false);
-  }
-
-  const handleUpdateBooking = (updatedBooking: Booking) => {
-    setBookings(prev => prev?.map(b => b?.id === updatedBooking.id ? updatedBooking : b) || []);
-    setEditingBooking(null);
-  }
-
-  // Calculate stats safely
+  // Calculate stats
   const totalBookings = bookings?.length || 0;
   const confirmedBookings = bookings?.filter(b => b?.status === 'confirmed').length || 0;
   const pendingBookings = bookings?.filter(b => b?.status === 'pending').length || 0;
@@ -295,76 +196,77 @@ export default function StaffBookingsPage() {
   }
 
   return (
-    <DashboardLayout userRole="staff">
-      <div className="space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff Bookings Management</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Bookings</h1>
           <p className="text-muted-foreground">
-            View, create, edit, and manage all member bookings
+            Manage and track all workspace bookings
           </p>
         </div>
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalBookings}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{confirmedBookings}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{pendingBookings}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
-            </CardContent>
-          </Card>
-        </div>
-        {/* Filters and Actions */}
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          New Booking
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <CardTitle>All Bookings</CardTitle>
-                <CardDescription>Manage bookings across all members and resources</CardDescription>
-              </div>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Booking
-              </Button>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <div className="text-2xl font-bold">{totalBookings}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{confirmedBookings}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingBookings}</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Bookings List */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle>All Bookings</CardTitle>
+              <CardDescription>View and manage all bookings</CardDescription>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
               <div className="relative flex-1">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by member, email, or resource..."
+                  placeholder="Search bookings..."
+                  className="pl-8 w-full"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8"
                 />
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -379,334 +281,254 @@ export default function StaffBookingsPage() {
                   <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={resourceTypeFilter} onValueChange={setResourceTypeFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="desk">Desk</SelectItem>
-                  <SelectItem value="meeting_room">Meeting Room</SelectItem>
-                  <SelectItem value="phone_booth">Phone Booth</SelectItem>
-                  <SelectItem value="event_space">Event Space</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
-            {/* Bookings List */}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredBookings.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No bookings found</p>
+            </div>
+          ) : (
             <div className="space-y-4">
-              {!filteredBookings || filteredBookings.length === 0 ? (
-                <div key="no-bookings" className="text-center py-12">
-                  <p className="text-muted-foreground">No bookings found matching your criteria.</p>
-                </div>
-              ) : (
-                filteredBookings.map((booking) => booking ? (
-                  <div key={booking.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-lg">{getResourceIcon(booking.resourceType)}</span>
-                          <div>
-                            <h4 className="font-semibold">{booking.resourceName}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {booking.memberName} • {booking.memberEmail}
-                            </p>
-                          </div>
+              {filteredBookings.map((booking) => (
+                <div key={booking.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{getResourceIcon(booking.resourceType)}</span>
+                        <div>
+                          <h3 className="font-medium">{booking.resourceName}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {booking.memberName} • {booking.memberEmail}
+                          </p>
                         </div>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <span className="text-muted-foreground">Date:</span>
-                            <p className="font-medium">{booking.date}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Time:</span>
-                            <p className="font-medium">{booking.startTime} - {booking.endTime}</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Duration:</span>
-                            <p className="font-medium">{booking.duration}h</p>
-                          </div>
-                          <div>
-                            <span className="text-muted-foreground">Price:</span>
-                            <p className="font-medium">{formatCurrency(booking.price)}</p>
-                          </div>
-                        </div>
-                        {booking.notes && (
-                          <div className="mt-2 text-sm">
-                            <span className="text-muted-foreground">Notes:</span>
-                            <p className="text-gray-700">{booking.notes}</p>
-                          </div>
-                        )}
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Badge className={getStatusColor(booking.status)}>
-                          {booking.status}
-                        </Badge>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setSelectedBooking(booking)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setEditingBooking(booking)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-red-600 hover:text-red-700"
-                            onClick={() => handleDeleteBooking(booking.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Date</p>
+                          <p>{booking.date}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Time</p>
+                          <p>{booking.startTime} - {booking.endTime}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Status</p>
+                          <Badge className={getStatusColor(booking.status)}>
+                            {booking.status}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Price</p>
+                          <p>{formatCurrency(booking.price)}</p>
                         </div>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedBooking(booking)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingBooking(booking)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                    </div>
                   </div>
-                ) : null)
-              )}
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-        {/* View Booking Dialog */}
-        <Dialog open={!!selectedBooking} onOpenChange={() => setSelectedBooking(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Booking Details</DialogTitle>
-              <DialogDescription>
-                Complete booking information
-              </DialogDescription>
-            </DialogHeader>
-            {selectedBooking && (
+          )}
+        </CardContent>
+      </Card>
+
+      {/* View Booking Dialog */}
+      <Dialog open={!!selectedBooking} onOpenChange={(open) => !open && setSelectedBooking(null)}>
+        <DialogContent>
+          {selectedBooking && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Booking Details</DialogTitle>
+                <DialogDescription>
+                  View detailed information about this booking
+                </DialogDescription>
+              </DialogHeader>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{getResourceIcon(selectedBooking.resourceType)}</span>
                   <div>
-                    <Label>Member</Label>
-                    <p className="font-medium">{selectedBooking.memberName}</p>
-                    <p className="text-sm text-muted-foreground">{selectedBooking.memberEmail}</p>
-                  </div>
-                  <div>
-                    <Label>Resource</Label>
-                    <p className="font-medium">{selectedBooking.resourceName}</p>
-                    <p className="text-sm text-muted-foreground capitalize">
-                      {selectedBooking.resourceType.replace('_', ' ')}
+                    <h3 className="text-lg font-medium">{selectedBooking.resourceName}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedBooking.memberName} • {selectedBooking.memberEmail}
                     </p>
                   </div>
                 </div>
+                
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Date</Label>
-                    <p className="font-medium">{selectedBooking.date}</p>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p>{selectedBooking.date}</p>
                   </div>
                   <div>
-                    <Label>Status</Label>
+                    <p className="text-sm text-muted-foreground">Status</p>
                     <Badge className={getStatusColor(selectedBooking.status)}>
                       {selectedBooking.status}
                     </Badge>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Time</Label>
-                    <p className="font-medium">{selectedBooking.startTime} - {selectedBooking.endTime}</p>
+                    <p className="text-sm text-muted-foreground">Start Time</p>
+                    <p>{selectedBooking.startTime}</p>
                   </div>
                   <div>
-                    <Label>Duration</Label>
-                    <p className="font-medium">{selectedBooking.duration} hours</p>
+                    <p className="text-sm text-muted-foreground">End Time</p>
+                    <p>{selectedBooking.endTime}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Duration</p>
+                    <p>{selectedBooking.duration} hours</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Price</p>
+                    <p>{formatCurrency(selectedBooking.price)}</p>
                   </div>
                 </div>
-                <div>
-                  <Label>Price</Label>
-                  <p className="font-medium">{formatCurrency(selectedBooking.price)}</p>
-                </div>
+                
                 {selectedBooking.notes && (
                   <div>
-                    <Label>Notes</Label>
-                    <p className="text-sm">{selectedBooking.notes}</p>
+                    <p className="text-sm text-muted-foreground">Notes</p>
+                    <p className="mt-1">{selectedBooking.notes}</p>
                   </div>
                 )}
-                <div>
-                  <Label>Created</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(selectedBooking.createdAt).toLocaleString()}
-                  </p>
-                </div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-        {/* Edit Booking Dialog */}
-        <Dialog open={!!editingBooking} onOpenChange={() => setEditingBooking(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Booking</DialogTitle>
-              <DialogDescription>
-                Modify booking details for {editingBooking?.memberName}
-              </DialogDescription>
-            </DialogHeader>
-            {editingBooking && (
-              <div className="space-y-4">
-                <div>
-                  <Label>Member</Label>
-                  <Input value={editingBooking.memberName} readOnly className="bg-gray-50" />
-                </div>
-                <div>
-                  <Label>Resource</Label>
-                  <Select defaultValue={editingBooking.resourceName}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockResources.map(resource => resource ? (
-                        <SelectItem key={`resource-${resource.id}`} value={resource.name}>
-                          {resource.name} ({formatCurrency(resource.hourlyRate)}/hr)
-                        </SelectItem>
-                      ) : null)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Date</Label>
-                    <Input type="date" defaultValue={editingBooking.date} />
-                  </div>
-                  <div>
-                    <Label>Start Time</Label>
-                    <Input type="time" defaultValue={editingBooking.startTime} />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Duration (hours)</Label>
-                    <Input 
-                      type="number" 
-                      min="0.5" 
-                      step="0.5" 
-                      defaultValue={editingBooking.duration} 
-                    />
-                  </div>
-                  <div>
-                    <Label>Status</Label>
-                    <Select defaultValue={editingBooking.status}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label>Notes</Label>
-                  <Textarea defaultValue={editingBooking.notes || ''} />
-                </div>
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => setEditingBooking(null)}>
-                    Cancel
-                  </Button>
-                  <Button onClick={() => handleUpdateBooking(editingBooking)}>
-                    Save Changes
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-        {/* Create Booking Dialog */}
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Booking</DialogTitle>
-              <DialogDescription>
-                Create a new booking for a member
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create/Edit Booking Dialog */}
+      <Dialog open={showCreateDialog || !!editingBooking} onOpenChange={(open) => {
+        if (!open) {
+          setShowCreateDialog(false);
+          setEditingBooking(null);
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingBooking ? 'Edit Booking' : 'Create New Booking'}</DialogTitle>
+            <DialogDescription>
+              {editingBooking 
+                ? `Update booking for ${editingBooking.memberName}`
+                : 'Create a new booking for a member'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label>Member</Label>
+              <Select defaultValue={editingBooking?.memberEmail}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.email}>
+                      {member.name} ({member.email})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label>Resource</Label>
+              <Select defaultValue={editingBooking?.resourceName}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a resource" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mockResources.map((resource) => (
+                    <SelectItem key={resource.id} value={resource.name}>
+                      {resource.name} ({formatCurrency(resource.hourlyRate)}/hr)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Member</Label>
-                <Select>
+                <Label>Date</Label>
+                <Input type="date" defaultValue={editingBooking?.date} />
+              </div>
+              <div>
+                <Label>Start Time</Label>
+                <Input type="time" defaultValue={editingBooking?.startTime} />
+              </div>
+              <div>
+                <Label>Duration (hours)</Label>
+                <Input 
+                  type="number" 
+                  min="0.5" 
+                  step="0.5" 
+                  defaultValue={editingBooking?.duration || 1} 
+                />
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select defaultValue={editingBooking?.status || 'confirmed'}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select member" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {mockMembers.map(member => member ? (
-                      <SelectItem key={`member-${member.id}`} value={member.name}>
-                        {member.name} ({member.email})
-                      </SelectItem>
-                    ) : null)}
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label>Resource</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select resource" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockResources.map(resource => resource ? (
-                      <SelectItem key={`create-resource-${resource.id}`} value={resource.name}>
-                        {resource.name} ({formatCurrency(resource.hourlyRate)}/hr)
-                      </SelectItem>
-                    ) : null)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Date</Label>
-                  <Input type="date" />
-                </div>
-                <div>
-                  <Label>Start Time</Label>
-                  <Input type="time" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Duration (hours)</Label>
-                  <Input type="number" min="0.5" step="0.5" placeholder="1.5" />
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select defaultValue="pending">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div>
-                <Label>Notes</Label>
-                <Textarea placeholder="Optional notes..." />
-              </div>
-              <div className="flex justify-end gap-3">
-                <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={() => handleCreateBooking({})}>
-                  Create Booking
-                </Button>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+            
+            <div>
+              <Label>Notes</Label>
+              <Textarea placeholder="Any special requests or notes..." defaultValue={editingBooking?.notes} />
+            </div>
+            
+            <div className="flex justify-end gap-2 pt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setEditingBooking(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button>
+                {editingBooking ? 'Save Changes' : 'Create Booking'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// Wrap the page with the dashboard layout
+export default function Page() {
+  return (
+    <DashboardLayout userRole="staff">
+      <StaffBookingsPage />
     </DashboardLayout>
-  )
+  );
 }

@@ -22,17 +22,20 @@ const MongoDBAdapter = (clientPromise: Promise<MongoClient>): Adapter => {
     ...baseAdapter,
     // @ts-ignore - We're extending the base adapter with role support
     async getUser(id: string) {
+      if (!baseAdapter.getUser) return null;
       const user = await baseAdapter.getUser(id);
       return user ? { ...user, role: (user as any).role || 'member' } : null;
     },
     // @ts-ignore - We're extending the base adapter with role support
     async getUserByEmail(email: string) {
-      const user = await (baseAdapter as any).getUserByEmail?.(email);
+      if (!(baseAdapter as any).getUserByEmail) return null;
+      const user = await (baseAdapter as any).getUserByEmail(email);
       return user ? { ...user, role: (user as any).role || 'member' } : null;
     },
     // @ts-ignore - We're extending the base adapter with role support
     async getUserByAccount(providerAccountId: { provider: string; providerAccountId: string }) {
-      const user = await (baseAdapter as any).getUserByAccount?.(providerAccountId);
+      if (!(baseAdapter as any).getUserByAccount) return null;
+      const user = await (baseAdapter as any).getUserByAccount(providerAccountId);
       return user ? { ...user, role: (user as any).role || 'member' } : null;
     },
   } as Adapter;

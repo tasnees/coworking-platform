@@ -29,96 +29,98 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 
-interface DashboardLayoutProps {
-  children: ReactNode
-  userRole?: 'admin' | 'staff' | 'member'
-}
-
 type NavigationItem = {
   name: string
-  href: string
+  href: (role: string) => string
   icon: React.ComponentType<{ className?: string }>
   roles: string[]
 }
 
-export default function DashboardLayout({ 
-  children, 
-  userRole = 'member' 
-}: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
-  const { user, isLoading, logout } = useAuth()
+const navigation: NavigationItem[] = [
+  { 
+    name: 'Dashboard', 
+    href: (role) => `/dashboard/${role}`, 
+    icon: LayoutDashboard, 
+    roles: ['admin', 'staff', 'member'] 
+  },
+  { 
+    name: 'Bookings', 
+    href: (role) => `/dashboard/${role}/bookings`, 
+    icon: Calendar, 
+    roles: ['admin', 'staff', 'member'] 
+  },
+  { 
+    name: 'Members', 
+    href: (role) => `/dashboard/${role}/members`, 
+    icon: Users, 
+    roles: ['admin', 'staff'] 
+  },
+  { 
+    name: 'Memberships', 
+    href: (role) => `/dashboard/${role}/memberships`, 
+    icon: CreditCard, 
+    roles: ['admin', 'staff', 'member'] 
+  },
+  { 
+    name: 'Check-In', 
+    href: (role) => `/dashboard/${role}/checkin`, 
+    icon: QrCode, 
+    roles: ['admin', 'staff', 'member'] 
+  },
+  { 
+    name: 'Analytics', 
+    href: (role) => `/dashboard/${role}/analytics`, 
+    icon: BarChart3, 
+    roles: ['admin'] 
+  },
+  { 
+    name: 'Settings', 
+    href: (role) => `/dashboard/${role}/settings`, 
+    icon: Settings, 
+    roles: ['admin', 'staff', 'member'] 
+  },
+]
 
-  // Set mounted state after client-side hydration
+interface DashboardLayoutProps {
+  children: ReactNode;
+  userRole?: 'admin' | 'staff' | 'member';
+}
+
+export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, isLoading, logout } = useAuth();
+  
+  // Use provided userRole or extract from pathname
+  const role = userRole || (pathname?.split('/')[2] as 'admin' | 'staff' | 'member') || 'member';
+  
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  // Navigation items
-  const navigation: NavigationItem[] = [
-    { 
-      name: "Dashboard", 
-      href: `/dashboard/${userRole}`, 
-      icon: LayoutDashboard, 
-      roles: ["admin", "staff", "member"] 
-    },
-    { 
-      name: "Bookings", 
-      href: `/dashboard/${userRole}/bookings`, 
-      icon: Calendar, 
-      roles: ["admin", "staff", "member"] 
-    },
-    { 
-      name: "Members", 
-      href: `/dashboard/${userRole}/members`, 
-      icon: Users, 
-      roles: ["admin", "staff"] 
-    },
-    { 
-      name: "Memberships", 
-      href: `/dashboard/${userRole}/memberships`, 
-      icon: CreditCard, 
-      roles: ["admin", "staff", "member"] 
-    },
-    { 
-      name: "Check-In", 
-      href: `/dashboard/${userRole}/checkin`, 
-      icon: QrCode, 
-      roles: ["admin", "staff", "member"] 
-    },
-    { 
-      name: "Analytics", 
-      href: `/dashboard/${userRole}/analytics`, 
-      icon: BarChart3, 
-      roles: ["admin"] 
-    },
-    { 
-      name: "Settings", 
-      href: `/dashboard/${userRole}/settings`, 
-      icon: Settings, 
-      roles: ["admin", "staff", "member"] 
-    },
-  ]
-
-  // Filter navigation based on user role
-  const filteredNavigation = navigation.filter(item => 
-    item.roles.includes(userRole)
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+  
+  // Filter navigation items based on user role
+  const filteredNavItems = navigation.filter(item => 
+    item.roles.includes(role as 'admin' | 'staff' | 'member')
   )
-
-  // isMounted is already set in the first useEffect
+  
+  // Check if current path is active
+  const isActive = (href: (role: string) => string) => {
+    return pathname === href(role as 'admin' | 'staff' | 'member');
+  }
 
   // Handle authentication state
   useEffect(() => {
-    if (!isLoading && !user && isMounted) {
+    if (isMounted && !isLoading && !user) {
       const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
       router.push(`/auth/login?callbackUrl=${callbackUrl}`);
     }
   }, [user, isLoading, router, isMounted]);
 
   // Show loading state while checking auth or if not mounted
-  if (!isMounted || isLoading) {
+  if (isLoading || !isMounted) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -127,11 +129,31 @@ export default function DashboardLayout({
   }
 
   // Don't render anything if not authenticated - will be handled by the useEffect
-  if (!user) {
+  if (!user || !isMounted) {
     return null;
   }
 
-
+  const renderNavItems = () => {
+    return filteredNavItems.map((item) => {
+      const Icon = item.icon
+      const href = item.href(role)
+      const active = isActive(item.href)
+      return (
+        <Link
+          key={item.name}
+          href={href}
+          className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+            active
+              ? 'bg-gray-100 text-gray-900'
+              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+          }`}
+        >
+          <Icon className="mr-3 h-5 w-5" />
+          {item.name}
+        </Link>
+      )
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -154,26 +176,7 @@ export default function DashboardLayout({
             </Button>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {filteredNavigation.map((item) => {
-              const isActive = pathname === item.href
-              const Icon = item.icon
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              )
-            })}
+            {renderNavItems()}
           </nav>
         </div>
       </div>
@@ -184,29 +187,11 @@ export default function DashboardLayout({
           <div className="flex h-16 items-center border-b px-4">
             <h1 className="text-xl font-bold text-primary">OmniSpace</h1>
             <Badge variant="secondary" className="ml-2 text-xs">
-              {userRole.toUpperCase()}
+              {role.toUpperCase()}
             </Badge>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {filteredNavigation.map((item) => {
-              const isActive = pathname === item.href
-              const Icon = item.icon
-              
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={`group flex items-center rounded-md px-2 py-2 text-sm font-medium ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  {item.name}
-                </Link>
-              )
-            })}
+            {renderNavItems()}
           </nav>
         </div>
       </div>
@@ -262,7 +247,7 @@ export default function DashboardLayout({
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${userRole}/settings`)}>
+                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${role}/settings`)}>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>

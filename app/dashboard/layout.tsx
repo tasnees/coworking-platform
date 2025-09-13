@@ -1,9 +1,12 @@
 'use client'
-import React, { ReactNode, Suspense, ErrorInfo } from 'react'
-import { SessionProvider } from 'next-auth/react'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
-import DashboardLayout from '@/components/dashboard-layout'
-import { useRouter } from 'next/navigation.js'
+
+import { ReactNode, Suspense, Component } from 'react';
+import type { ErrorInfo as ReactErrorInfo } from 'react';
+import { SessionProvider } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import DashboardLayout from '@/components/dashboard-layout';
+
 // Loading component for the dashboard
 function DashboardLoading() {
   return (
@@ -13,33 +16,40 @@ function DashboardLoading() {
         <p className="text-gray-600">Loading dashboard...</p>
       </div>
     </div>
-  )
+  );
 }
+
 // Error boundary component
-class ErrorBoundary extends React.Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
-    super(props)
-    this.state = { hasError: false, error: null }
+    super(props);
+    this.state = { hasError: false, error: null };
   }
+  
   static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error }
+    return { hasError: true, error };
   }
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Error caught by error boundary:', error, errorInfo)
+  
+  componentDidCatch(error: Error, errorInfo: ReactErrorInfo) {
+    console.error('Error caught by error boundary:', error, errorInfo);
   }
+  
   resetError = () => {
-    this.setState({ hasError: false, error: null })
-  }
+    this.setState({ hasError: false, error: null });
+  };
+  
   render() {
     if (this.state.hasError) {
-      return <DashboardError error={this.state.error!} reset={this.resetError} />
+      return <DashboardError error={this.state.error!} reset={this.resetError} />;
     }
-    return this.props.children
+    return this.props.children;
   }
 }
+
 // Error display component
 function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
-  const router = useRouter()
+  const router = useRouter();
+  
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
@@ -61,8 +71,9 @@ function DashboardError({ error, reset }: { error: Error; reset: () => void }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
+
 // Error boundary for the dashboard
 function DashboardErrorBoundary({ children }: { children: ReactNode }) {
   return (
@@ -71,20 +82,24 @@ function DashboardErrorBoundary({ children }: { children: ReactNode }) {
         {children}
       </Suspense>
     </ErrorBoundary>
-  )
+  );
 }
+
 // Wrapper to ensure auth is loaded
 function AuthWrapper({ children }: { children: ReactNode }) {
-  const { isLoading } = useAuth()
+  const { isLoading } = useAuth();
+  
   if (isLoading) {
-    return <DashboardLoading />
+    return <DashboardLoading />;
   }
-  return <>{children}</>
+  
+  return <>{children}</>;
 }
+
 export default function DashboardRootLayout({
   children,
 }: {
-  children: ReactNode
+  children: ReactNode;
 }) {
   return (
     <SessionProvider>
@@ -100,5 +115,5 @@ export default function DashboardRootLayout({
         </DashboardErrorBoundary>
       </AuthProvider>
     </SessionProvider>
-  )
+  );
 }
