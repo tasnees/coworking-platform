@@ -46,8 +46,9 @@ model User {
   image         String?
   password      String?
   role          String    @default("member")
-  accounts      Account[]
-  sessions      Session[]
+  accounts          Account[]
+  sessions          Session[]
+  scheduledCheckIns ScheduledCheckIn[]
 }
 
 model VerificationToken {
