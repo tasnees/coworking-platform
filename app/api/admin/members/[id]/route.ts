@@ -17,21 +17,32 @@ export async function PATCH(
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const { status } = await request.json();
+    const { status, membershipType } = await request.json();
 
-    // Validate status
-    if (!['active', 'suspended', 'cancelled'].includes(status)) {
+    // Validate status if provided
+    if (status && !['active', 'suspended', 'cancelled'].includes(status)) {
       return new NextResponse('Invalid status', { status: 400 });
     }
+    
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (status) {
+      updateData.status = status;
+      // If status is cancelled, also update membership end date
+      if (status === 'cancelled') {
+        updateData.membershipEndDate = new Date();
+      }
+    }
+    
+    if (membershipType) {
+      updateData.membershipType = membershipType;
+    }
 
-    // Update member status
+    // Update member data
     const updatedMember = await prisma.user.update({
       where: { id: params.id },
-      data: { 
-        status,
-        // If status is cancelled, also update membership end date
-        ...(status === 'cancelled' && { membershipEndDate: new Date() })
-      },
+      data: updateData,
       select: {
         id: true,
         name: true,

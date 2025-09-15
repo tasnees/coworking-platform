@@ -170,7 +170,7 @@ export async function POST(request: Request) {
         // These fields should be properly added to the Prisma schema
         ...(phone ? { phone } : {}) as any,
         ...(notes ? { notes } : {}) as any,
-        membershipType: role === 'member' ? 'flex' : null,
+        membershipType: role === 'member' ? (membershipType || 'flex') : null,
         emailVerified: null
       },
       select: {

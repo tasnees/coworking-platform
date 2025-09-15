@@ -4,6 +4,11 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { startOfMonth, endOfMonth, subMonths, eachDayOfInterval, format, isSameDay } from 'date-fns';
 
+// Force dynamic rendering
+// This route needs to be dynamically rendered because it uses headers
+// and needs to fetch fresh data on each request
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

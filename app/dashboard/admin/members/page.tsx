@@ -143,6 +143,42 @@ export default function AdminMembersPage() {
 
   const router = useRouter();
 
+  // Update form when editingMember changes
+  useEffect(() => {
+    if (editingMember) {
+      setNewMember({
+        id: editingMember.id,
+        name: editingMember.name || '',
+        email: editingMember.email || '',
+        phone: editingMember.phone || '',
+        membershipType: (editingMember.membershipType as MembershipType) || 'flex',
+        status: (editingMember.status as UserStatus) || 'active',
+        joinDate: editingMember.joinDate || new Date().toISOString(),
+        lastVisit: editingMember.lastVisit || '',
+        notes: editingMember.notes || '',
+        role: editingMember.role || 'member',
+        password: '',
+        confirmPassword: ''
+      });
+    } else {
+      // Reset form for new member
+      setNewMember({
+        id: '',
+        name: '',
+        email: '',
+        phone: '',
+        membershipType: 'flex',
+        status: 'active',
+        joinDate: new Date().toISOString(),
+        lastVisit: '',
+        notes: '',
+        password: '',
+        confirmPassword: '',
+        role: 'member'
+      });
+    }
+  }, [editingMember]);
+
   // Filter members based on search term
   useEffect(() => {
     const filtered = members.filter(member => 
@@ -241,32 +277,58 @@ export default function AdminMembersPage() {
     
     if (!newMember.name || !newMember.email || !newMember.role) {
       toast.error('Please fill in all required fields');
-      return;
+      return false;
     }
 
     if (newMember.password && newMember.password !== newMember.confirmPassword) {
       toast.error('Passwords do not match');
-      return;
+      return false;
     }
 
-    handleSubmit();
+    // Create a new form event to pass to handleSubmit
+    const formEvent = new Event('submit') as unknown as React.FormEvent<HTMLFormElement>;
+    handleSubmit(formEvent);
+    return true;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
       setIsSubmitting(true);
+      
       const url = editingMember 
         ? `/api/admin/members/${editingMember.id}`
         : '/api/admin/members';
       
-      const method = editingMember ? 'PUT' : 'POST';
+      const method = editingMember ? 'PATCH' : 'POST';
+      
+      // Prepare the data to send
+      const requestData: any = {
+        name: newMember.name,
+        email: newMember.email,
+        role: newMember.role,
+        status: newMember.status,
+        phone: newMember.phone,
+        notes: newMember.notes,
+      };
+      
+      // Only include membershipType for members
+      if (newMember.role === 'member') {
+        requestData.membershipType = newMember.membershipType || 'flex';
+      }
+      
+      // Only include password if it's a new member or password is being changed
+      if (!editingMember || newMember.password) {
+        requestData.password = newMember.password;
+      }
       
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(newMember),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -280,40 +342,49 @@ export default function AdminMembersPage() {
         // Update existing member in the list
         setMembers(prev => prev.map(member => 
           member.id === editingMember.id 
-            ? { ...member, ...data, name: data.name || member.name, email: data.email || member.email }
+            ? { 
+                ...member, 
+                ...data, 
+                name: data.name || member.name, 
+                email: data.email || member.email,
+                membershipType: data.membershipType || member.membershipType || 'flex',
+                plan: data.membershipType || member.plan || 'Flex'
+              }
             : member
         ));
       } else {
         // Add new member to the list
-        setMembers(prev => [{
-          ...data,
+        const newMemberData: Member = {
           id: data.id,
           name: data.name,
           email: data.email,
           membership: 'active',
-          status: 'active',
+          status: data.status || 'active',
           membershipType: data.membershipType || 'flex',
-          joinDate: new Date().toISOString(),
-          lastVisit: new Date().toISOString(),
-          plan: data.plan || 'Basic',
-          phone: data.phone,
-          role: data.role
-        }, ...prev]);
+          joinDate: data.joinDate || new Date().toISOString(),
+          lastVisit: data.lastVisit || new Date().toISOString(),
+          plan: data.membershipType || 'Flex',
+          phone: data.phone || '',
+          role: data.role || 'member',
+          notes: data.notes || ''
+        };
+        setMembers(prev => [newMemberData, ...prev]);
       }
       
-      // Reset form and close dialog
+      // Reset form
       setNewMember({
         name: '',
         email: '',
+        phone: '',
+        membershipType: 'flex',
+        status: 'active',
+        joinDate: new Date().toISOString(),
+        lastVisit: '',
+        notes: '',
         password: '',
         confirmPassword: '',
         role: 'member',
-        phone: '',
-        status: 'active',
-        membershipType: 'flex',
-        joinDate: new Date().toISOString(),
-        lastVisit: new Date().toISOString(),
-        notes: ''
+        id: ''
       });
       
       setEditingMember(null);

@@ -34,7 +34,8 @@ import {
   MapPin, 
   Key, 
   Edit3, 
-  ShieldCheck 
+  ShieldCheck,
+  Loader2 
 } from 'lucide-react';
 
 interface AdminProfile {
@@ -278,6 +279,54 @@ export default function AdminSettingsPage() {
     }
   };
 
+  // Handle preferences change
+  const handlePreferenceChange = async (key: keyof AdminPreferences, value: boolean) => {
+    try {
+      setState(prev => ({ ...prev, isSaving: true }));
+      
+      // Simulate API call to save preferences
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      toast({
+        title: 'Preferences Updated',
+        description: 'Your preferences have been saved successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update preferences. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setState(prev => ({ ...prev, isSaving: false }));
+    }
+  };
+  
+  // Handle notification settings change
+  const handleNotificationChange = async (key: string, value: boolean) => {
+    try {
+      setState(prev => ({ ...prev, isSaving: true }));
+      
+      // Simulate API call to save notification settings
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      toast({
+        title: 'Notification Settings Updated',
+        description: 'Your notification settings have been saved successfully.',
+      });
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update notification settings. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setState(prev => ({ ...prev, isSaving: false }));
+    }
+  };
+
   // Handle loading state
   if (isLoading || !isClient) {
     return (
@@ -308,11 +357,22 @@ export default function AdminSettingsPage() {
       
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="system">System</TabsTrigger>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" />
+            <span>Profile</span>
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="flex items-center gap-2">
+            <SettingsIcon className="h-4 w-4" />
+            <span>Preferences</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            <span>Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            <span>Notifications</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -630,6 +690,227 @@ export default function AdminSettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Tabs defaultValue="profile" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="profile" className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" />
+            <span>Profile</span>
+          </TabsTrigger>
+          <TabsTrigger value="preferences" className="flex items-center gap-2">
+            <SettingsIcon className="h-4 w-4" />
+            <span>Preferences</span>
+          </TabsTrigger>
+          <TabsTrigger value="security" className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            <span>Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            <span>Notifications</span>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-4">
+          <Card>
+            {/* Profile content */}
+          </Card>
+        </TabsContent>
+
+        {/* Preferences Tab */}
+        <TabsContent value="preferences" className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Preferences</CardTitle>
+            <CardDescription>
+              Customize your application experience and display settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-medium">Display Settings</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Dark Mode</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Switch between light and dark theme
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={true}
+                    onCheckedChange={(checked) => handleNotificationChange('darkMode', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Compact View</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Show more content in less space
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={false}
+                    onCheckedChange={(checked) => handleNotificationChange('compactView', checked)}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <h3 className="font-medium">Language & Region</h3>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="language">Language</Label>
+                  <select
+                    id="language"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    defaultValue="en"
+                  >
+                    <option value="en">English</option>
+                    <option value="fr">Français</option>
+                    <option value="es">Español</option>
+                    <option value="de">Deutsch</option>
+                  </select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="timezone">Time Zone</Label>
+                  <select
+                    id="timezone"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    defaultValue="UTC+01:00"
+                  >
+                    <option value="UTC+00:00">UTC+00:00 (London)</option>
+                    <option value="UTC+01:00">UTC+01:00 (Paris, Berlin)</option>
+                    <option value="UTC-05:00">UTC-05:00 (New York)</option>
+                    <option value="UTC-08:00">UTC-08:00 (Los Angeles)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="border-t px-6 py-4">
+            <Button disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Preferences'
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+
+      {/* Notifications Tab */}
+      <TabsContent value="notifications" className="space-y-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Notification Settings</CardTitle>
+            <CardDescription>
+              Configure how you receive notifications.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-4">
+              <h3 className="font-medium">Email Notifications</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Account Activity</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive emails about your account activity
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={true}
+                    onCheckedChange={(checked) => handleNotificationChange('emailAccountActivity', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Newsletter</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive our monthly newsletter
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={true}
+                    onCheckedChange={(checked) => handleNotificationChange('emailNewsletter', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Product Updates</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified about new features and updates
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={true}
+                    onCheckedChange={(checked) => handleNotificationChange('emailProductUpdates', checked)}
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <Separator />
+            
+            <div className="space-y-4">
+              <h3 className="font-medium">Push Notifications</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>New Messages</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified about new direct messages
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={true}
+                    onCheckedChange={(checked) => handleNotificationChange('pushMessages', checked)}
+                  />
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Reminders</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Receive reminders for upcoming events
+                    </p>
+                  </div>
+                  <Switch 
+                    defaultChecked={true}
+                    onCheckedChange={(checked) => handleNotificationChange('pushReminders', checked)}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter className="border-t px-6 py-4">
+            <Button disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Notification Settings'
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+      </Tabs>
     </div>
   );
 }

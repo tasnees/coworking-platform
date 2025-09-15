@@ -248,7 +248,6 @@ export default function BookingsPage() {
                       <SelectValue placeholder="Select a member" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Select a member</SelectItem>
                       {members.map((member) => (
                         <SelectItem key={member.id} value={member.id}>
                           {member.name} - {member.email}
@@ -268,7 +267,6 @@ export default function BookingsPage() {
                       <SelectValue placeholder="Select a resource" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Select a resource</SelectItem>
                       {resources.map((resource) => (
                         <SelectItem key={resource.id} value={resource.id}>
                           {resource.name} ({resource.type})
