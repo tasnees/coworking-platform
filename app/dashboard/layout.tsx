@@ -79,7 +79,9 @@ function DashboardErrorBoundary({ children }: { children: ReactNode }) {
   return (
     <ErrorBoundary>
       <Suspense fallback={<DashboardLoading />}>
-        {children}
+        <DashboardLayout>
+          {children}
+        </DashboardLayout>
       </Suspense>
     </ErrorBoundary>
   );
@@ -99,21 +101,17 @@ function AuthWrapper({ children }: { children: ReactNode }) {
 export default function DashboardRootLayout({
   children,
 }: {
-  children: ReactNode;
+  children: React.ReactNode
 }) {
   return (
     <SessionProvider>
       <AuthProvider>
-        <DashboardErrorBoundary>
-          <AuthWrapper>
-            <DashboardLayout>
-              <Suspense fallback={<DashboardLoading />}>
-                {children}
-              </Suspense>
-            </DashboardLayout>
-          </AuthWrapper>
-        </DashboardErrorBoundary>
+        <AuthWrapper>
+          <DashboardErrorBoundary>
+            {children}
+          </DashboardErrorBoundary>
+        </AuthWrapper>
       </AuthProvider>
     </SessionProvider>
-  );
+  )
 }

@@ -21,12 +21,20 @@ interface MemberResponse {
   membershipEndDate: string | null;
 }
 
-type UserWithMembership = User & {
-  membershipType?: string;
-  phone?: string | null;
-  notes?: string | null;
-  lastLogin?: Date | null;
-  membershipEndDate?: Date | null;
+interface UserWithMembership {
+  id: string;
+  name: string | null;
+  email: string | null;
+  emailVerified: Date | null;
+  image: string | null;
+  password: string | null;
+  role: string;
+  status: string;
+  membershipType: string | null;
+  phone: string | null;
+  notes: string | null;
+  lastLogin: Date | null;
+  membershipEndDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -68,7 +76,7 @@ export async function GET() {
     });
 
     // Transform the data to match the frontend's expected format
-    const formattedMembers = members.map((member: UserWithMembership): MemberResponse => {
+    const formattedMembers = members.map((member): MemberResponse => {
       const createdAt = member.createdAt instanceof Date ? member.createdAt : new Date(member.createdAt);
       const lastLogin = member.lastLogin ? (member.lastLogin instanceof Date ? member.lastLogin : new Date(member.lastLogin)) : null;
       const membershipEndDate = member.membershipEndDate ? (member.membershipEndDate instanceof Date ? member.membershipEndDate : new Date(member.membershipEndDate)) : null;
@@ -77,14 +85,14 @@ export async function GET() {
         id: member.id,
         name: member.name || 'No Name',
         email: member.email || 'No Email',
-        membership: member.status || 'active',
-        status: member.status || 'active',
+        membership: member.status,
+        status: member.status,
         membershipType: member.membershipType || 'flex',
         joinDate: createdAt.toISOString(),
         lastVisit: lastLogin?.toISOString() || null,
         plan: member.membershipType || 'flex',
-        phone: member.phone || null,
-        notes: member.notes || null,
+        phone: member.phone,
+        notes: member.notes,
         membershipEndDate: membershipEndDate?.toISOString() || null
       };
     });
@@ -110,11 +118,20 @@ export async function POST(request: Request) {
       name, 
       email, 
       password,
+      role = 'member',
       phone = '', 
       membershipType = 'flex', 
       status = 'active',
       notes = ''
     } = data;
+
+    // Validate role
+    if (!['member', 'staff'].includes(role)) {
+      return NextResponse.json(
+        { message: 'Invalid role. Must be either "member" or "staff"' },
+        { status: 400 }
+      );
+    }
 
     // Validate required fields
     if (!name || !email) {
@@ -147,13 +164,13 @@ export async function POST(request: Request) {
         name,
         email,
         password: hashedPassword,
-        role: 'member',
+        role: role,
         status: 'active',
         // Using type assertion to bypass TypeScript errors for now
         // These fields should be properly added to the Prisma schema
         ...(phone ? { phone } : {}) as any,
         ...(notes ? { notes } : {}) as any,
-        membershipType: 'flex',
+        membershipType: role === 'member' ? 'flex' : null,
         emailVerified: null
       },
       select: {

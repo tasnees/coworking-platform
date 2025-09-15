@@ -2,12 +2,15 @@
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useToast } from "@/components/ui/use-toast"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import DashboardLayout from "@/components/dashboard-layout"
 import { QrCode, Scan, Clock, MapPin, CheckCircle, AlertCircle, Wifi, Coffee, Users } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+
 interface CheckInSession {
   id: string
   location: string
@@ -16,6 +19,7 @@ interface CheckInSession {
   duration?: string
   amenitiesUsed: string[]
 }
+
 interface Location {
   id: string
   name: string
@@ -24,6 +28,7 @@ interface Location {
   capacity: number
   currentOccupancy: number
 }
+
 export default function MemberCheckInPage() {
   const [activeTab, setActiveTab] = useState("checkin")
   const [isCheckedIn, setIsCheckedIn] = useState(false)
@@ -58,33 +63,61 @@ export default function MemberCheckInPage() {
       currentOccupancy: 12
     }
   ]
-  // Mock check-in history
-  const [checkInHistory, setCheckInHistory] = useState<CheckInSession[]>([
-    {
-      id: "1",
-      location: "Main Entrance",
-      checkInTime: "2024-01-26T09:15:00",
-      checkOutTime: "2024-01-26T17:30:00",
-      duration: "8h 15m",
-      amenitiesUsed: ["WiFi", "Coffee", "Meeting Room B"]
-    },
-    {
-      id: "2",
-      location: "Side Entrance",
-      checkInTime: "2024-01-25T10:30:00",
-      checkOutTime: "2024-01-25T16:45:00",
-      duration: "6h 15m",
-      amenitiesUsed: ["WiFi", "Desk A-12"]
-    },
-    {
-      id: "3",
-      location: "Main Entrance",
-      checkInTime: "2024-01-24T08:45:00",
-      checkOutTime: "2024-01-24T18:00:00",
-      duration: "9h 15m",
-      amenitiesUsed: ["WiFi", "Phone Booth 3", "Printer"]
-    }
-  ])
+  // Check-in history state
+  const [checkInHistory, setCheckInHistory] = useState<CheckInSession[]>([]);
+  
+  // Load check-in history on component mount
+  useEffect(() => {
+    const loadCheckInHistory = async () => {
+      try {
+        const response = await fetch('/api/checkin');
+        if (response.ok) {
+          const data = await response.json();
+          // Transform API data to match our CheckInSession interface
+          const history = data.checkIns.map((checkIn: any) => ({
+            id: checkIn.id,
+            location: 'Main Workspace', // You might want to include location in your API response
+            checkInTime: checkIn.checkInTime,
+            checkOutTime: checkIn.checkOutTime,
+            duration: checkIn.duration || '',
+            amenitiesUsed: []
+          }));
+          setCheckInHistory(history);
+        }
+      } catch (error) {
+        console.error('Error loading check-in history:', error);
+        // Fallback to mock data if API fails
+        setCheckInHistory([
+          {
+            id: '1',
+            location: 'Main Entrance',
+            checkInTime: '2024-01-26T09:15:00',
+            checkOutTime: '2024-01-26T17:30:00',
+            duration: '8h 15m',
+            amenitiesUsed: ['WiFi', 'Coffee', 'Meeting Room B']
+          },
+          {
+            id: '2',
+            location: 'Side Entrance',
+            checkInTime: '2024-01-25T10:30:00',
+            checkOutTime: '2024-01-25T16:45:00',
+            duration: '6h 15m',
+            amenitiesUsed: ['WiFi', 'Desk A-12']
+          },
+          {
+            id: '3',
+            location: 'Main Entrance',
+            checkInTime: '2024-01-24T08:45:00',
+            checkOutTime: '2024-01-24T18:00:00',
+            duration: '9h 15m',
+            amenitiesUsed: ['WiFi', 'Phone Booth 3', 'Printer']
+          }
+        ]);
+      }
+    };
+    
+    loadCheckInHistory();
+  }, []);
   // Generate QR code for check-in
   const generateCheckInQr = (location: Location) => {
     const qrData = {
@@ -105,31 +138,61 @@ export default function MemberCheckInPage() {
     setShowQrDialog(true)
   }
   // Handle check-in
-  const handleCheckIn = (location: Location) => {
-    const newSession: CheckInSession = {
-      id: Date.now().toString(),
-      location: location.name,
-      checkInTime: new Date().toISOString(),
-      amenitiesUsed: []
+  const handleCheckIn = async () => {
+    try {
+      const response = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ checkIn: true }),
+      });
+
+      if (response.ok) {
+        toast.success('You have been checked in to the coworking space.');
+        setIsCheckedIn(true);
+      } else {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to check in');
+      }
+      setIsCheckedIn(true);
+      setShowQrDialog(false);
+      
+      // Show success message
+      toast.success(`You've checked in at ${(location as any).name}`);
+      
+    } catch (error) {
+      console.error('Error during check-in:', error);
+      toast.error(error instanceof Error ? error.message : 'An error occurred during check-in');
     }
-    setCurrentSession(newSession)
-    setIsCheckedIn(true)
-    setShowQrDialog(false)
   }
   // Handle check-out
-  const handleCheckOut = () => {
-    if (currentSession) {
-      const checkOutTime = new Date().toISOString()
-      const duration = calculateDuration(currentSession.checkInTime, checkOutTime)
+  const handleCheckOut = async () => {
+    if (!currentSession) return;
+    
+    try {
+      const checkOutTime = new Date().toISOString();
+      const duration = calculateDuration(currentSession.checkInTime, checkOutTime);
+      
+      // In a real app, you would call an API to update the check-in record
+      // For now, we'll just update the UI
       const completedSession = {
         ...currentSession,
         checkOutTime,
         duration,
         amenitiesUsed: ["WiFi", "Coffee"] // Mock amenities
-      }
-      setCheckInHistory(prev => [completedSession, ...prev])
-      setCurrentSession(null)
-      setIsCheckedIn(false)
+      };
+      
+      setCheckInHistory(prev => [completedSession, ...prev]);
+      setCurrentSession(null);
+      setIsCheckedIn(false);
+      
+      // Show success message
+      toast.success(`You have been checked out, you were checked in for ${duration}`);
+      
+    } catch (error) {
+      console.error('Error during check-out:', error);
+      toast.error(error instanceof Error ? error.message : 'An error occurred during check-out');
     }
   }
   // Calculate duration between check-in and check-out
@@ -353,7 +416,9 @@ export default function MemberCheckInPage() {
               <div className="flex gap-2">
                 <Button 
                   onClick={() => {
-                    if (selectedLocation) handleCheckIn(selectedLocation)
+                    if (selectedLocation) {
+                      handleCheckIn()
+                    }
                   }}
                   className="w-full"
                 >

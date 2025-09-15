@@ -598,28 +598,29 @@ export default function StaffCheckinPage() {
               <Table>
                 <TableBody>
                   {filteredMembers.map((member) => (
-                    <TableRow 
-                      key={member.id} 
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedMember(member)}
-                    >
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{member.email}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleManualCheckin(member);
-                          }}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing && selectedMember?.id === member.id ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : null}
-                          Check In
-                        </Button>
-                      </TableCell>
+                    <TableRow key={member.id}>
+                      <div 
+                        className="contents cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedMember(member)}
+                      >
+                        <TableCell className="font-medium">{member.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{member.email}</TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleManualCheckin(member);
+                            }}
+                            disabled={isProcessing}
+                          >
+                            {isProcessing && selectedMember?.id === member.id ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : null}
+                            Check In
+                          </Button>
+                        </TableCell>
+                      </div>
                     </TableRow>
                   ))}
                 </TableBody>

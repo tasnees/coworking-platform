@@ -1,8 +1,17 @@
 "use client";
+
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
 // Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
+
+// Import Chart.js with SSR disabled to avoid window is not defined errors
+const Line = dynamic(() => import('react-chartjs-2').then((mod) => mod.Line), {
+  ssr: false,
+  loading: () => <div>Loading chart...</div>,
+});
 
 export default function AnalyticsPage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -20,17 +29,21 @@ export default function AnalyticsPage() {
     peakHour: "",
     churnRate: 0,
   });
-  // Mock trend data for the graph
+  
+  // State for trend data
   const [trendData, setTrendData] = useState({
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    checkins: [62, 70, 89, 74, 80, 65, 55],
-    revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
+    labels: [] as string[],
+    checkins: [] as number[],
+    revenue: [] as number[],
   });
+  
   // Dynamically import Chart.js and Line component on client side only
   const [Line, setLine] = useState<any>(null);
+  
   useEffect(() => {
     // This effect only runs on the client side
     setIsMounted(true);
+    
     // Dynamically import Chart.js and Line component
     const loadCharts = async () => {
       try {
@@ -49,28 +62,41 @@ export default function AnalyticsPage() {
         setIsLoading(false);
       }
     };
-    // Simulate fetching real data
+    
+    // Fetch real analytics data from API
     const fetchAnalyticsData = async () => {
       try {
         setIsLoading(true);
-        // Simulate API delay
-        await new Promise((res) => setTimeout(res, 500));
+        const response = await fetch('/api/analytics', {
+          credentials: 'include', // Include cookies for auth
+          cache: 'no-store' // Ensure fresh data
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics data');
+        }
+        
+        const data = await response.json();
+        
+        // Update stats and trend data from API response
         setStats({
-          totalMembers: 236,
-          newMembersThisMonth: 18,
-          totalRevenue: 21500,
-          revenueChange: 7.2,
-          occupancyRate: 82,
-          avgDailyCheckins: 74,
-          peakDay: "Wednesday",
-          peakHour: "2:00 PM",
-          churnRate: 2.1,
+          totalMembers: data.stats.totalMembers,
+          newMembersThisMonth: data.stats.newMembersThisMonth,
+          totalRevenue: data.stats.totalRevenue,
+          revenueChange: data.stats.revenueChange,
+          occupancyRate: data.stats.occupancyRate,
+          avgDailyCheckins: data.stats.avgDailyCheckins,
+          peakDay: data.stats.peakDay,
+          peakHour: data.stats.peakHour,
+          churnRate: data.stats.churnRate,
         });
+        
         setTrendData({
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-          checkins: [62, 70, 89, 74, 80, 65, 55],
-          revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
+          labels: data.trendData.labels,
+          checkins: data.trendData.checkins,
+          revenue: data.trendData.revenue,
         });
+        
       } catch (err) {
         console.error('Error fetching analytics data:', err);
         setError('Failed to load analytics data. Please try again later.');
@@ -78,10 +104,15 @@ export default function AnalyticsPage() {
         setIsLoading(false);
       }
     };
+    
     loadCharts();
+    
+    // Set up auto-refresh every 5 minutes
+    const refreshInterval = setInterval(fetchAnalyticsData, 5 * 60 * 1000);
+    
     // Cleanup function
     return () => {
-      // Any cleanup if needed
+      clearInterval(refreshInterval);
     };
   }, []);
   // Don't render anything until the component is mounted on the client
@@ -120,23 +151,29 @@ export default function AnalyticsPage() {
   }
   // Chart.js data and options
   const lineData = {
-    labels: trendData.labels,
+    labels: trendData.labels.length > 0 ? trendData.labels : ['Loading...'],
     datasets: [
       {
         label: "Check-ins",
-        data: trendData.checkins,
+        data: trendData.checkins.length > 0 ? trendData.checkins : [0],
         borderColor: "#6366f1",
         backgroundColor: "rgba(99,102,241,0.1)",
         tension: 0.4,
         yAxisID: "y",
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
       {
         label: "Revenue ($)",
-        data: trendData.revenue,
+        data: trendData.revenue.length > 0 ? trendData.revenue : [0],
         borderColor: "#22c55e",
         backgroundColor: "rgba(34,197,94,0.1)",
         tension: 0.4,
         yAxisID: "y1",
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
       },
     ],
   };
@@ -156,15 +193,59 @@ export default function AnalyticsPage() {
         type: "linear" as const,
         display: true,
         position: "left" as const,
-        title: { display: true, text: "Check-ins" },
-        grid: { drawOnChartArea: false },
+        title: { 
+          display: true, 
+          text: "Check-ins",
+          color: '#64748b',
+          font: {
+            size: 12,
+          },
+        },
+        grid: { 
+          drawOnChartArea: false,
+          color: 'rgba(100, 116, 139, 0.1)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 11,
+          },
+        },
       },
       y1: {
         type: "linear" as const,
         display: true,
         position: "right" as const,
-        title: { display: true, text: "Revenue ($)" },
-        grid: { drawOnChartArea: false },
+        title: { 
+          display: true, 
+          text: "Revenue ($)",
+          color: '#64748b',
+          font: {
+            size: 12,
+          },
+        },
+        grid: { 
+          drawOnChartArea: false,
+          display: false,
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 11,
+          },
+          callback: (value: any) => `$${value.toLocaleString()}`,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            size: 11,
+          },
+        },
       },
     },
   };
@@ -178,6 +259,19 @@ export default function AnalyticsPage() {
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>Peak Hours</CardTitle>
+            <CardDescription>Busiest time</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.peakDay || 'N/A'}</div>
+            <div className="text-xs text-muted-foreground mt-2">
+              {stats.peakHour ? `Around ${stats.peakHour}` : 'No data available'}
+            </div>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardHeader>
             <CardTitle>Total Members</CardTitle>
@@ -201,15 +295,17 @@ export default function AnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
-              <DollarSign className="h-6 w-6 text-green-600" />
+              <DollarSign className="h-6 w-6 text-primary" />
               <span className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</span>
             </div>
             <div className="text-xs text-muted-foreground mt-2">
-              <span className={stats.revenueChange >= 0 ? "text-green-600" : "text-red-600"}>
-                {stats.revenueChange >= 0 ? "+" : ""}
-                {stats.revenueChange}%
-              </span>{" "}
-              from last month
+              {stats.revenueChange > 0 ? (
+                <span className="text-green-500">↑ {stats.revenueChange}% from last month</span>
+              ) : stats.revenueChange < 0 ? (
+                <span className="text-red-500">↓ {Math.abs(stats.revenueChange)}% from last month</span>
+              ) : (
+                <span>No change from last month</span>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -217,15 +313,12 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Occupancy Rate</CardTitle>
-            <CardDescription>Workspace utilization</CardDescription>
+            <CardDescription>Average daily</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
-              <span className="text-2xl font-bold">{stats.occupancyRate}%</span>
-            </div>
+            <div className="text-2xl font-bold">{stats.occupancyRate}%</div>
             <div className="text-xs text-muted-foreground mt-2">
-              Peak: {stats.peakDay} at {stats.peakHour}
+              {stats.avgDailyCheckins} avg. check-ins/day
             </div>
           </CardContent>
         </Card>

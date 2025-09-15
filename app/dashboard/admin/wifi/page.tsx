@@ -20,6 +20,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 // Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -37,7 +38,39 @@ export default function WifiSettingsPage() {
   const [activeTab, setActiveTab] = useState("networks")
   const [showPassword, setShowPassword] = useState(false)
   const [showGuestPassword, setShowGuestPassword] = useState(false)
-  const wifiNetworks = [
+  const [newNetwork, setNewNetwork] = useState({
+    name: '',
+    type: '',
+    password: '',
+    bandwidth: '',
+    active: true
+  })
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [guestSettings, setGuestSettings] = useState({
+    selectedNetwork: "OmniSpace-Guest",
+    password: "guest2025",
+    autoRotatePassword: false,
+    enableCaptivePortal: true,
+    enableTimeLimit: true,
+    timeLimitHours: 2,
+    showPassword: false
+  })
+  const [isSaving, setIsSaving] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isCodeDialogOpen, setIsCodeDialogOpen] = useState(false)
+  const [newAccessCode, setNewAccessCode] = useState({
+    type: 'day',
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default: 1 week from now
+    usageLimit: 1,
+    network: 'guest',
+    code: ''
+  })
+  const [accessCodes, setAccessCodes] = useState([
+    { id: 1, code: 'GUEST-1234', type: 'Day Pass', expiresAt: '2025-07-24', usageLimit: 1, usageCount: 0 },
+    { id: 2, code: 'EVENT-5678', type: 'Event', expiresAt: '2025-07-30', usageLimit: 50, usageCount: 12 },
+    { id: 3, code: 'TRIAL-9012', type: 'Trial', expiresAt: '2025-08-15', usageLimit: 5, usageCount: 2 },
+  ])
+  const [wifiNetworks, setWifiNetworks] = useState([
     {
       id: 1,
       name: "OmniSpace-Main",
@@ -78,12 +111,7 @@ export default function WifiSettingsPage() {
       connectedDevices: 0,
       usagePercent: 0,
     },
-  ]
-  const accessCodes = [
-    { id: 1, code: "GUEST-1234", type: "Day Pass", expiresAt: "2025-07-24", usageLimit: 1, usageCount: 0 },
-    { id: 2, code: "EVENT-5678", type: "Event", expiresAt: "2025-07-30", usageLimit: 50, usageCount: 12 },
-    { id: 3, code: "TRIAL-9012", type: "Trial", expiresAt: "2025-08-15", usageLimit: 5, usageCount: 2 },
-  ]
+  ])
   const membershipTypes = [
     { id: 1, name: "Day Pass", accessType: "Guest Network", timeLimit: "12 hours", deviceLimit: 1 },
     { id: 2, name: "Weekly Flex", accessType: "Main Network", timeLimit: "During operating hours", deviceLimit: 2 },
@@ -102,6 +130,46 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
+  const handleCreateNetwork = () => {
+    // Basic validation
+    if (!newNetwork.name || !newNetwork.type || !newNetwork.password || !newNetwork.bandwidth) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Create new network object
+    const newId = wifiNetworks.length > 0 ? Math.max(...wifiNetworks.map(n => n.id)) + 1 : 1;
+    const networkToAdd = {
+      id: newId,
+      name: newNetwork.name,
+      status: newNetwork.active ? 'active' : 'inactive',
+      type: newNetwork.type,
+      password: newNetwork.password,
+      bandwidth: newNetwork.bandwidth,
+      connectedDevices: 0,
+      usagePercent: 0,
+    };
+
+    // In a real app, you would make an API call here to save the network
+    console.log('Creating new network:', networkToAdd);
+    
+    // Show success message
+    alert(`Network "${newNetwork.name}" created successfully!`);
+    
+    // Reset form and close dialog
+    setNewNetwork({
+      name: '',
+      type: '',
+      password: '',
+      bandwidth: '',
+      active: true
+    });
+    setIsDialogOpen(false);
+    
+    // Update the state with the new network
+    setWifiNetworks([...wifiNetworks, networkToAdd]);
+  };
+
   const getNetworkTypeColor = (type: string) => {
     switch (type) {
       case "main":
@@ -196,9 +264,9 @@ export default function WifiSettingsPage() {
                   <CardTitle>WiFi Networks</CardTitle>
                   <CardDescription>Manage your coworking space WiFi networks</CardDescription>
                 </div>
-                <Dialog>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>Add Network</Button>
+                    <Button onClick={() => setIsDialogOpen(true)}>Add Network</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
@@ -210,13 +278,22 @@ export default function WifiSettingsPage() {
                         <Label htmlFor="network-name" className="text-right">
                           Network Name
                         </Label>
-                        <Input id="network-name" placeholder="e.g., OmniSpace-Premium" className="col-span-3" />
+                        <Input 
+                          id="network-name" 
+                          placeholder="e.g., OmniSpace-Premium" 
+                          className="col-span-3" 
+                          value={newNetwork.name}
+                          onChange={(e) => setNewNetwork({...newNetwork, name: e.target.value})}
+                        />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="network-type" className="text-right">
                           Type
                         </Label>
-                        <Select>
+                        <Select 
+                          value={newNetwork.type}
+                          onValueChange={(value) => setNewNetwork({...newNetwork, type: value})}
+                        >
                           <SelectTrigger className="col-span-3">
                             <SelectValue placeholder="Select network type" />
                           </SelectTrigger>
@@ -232,24 +309,55 @@ export default function WifiSettingsPage() {
                         <Label htmlFor="password" className="text-right">
                           Password
                         </Label>
-                        <Input id="password" type="password" className="col-span-3" />
+                        <Input 
+                          id="password" 
+                          type="password" 
+                          className="col-span-3" 
+                          value={newNetwork.password}
+                          onChange={(e) => setNewNetwork({...newNetwork, password: e.target.value})}
+                        />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="bandwidth" className="text-right">
                           Bandwidth
                         </Label>
-                        <Input id="bandwidth" placeholder="e.g., 100 Mbps" className="col-span-3" />
+                        <Input 
+                          id="bandwidth" 
+                          placeholder="e.g., 100 Mbps" 
+                          className="col-span-3" 
+                          value={newNetwork.bandwidth}
+                          onChange={(e) => setNewNetwork({...newNetwork, bandwidth: e.target.value})}
+                        />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="active" className="text-right">
                           Active
                         </Label>
-                        <Switch id="active" className="col-span-3" />
+                        <Switch 
+                          id="active" 
+                          className="col-span-3" 
+                          checked={newNetwork.active}
+                          onCheckedChange={(checked) => setNewNetwork({...newNetwork, active: checked})}
+                        />
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Create Network</Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setNewNetwork({
+                            name: '',
+                            type: '',
+                            password: '',
+                            bandwidth: '',
+                            active: true
+                          });
+                          setIsDialogOpen(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateNetwork}>Create Network</Button>
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -394,7 +502,10 @@ export default function WifiSettingsPage() {
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <Label htmlFor="guest-network">Guest Network</Label>
-                      <Select defaultValue="OmniSpace-Guest">
+                      <Select 
+                        value={guestSettings.selectedNetwork}
+                        onValueChange={(value) => setGuestSettings({...guestSettings, selectedNetwork: value})}
+                      >
                         <SelectTrigger id="guest-network">
                           <SelectValue placeholder="Select guest network" />
                         </SelectTrigger>
@@ -409,16 +520,18 @@ export default function WifiSettingsPage() {
                       <div className="flex gap-2">
                         <Input
                           id="guest-password"
-                          type={showGuestPassword ? "text" : "password"}
-                          value="guest2025"
+                          type={guestSettings.showPassword ? "text" : "password"}
+                          value={guestSettings.password}
+                          onChange={(e) => setGuestSettings({...guestSettings, password: e.target.value})}
                           className="flex-1"
                         />
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => setShowGuestPassword(!showGuestPassword)}
+                          type="button"
+                          onClick={() => setGuestSettings({...guestSettings, showPassword: !guestSettings.showPassword})}
                         >
-                          {showGuestPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {guestSettings.showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                       </div>
                     </div>
@@ -426,7 +539,11 @@ export default function WifiSettingsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="auto-password">Auto-rotate guest password</Label>
-                      <Switch id="auto-password" />
+                      <Switch 
+                        id="auto-password" 
+                        checked={guestSettings.autoRotatePassword}
+                        onCheckedChange={(checked) => setGuestSettings({...guestSettings, autoRotatePassword: checked})}
+                      />
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Automatically change the guest password every week
@@ -435,7 +552,11 @@ export default function WifiSettingsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="captive-portal">Enable captive portal</Label>
-                      <Switch id="captive-portal" defaultChecked />
+                      <Switch 
+                        id="captive-portal" 
+                        checked={guestSettings.enableCaptivePortal}
+                        onCheckedChange={(checked) => setGuestSettings({...guestSettings, enableCaptivePortal: checked})}
+                      />
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Show a login page when guests connect to the WiFi
@@ -444,17 +565,99 @@ export default function WifiSettingsPage() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="time-limit">Time limit for guest access</Label>
-                      <Switch id="time-limit" defaultChecked />
+                      <Switch 
+                        id="time-limit" 
+                        checked={guestSettings.enableTimeLimit}
+                        onCheckedChange={(checked) => setGuestSettings({...guestSettings, enableTimeLimit: checked})}
+                      />
                     </div>
                     <div className="flex items-center gap-2">
-                      <Input type="number" defaultValue={2} className="w-20" />
+                      <Input 
+                        type="number" 
+                        value={guestSettings.timeLimitHours}
+                        onChange={(e) => setGuestSettings({...guestSettings, timeLimitHours: parseInt(e.target.value) || 0})}
+                        className="w-20" 
+                        min="1"
+                        max="24"
+                      />
                       <span className="text-sm text-muted-foreground">hours</span>
                     </div>
                   </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-end">
-                <Button>Save Guest Settings</Button>
+                <Button 
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    try {
+                      setIsSaving(true);
+                      
+                      // Validate inputs
+                      if (!guestSettings.selectedNetwork) {
+                        toast.error('Please select a network');
+                        return;
+                      }
+                      
+                      if (!guestSettings.password) {
+                        toast.error('Please enter a password');
+                        return;
+                      }
+                      
+                      if (guestSettings.enableTimeLimit && (!guestSettings.timeLimitHours || guestSettings.timeLimitHours < 1 || guestSettings.timeLimitHours > 24)) {
+                        toast.error('Please enter a valid time limit between 1 and 24 hours');
+                        return;
+                      }
+                      
+                      // Prepare the data to save
+                      const settingsToSave = {
+                        network: guestSettings.selectedNetwork,
+                        password: guestSettings.password,
+                        autoRotatePassword: guestSettings.autoRotatePassword,
+                        enableCaptivePortal: guestSettings.enableCaptivePortal,
+                        enableTimeLimit: guestSettings.enableTimeLimit,
+                        timeLimitHours: guestSettings.timeLimitHours
+                      };
+                      
+                      console.log('Saving guest settings:', settingsToSave);
+                      
+                      // Simulate API call with a delay
+                      await new Promise(resolve => setTimeout(resolve, 1000));
+                      
+                      // Update the networks list with the new password
+                      setWifiNetworks(currentNetworks => 
+                        currentNetworks.map(network => 
+                          network.name === guestSettings.selectedNetwork 
+                            ? { ...network, password: guestSettings.password }
+                            : network
+                        )
+                      );
+                      
+                      // Show success message
+                      toast.success('Guest WiFi settings saved successfully!', {
+                        duration: 3000,
+                      });
+                      
+                    } catch (error) {
+                      console.error('Failed to save guest settings:', error);
+                      toast.error('Failed to save guest settings. Please try again.', {
+                        duration: 5000,
+                      });
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                  disabled={isSaving}
+                  className="min-w-[150px]"
+                >
+                  {isSaving ? (
+                    <>
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <span>Save Guest Settings</span>
+                  )}
+                </Button>
               </CardFooter>
             </Card>
           </TabsContent>
@@ -466,63 +669,160 @@ export default function WifiSettingsPage() {
                   <CardTitle>WiFi Access Codes</CardTitle>
                   <CardDescription>Generate and manage temporary WiFi access codes</CardDescription>
                 </div>
-                <Dialog>
+                <Dialog open={isCodeDialogOpen} onOpenChange={setIsCodeDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button>Generate Code</Button>
+                    <Button onClick={() => setIsCodeDialogOpen(true)}>Generate Code</Button>
                   </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Generate Access Code</DialogTitle>
                       <DialogDescription>Create a new temporary WiFi access code.</DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="code-type" className="text-right">
-                          Type
-                        </Label>
-                        <Select>
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Select code type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="day">Day Pass</SelectItem>
-                            <SelectItem value="event">Event</SelectItem>
-                            <SelectItem value="trial">Trial</SelectItem>
-                          </SelectContent>
-                        </Select>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      try {
+                        setIsGenerating(true);
+                        
+                        // Generate a random code
+                        const code = `CODE-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+                        
+                        // Create new access code
+                        const newCode = {
+                          id: Date.now(),
+                          code,
+                          type: newAccessCode.type === 'day' ? 'Day Pass' : 
+                                newAccessCode.type === 'event' ? 'Event' : 'Trial',
+                          expiresAt: newAccessCode.expiresAt,
+                          usageLimit: newAccessCode.usageLimit,
+                          usageCount: 0,
+                          network: newAccessCode.network
+                        };
+                        
+                        // In a real app, you would make an API call here
+                        console.log('Generating new access code:', newCode);
+                        
+                        // Simulate API call
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        
+                        // Add to access codes list
+                        setAccessCodes(prev => [newCode, ...prev]);
+                        
+                        // Show success message
+                        toast.success('Access code generated successfully!', {
+                          duration: 3000,
+                        });
+                        
+                        // Reset form and close dialog
+                        setNewAccessCode({
+                          type: 'day',
+                          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                          usageLimit: 1,
+                          network: 'guest',
+                          code: ''
+                        });
+                        setIsCodeDialogOpen(false);
+                        
+                      } catch (error) {
+                        console.error('Failed to generate access code:', error);
+                        toast.error('Failed to generate access code. Please try again.', {
+                          duration: 5000,
+                        });
+                      } finally {
+                        setIsGenerating(false);
+                      }
+                    }}>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="code-type" className="text-right">
+                            Type
+                          </Label>
+                          <Select
+                            value={newAccessCode.type}
+                            onValueChange={(value) => setNewAccessCode({...newAccessCode, type: value})}
+                          >
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Select code type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="day">Day Pass</SelectItem>
+                              <SelectItem value="event">Event</SelectItem>
+                              <SelectItem value="trial">Trial</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="expiry-date" className="text-right">
+                            Expires
+                          </Label>
+                          <Input 
+                            id="expiry-date" 
+                            type="date" 
+                            className="col-span-3" 
+                            value={newAccessCode.expiresAt}
+                            onChange={(e) => setNewAccessCode({...newAccessCode, expiresAt: e.target.value})}
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="usage-limit" className="text-right">
+                            Usage Limit
+                          </Label>
+                          <Input 
+                            id="usage-limit" 
+                            type="number" 
+                            min="1"
+                            value={newAccessCode.usageLimit}
+                            onChange={(e) => setNewAccessCode({...newAccessCode, usageLimit: parseInt(e.target.value) || 1})}
+                            className="col-span-3" 
+                          />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="network" className="text-right">
+                            Network
+                          </Label>
+                          <Select
+                            value={newAccessCode.network}
+                            onValueChange={(value) => setNewAccessCode({...newAccessCode, network: value})}
+                          >
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Select network" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="main">Main Network</SelectItem>
+                              <SelectItem value="guest">Guest Network</SelectItem>
+                              <SelectItem value="events">Events Network</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="expiry-date" className="text-right">
-                          Expires
-                        </Label>
-                        <Input id="expiry-date" type="date" className="col-span-3" />
+                      <div className="flex justify-end gap-2">
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          onClick={() => {
+                            setIsCodeDialogOpen(false);
+                            // Reset form
+                            setNewAccessCode({
+                              type: 'day',
+                              expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                              usageLimit: 1,
+                              network: 'guest',
+                              code: ''
+                            });
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={isGenerating}>
+                          {isGenerating ? (
+                            <>
+                              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                              Generating...
+                            </>
+                          ) : 'Generate Code'}
+                        </Button>
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="usage-limit" className="text-right">
-                          Usage Limit
-                        </Label>
-                        <Input id="usage-limit" type="number" defaultValue={1} className="col-span-3" />
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="network" className="text-right">
-                          Network
-                        </Label>
-                        <Select>
-                          <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Select network" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="main">Main Network</SelectItem>
-                            <SelectItem value="guest">Guest Network</SelectItem>
-                            <SelectItem value="events">Events Network</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline">Cancel</Button>
-                      <Button>Generate Code</Button>
-                    </div>
+                    </form>
                   </DialogContent>
                 </Dialog>
               </CardHeader>
@@ -540,10 +840,22 @@ export default function WifiSettingsPage() {
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy
-                        </Button>
+                        <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await navigator.clipboard.writeText(code.code);
+                            toast.success('Code copied to clipboard!');
+                          } catch (error) {
+                            console.error('Failed to copy code:', error);
+                            toast.error('Failed to copy code');
+                          }
+                        }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy
+                      </Button>
                         <Button variant="outline" size="sm">
                           <Download className="mr-2 h-4 w-4" />
                           QR Code
