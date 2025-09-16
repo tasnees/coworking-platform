@@ -1,5 +1,13 @@
 import Link from 'next/link';
 
+// Generate static params for this route
+export async function generateStaticParams() {
+  // For static export, return an empty array since we don't know the params in advance
+  // The actual params will be handled client-side
+  return [];
+}
+
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">

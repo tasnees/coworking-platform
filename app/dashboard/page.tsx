@@ -3,6 +3,14 @@ import { authOptions } from '@/lib/auth-options';
 import { redirect } from 'next/navigation';
 import { getDashboardPath } from '@/lib/utils/routes';
 
+// Generate static params for this route
+export async function generateStaticParams() {
+  // For static export, return an empty array since we don't know the params in advance
+  // The actual params will be handled client-side
+  return [];
+}
+
+
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
   

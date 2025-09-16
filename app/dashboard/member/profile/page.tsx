@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
@@ -14,7 +14,7 @@ interface SessionUser {
   email?: string | null;
   image?: string | null;
   role: string;
-  [key: string]: unknown; // Allow additional properties
+  [key: string]: unknown;
 }
 
 export default function ProfilePage() {
@@ -34,7 +34,7 @@ export default function ProfilePage() {
   }
 
   if (!session?.user) {
-    return null; // Will be redirected by onUnauthenticated
+    return null;
   }
 
   const user = session.user as SessionUser;
@@ -85,7 +85,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-      {/* User's Bookings */}
+      {}
       <UserBookings />
     </div>
   );

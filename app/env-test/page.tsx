@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from 'react';
 
@@ -8,9 +8,9 @@ export default function EnvTest() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only run on client side
+   
     if (typeof window !== 'undefined') {
-      // Get all environment variables that start with NEXT_PUBLIC_
+     
       const publicEnv = Object.entries(process.env)
         .filter(([key]) => key.startsWith('NEXT_PUBLIC_'))
         .reduce((acc, [key, value]) => ({

@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 
@@ -54,7 +54,7 @@ export default function TestSignup() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       addLog(`Error: ${errorMessage}`);
       
-      // Handle Axios error response
+     
       if (error && typeof error === 'object' && 'response' in error) {
         const axiosError = error as { response?: { data?: unknown } };
         if (axiosError.response?.data) {
@@ -68,7 +68,7 @@ export default function TestSignup() {
   const runTests = async () => {
     setLogs([]);
     
-    // Test backend connection first
+   
     const backendAvailable = await testDirectBackend();
     
     if (!backendAvailable) {
@@ -76,7 +76,7 @@ export default function TestSignup() {
       return;
     }
     
-    // Test different endpoints
+   
     const endpoints = [
       'https://coworking-platform-backend.onrender.com/api/auth/register',
       '/api/auth/signup',

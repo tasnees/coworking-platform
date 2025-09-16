@@ -42,12 +42,19 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   
+  // Disable static export for API routes
+  output: 'standalone',
+  
+  // Configure proper page extensions
+  pageExtensions: ['tsx', 'ts', 'jsx', 'js'],
+  
   // Disable ESLint and TypeScript checks during build for CI/CD pipelines
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // Consider removing this in production
+    // Only ignore build errors in development
+    ignoreBuildErrors: process.env.NODE_ENV !== 'production',
   },
   
   // Security headers

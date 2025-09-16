@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 
-// Types
 type NetworkStatus = 'active' | 'inactive' | 'maintenance';
 
 interface Network {
@@ -38,14 +37,14 @@ const WiFiSettingsPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
-  // Initialize component
+ 
   useEffect(() => {
     setIsMounted(true);
     loadInitialData();
     return () => setIsMounted(false);
   }, []);
 
-  // Load initial data
+ 
   const loadInitialData = async () => {
     try {
       setIsLoading(true);
@@ -59,9 +58,9 @@ const WiFiSettingsPage = () => {
     }
   };
 
-  // Load networks
+ 
   const loadNetworks = async () => {
-    // Simulate API call
+   
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const mockNetworks: Network[] = [
@@ -100,7 +99,7 @@ const WiFiSettingsPage = () => {
     setWifiNetworks(mockNetworks);
   };
 
-  // Handle refresh networks
+ 
   const handleRefreshNetworks = async () => {
     try {
       setIsRefreshing(true);
@@ -115,7 +114,7 @@ const WiFiSettingsPage = () => {
     }
   };
 
-  // Handle toggle network status
+ 
   const handleToggleStatus = useCallback((networkId: number) => {
     setWifiNetworks(prev => {
       const updated = prev.map(network => {
@@ -133,7 +132,7 @@ const WiFiSettingsPage = () => {
     });
   }, []);
 
-  // Don't render anything during SSR or while loading initial data
+ 
   if (!isMounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">

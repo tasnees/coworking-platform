@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useEffect, useMemo } from "react"
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +12,6 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Search, Plus, Eye, Edit, Trash2, Mail, Phone, Calendar, MapPin, Building, Clock, CheckCircle, XCircle } from "lucide-react"
 import { User } from "lucide-react"
-// Loading component for the page
 const LoadingSpinner = () => (
   <div className="flex h-screen w-full items-center justify-center">
     <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -196,34 +196,33 @@ const mockMembers: Member[] = [
     totalVisits: 29
   }
 ]
-// Helper function to safely get array length
 const getSafeLength = (arr: any[] | undefined): number => {
   return Array.isArray(arr) ? arr.length : 0;
 }
 
 export default function StaffMembersPage() {
-  // State for client-side rendering
+ 
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Data state
+ 
   const [members, setMembers] = useState<Member[] | null>(null);
   
-  // Filter and search state
+ 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   
-  // Dialog visibility state
+ 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
   
-  // Selected data state
+ 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
   
-  // Form state with required fields
+ 
   const [formData, setFormData] = useState<Omit<Member, 'id' | 'joinDate' | 'totalVisits' | 'lastVisit'>>({
     name: "",
     email: "",
@@ -237,12 +236,12 @@ export default function StaffMembersPage() {
     notes: ""
   });
 
-  // Initialize members on client side to avoid hydration issues
+ 
   useEffect(() => {
     setIsClient(true);
-    // Simulate API call with a small delay
+   
     const timer = setTimeout(() => {
-      // Ensure all required fields are present
+     
       const validMembers = mockMembers.map(member => ({
         ...member,
         company: member.company || '',
@@ -256,7 +255,7 @@ export default function StaffMembersPage() {
     }, 100);
     return () => clearTimeout(timer);
   }, [])
-  // Only process members on client side
+ 
   const filteredMembers = useMemo(() => {
     if (!isClient || !Array.isArray(members)) return [];
     return members.filter(member => {
@@ -272,7 +271,7 @@ export default function StaffMembersPage() {
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [members, searchQuery, statusFilter, typeFilter, isClient]);
-  // Memoize statistics to prevent unnecessary recalculations
+ 
   const { totalMembers, activeMembers, inactiveMembers, suspendedMembers, newMembersThisMonth } = useMemo(() => {
     if (!isClient || !Array.isArray(members)) { 
       return { 
@@ -403,7 +402,7 @@ export default function StaffMembersPage() {
         <h1 className="text-3xl font-bold">Member Management</h1>
         <p className="text-muted-foreground">Manage all coworking space members and their information</p>
       </div>
-      {/* Stats Cards */}
+      {}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -442,7 +441,7 @@ export default function StaffMembersPage() {
           </CardContent>
         </Card>
       </div>
-      {/* Filters and Actions */}
+      {}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
           <div className="flex-1">
             <div className="relative">
@@ -482,7 +481,7 @@ export default function StaffMembersPage() {
             Add Member
           </Button>
         </div>
-        {/* Members List */}
+        {}
         <div className="border rounded-lg">
           <div className="divide-y">
             {filteredMembers.map((member: Member) => (
@@ -557,7 +556,7 @@ export default function StaffMembersPage() {
             ))}
           </div>
         </div>
-        {/* Create/Edit Dialog */}
+        {}
         <Dialog open={showCreateDialog || showEditDialog} onOpenChange={showCreateDialog ? setShowCreateDialog : setShowEditDialog}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
@@ -696,7 +695,7 @@ export default function StaffMembersPage() {
             </div>
           </DialogContent>
         </Dialog>
-        {/* View Dialog */}
+        {}
         <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
           <DialogContent>
             <DialogHeader>

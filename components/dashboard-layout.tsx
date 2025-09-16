@@ -3,6 +3,7 @@
 import { useState, type ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
+import { useUser, UserButton, useAuth } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -14,20 +15,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  CreditCard,
-  QrCode,
-  BarChart3,
-  Settings,
-  LogOut,
+import { 
+  LayoutDashboard, 
+  Calendar, 
+  Users, 
+  CreditCard, 
+  QrCode, 
+  BarChart3, 
+  Settings, 
+  LogOut as LogOutIcon,
   Menu,
-  Bell,
+  Bell
 } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
-import { LogoutButton } from '@/components/auth/LogoutButton'
 
 type NavigationItem = {
   name: string
@@ -86,26 +85,38 @@ interface DashboardLayoutProps {
   userRole?: 'admin' | 'staff' | 'member';
 }
 
-export default function DashboardLayout({ children, userRole }: DashboardLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+export default function DashboardLayout({ children, userRole: initialUserRole }: DashboardLayoutProps) {
+  const { user, isLoaded } = useUser()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  
+  // Use the provided userRole prop or fall back to the one from useUser
+  const userRole = initialUserRole || (user?.publicMetadata?.role as 'admin' | 'staff' | 'member') || 'member'
+  
+  const handleSignOut = async () => {
+    try {
+      const response = await fetch('/api/auth/signout', { method: 'POST' });
+      if (response.ok) {
+        window.location.href = '/auth/sign-in';
+      }
+    } catch (error) {
+      console.error('Error signing out:', error);
+      window.location.href = '/auth/sign-in';
+    }
+  };
+
+  const [activeRole, setActiveRole] = useState<'admin' | 'staff' | 'member'>(userRole || 'member');
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading, logout } = useAuth();
   
   // Use provided userRole or extract from pathname
   const role = userRole || (pathname?.split('/')[2] as 'admin' | 'staff' | 'member') || 'member';
   
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
-  
-  // Filter navigation items based on user role
-  const filteredNavItems = navigation.filter(item => 
-    item.roles.includes(role as 'admin' | 'staff' | 'member')
-  )
-  
+    if (userRole) {
+      setActiveRole(userRole)
+    }
+  }, [userRole])
+
   // Check if current path is active
   const isActive = (href: (role: string) => string) => {
     return pathname === href(role as 'admin' | 'staff' | 'member');
@@ -113,14 +124,14 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
   // Handle authentication state
   useEffect(() => {
-    if (isMounted && !isLoading && !user) {
+    if (isLoaded && !user) {
       const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      router.push(`/auth/login?callbackUrl=${callbackUrl}`);
+      router.push(`/auth/sign-in?redirect_url=${callbackUrl}`);
     }
-  }, [user, isLoading, router, isMounted]);
+  }, [user, isLoaded, router]);
 
   // Show loading state while checking auth or if not mounted
-  if (isLoading || !isMounted) {
+  if (!isLoaded) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -128,11 +139,11 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
     );
   }
 
-  // Don't render anything if not authenticated - will be handled by the useEffect
-  if (!user || !isMounted) {
-    return null;
-  }
-
+  // Filter navigation items based on user role
+  const filteredNavItems = navigation.filter(item => 
+    item.roles.includes(role as 'admin' | 'staff' | 'member')
+  )
+  
   const renderNavItems = () => {
     return filteredNavItems.map((item) => {
       const Icon = item.icon
@@ -158,10 +169,10 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
-      <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? "block" : "hidden"}`}>
+      <div className={`fixed inset-0 z-50 lg:hidden ${mobileMenuOpen ? "block" : "hidden"}`}>
         <div 
           className="fixed inset-0 bg-gray-600 bg-opacity-75" 
-          onClick={() => setSidebarOpen(false)} 
+          onClick={() => setMobileMenuOpen(false)} 
         />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">
           <div className="flex h-16 items-center justify-between border-b px-4">
@@ -169,7 +180,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => setSidebarOpen(false)}
+              onClick={() => setMobileMenuOpen(false)}
               aria-label="Close menu"
             >
               ×
@@ -204,7 +215,7 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
             variant="ghost" 
             size="sm" 
             className="lg:hidden" 
-            onClick={() => setSidebarOpen(true)}
+            onClick={() => setMobileMenuOpen(true)}
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
@@ -219,45 +230,41 @@ export default function DashboardLayout({ children, userRole }: DashboardLayoutP
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="relative h-8 w-8 rounded-full"
-                    aria-label="User menu"
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage 
-                        src={user.image || "/placeholder-user.jpg"} 
-                        alt={user.name || "User"} 
-                      />
-                      <AvatarFallback>
-                        {user.email?.charAt(0).toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
+                  <div className="flex items-center">
+                    <UserButton 
+                      afterSignOutUrl="/"
+                      appearance={{
+                        elements: {
+                          avatarBox: 'h-8 w-8',
+                        },
+                      }}
+                    />
+                    <span className="ml-2 text-sm font-medium text-gray-700">
+                      {user?.fullName || 'User'}
+                    </span>
+                  </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user.name || 'User'}
+                        {user?.fullName || 'User'}
                       </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user.email || ''}
-                      </p>
+                      {user?.primaryEmailAddress?.emailAddress && (
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.primaryEmailAddress.emailAddress}
+                        </p>
+                      )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${role}/settings`)}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
+                  <DropdownMenuItem 
+                    className="text-red-600 cursor-pointer"
+                    onClick={handleSignOut}
+                  >
+                    <LogOutIcon className="mr-2 h-4 w-4" />
+                    <span>Sign out</span>
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <div className="w-full">
-                    <LogoutButton 
-                      className="w-full justify-start px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                      redirectPath="/auth/login"
-                    />
-                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

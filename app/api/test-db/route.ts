@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 
 // This route is disabled in static export mode
-export const dynamic = 'force-static';
+// Static behavior for production, dynamic in development
+export const dynamic = process.env.NODE_ENV === "production" ? "force-static" : "auto";
+
+// Enable dynamic parameters
+export const dynamicParams = true;
 
 export const revalidate = 60; // Revalidate every 60 seconds
 

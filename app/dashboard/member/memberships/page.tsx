@@ -30,7 +30,6 @@ import {
   Loader2
 } from "lucide-react";
 
-// Type definitions
 type PlanType = "basic" | "standard" | "premium" | "enterprise";
 type BillingCycle = "monthly" | "quarterly" | "annually";
 type MembershipStatus = "active" | "inactive" | "pending";
@@ -76,7 +75,6 @@ interface BillingHistory {
   invoiceUrl?: string;
 }
 
-// Mock data generation functions
 const generateMockMembership = (): MembershipPlan => ({
   id: "premium-001",
   name: "Premium Plan",
@@ -143,7 +141,6 @@ const generateMockBillingHistory = (): BillingHistory[] => [
   }
 ];
 
-// Available plans mock data
 const availablePlans: MembershipPlan[] = [
   {
     id: "basic-001",
@@ -243,14 +240,14 @@ export default function MembershipsPage() {
   const [billingHistory, setBillingHistory] = useState<BillingHistory[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize data on client-side only
+ 
   useEffect(() => {
     setIsClient(true);
 
-    // Simulate API calls
+   
     const loadData = async () => {
       try {
-        // In a real app, these would be actual API calls
+       
         setCurrentMembership(generateMockMembership());
         setUsageStats(generateMockUsageStats());
         setBillingHistory(generateMockBillingHistory());
@@ -264,7 +261,7 @@ export default function MembershipsPage() {
     loadData();
   }, []);
 
-  // Helper functions
+ 
   const getPlanIcon = (type: string) => {
     switch (type) {
       case "basic": return <Package className="h-5 w-5" />;
@@ -296,20 +293,20 @@ export default function MembershipsPage() {
     return Math.min((used / total) * 100, 100);
   };
 
-  // Handle plan upgrade
+ 
   const handleUpgradeToPlan = async (plan: MembershipPlan) => {
     if (!plan) return;
     
     try {
-      // In a real app, you would make an API call to update the membership
-      // const response = await fetch('/api/membership/upgrade', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ planId: plan.id })
-      // });
-      // const data = await response.json();
+     
+     
+     
+     
+     
+     
+     
       
-      // For demo purposes, we'll just update the local state
+     
       setCurrentMembership({
         ...plan,
         status: 'active',
@@ -317,7 +314,7 @@ export default function MembershipsPage() {
         autoRenew: true
       });
       
-      // Show success message
+     
       alert(`Successfully upgraded to ${plan.name}!`);
       setShowUpgradeDialog(false);
       setSelectedPlanForUpgrade(null);
@@ -328,7 +325,7 @@ export default function MembershipsPage() {
     }
   };
 
-  // Event handlers
+ 
   const handleDownloadInvoice = (invoiceId: string, description: string) => {
     if (!currentMembership) return;
 
@@ -368,7 +365,7 @@ Thank you for your business!
     }
   };
 
-  // Toggle Auto-Renewal
+ 
   const handleToggleAutoRenew = () => {
     if (currentMembership) {
       const newAutoRenewStatus = !currentMembership.autoRenew;
@@ -383,15 +380,15 @@ Thank you for your business!
     setShowAutoRenewDialog(true);
   };
 
-  // Handle upgrade button click
+ 
   const handleUpgradePlan = () => {
     setShowUpgradeDialog(true);
   };
 
-  // The state for the selected plan in the dialog
+ 
   const [selectedPlanForUpgrade, setSelectedPlanForUpgrade] = useState<MembershipPlan | null>(null);
   
-  // Loading state
+ 
   if (!isClient || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -400,7 +397,7 @@ Thank you for your business!
     );
   }
 
-  // Error state - ensure all required data is loaded
+ 
   if (!currentMembership || !usageStats || !billingHistory) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -412,12 +409,12 @@ Thank you for your business!
   return (
     <DashboardLayout userRole="member" key="membership-layout">
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Membership</h1>
           <p className="text-muted-foreground">Manage your membership plan and billing information.</p>
         </div>
-        {/* Current Membership Card */}
+        {}
         <Card className="border-purple-500">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -465,7 +462,7 @@ Thank you for your business!
             <TabsTrigger value="billing">Billing</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
-            {/* Usage Stats */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -490,7 +487,7 @@ Thank you for your business!
                 </div>
               </CardContent>
             </Card>
-            {/* Quick Actions */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
@@ -538,7 +535,7 @@ Thank you for your business!
                 </ul>
               </CardContent>
             </Card>
-            {/* Available Plans */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Available Plans</CardTitle>
@@ -597,7 +594,7 @@ Thank you for your business!
             </Card>
           </TabsContent>
           <TabsContent value="billing" className="space-y-4">
-            {/* Billing Summary */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -634,7 +631,7 @@ Thank you for your business!
                 </div>
               </CardContent>
             </Card>
-            {/* Billing History */}
+            {}
             <Card>
               <CardHeader>
                 <CardTitle>Billing History</CardTitle>
@@ -681,7 +678,7 @@ Thank you for your business!
             </Card>
           </TabsContent>
         </Tabs>
-        {/* Upgrade Dialog */}
+        {}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -754,7 +751,7 @@ Thank you for your business!
             )}
           </DialogContent>
         </Dialog>
-        {/* Auto-Renewal Confirmation Dialog */}
+        {}
         <Dialog open={showAutoRenewDialog} onOpenChange={setShowAutoRenewDialog}>
           <DialogContent>
             <DialogHeader>

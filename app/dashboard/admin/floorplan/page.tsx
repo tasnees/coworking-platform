@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useMemo, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,9 +42,6 @@ import {
   Share2
 } from "lucide-react"
 
-// ---
-// TYPE DEFINITIONS
-// ---
 
 interface Floor {
   id: string;
@@ -94,11 +92,6 @@ interface FloorStat {
   percentage: number;
 }
 
-// ---
-// DATA DEFINITIONS
-// You can define this data outside the component to ensure it's available for both
-// the server (during prerendering) and the client.
-// ---
 
 const floors: Floor[] = [
   { 
@@ -163,9 +156,6 @@ const desks: Desk[] = [
   { id: "QZ1", name: "Quiet Zone 1", type: "focus", status: "occupied", member: "Alex Chen", area: 12, floor: "second", x: 0, y: 6, capacity: 1, occupancy: 1 },
 ];
 
-// ---
-// HELPER FUNCTIONS (UNCHANGED)
-// ---
 const getAreaTypeLabel = (type: string) => {
   switch (type) {
     case "workspace": return "Workspace";
@@ -204,9 +194,6 @@ const getDeskTypeLabel = (type: string) => {
   }
 }
 
-// ---
-// MAIN COMPONENT
-// ---
 interface FloorStat {
   id: string;
   title: string;
@@ -215,7 +202,6 @@ interface FloorStat {
   percentage: number;
 }
 
-// Helper function to safely get array length
 const getSafeLength = (arr: any[] | undefined): number => {
   if (typeof window === 'undefined') return 0;
   try {
@@ -225,34 +211,32 @@ const getSafeLength = (arr: any[] | undefined): number => {
   }
 };
 
-// Safe data access for SSR
 const safeFloors: Floor[] = [];
 const safeAreas: Area[] = [];
 const safeDesks: Desk[] = [];
 
-// Initialize client-side data
 if (typeof window !== 'undefined') {
-  // Only access window-dependent data on the client side
+ 
   safeFloors.push(...(floors || []));
   safeAreas.push(...(areas || []));
   safeDesks.push(...(desks || []));
 }
 
 const getFloorStats = (floorId: string): FloorStat[] => {
-  // Early return if running on server
+ 
   if (typeof window === 'undefined') {
     return [];
   }
-  // Safely filter areas and desks, defaulting to empty arrays if undefined
+ 
   const currentFloor = safeFloors.find((floor: Floor) => floor.id === floorId) || safeFloors[0];
   const floorAreas = safeAccess.areas.filter((area: Area) => area.floor === currentFloor?.id) || [];
   const floorDesks = safeAccess.desks.filter((desk: Desk) => desk.floor === currentFloor?.id) || [];
   
-  // Filter for meeting rooms with null checks
+ 
   const meetingRooms = Array.isArray(floorAreas) ? floorAreas.filter((area: any) => area?.type === 'meeting') : [];
   const occupiedMeetingRooms = Array.isArray(meetingRooms) ? meetingRooms.filter((room: any) => room?.occupancy > 0).length : 0;
   
-  // Calculate total capacity and occupancy with null checks
+ 
   const totalCapacity = Array.isArray(floorAreas) ? floorAreas.reduce((total: number, area: Area) => total + (area.capacity || 0), 0) : 0;
   const areaOccupancy = floorAreas.reduce((total: number, area: Area) => total + (area.occupancy || 0), 0);
   const currentOccupancy = Array.isArray(floorDesks) ? floorDesks.filter((desk: any) => desk?.status === 'occupied').length : 0;
@@ -289,7 +273,6 @@ const getFloorStats = (floorId: string): FloorStat[] => {
   ];
 };
 
-// Helper function to safely access array values
 const safeAccess = typeof window === 'undefined' ? {
   floors: { find: () => null, filter: () => [] },
   areas: { find: () => undefined, filter: () => [] },
@@ -344,23 +327,23 @@ export default function FloorPlanPage() {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [editMode, setEditMode] = useState(false);
   
-  // Set client-side flag and initialize data
+ 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Ensure we have valid data before rendering
+ 
   if (!isClient) {
     return <div className="p-6">Loading floor plan...</div>;
   }
 
-  // Calculate floor stats based on the active tab
+ 
   const floorStats = useMemo(() => {
     if (!isClient) return [];
     return getFloorStats(activeTab);
   }, [activeTab, isClient]);
 
-  // Use `useMemo` to filter data once per render, improving performance
+ 
   const filteredAreas = useMemo(() => {
     if (!isClient) return [];
     return safeAccess.areas.filter((area: Area) => area && area.floor === activeTab);
@@ -376,12 +359,12 @@ export default function FloorPlanPage() {
     return safeFloors.find((f: Floor) => f.id === activeTab) || safeFloors[0];
   }, [activeTab, isClient, safeFloors]);
 
-  // Show loading state until client-side rendering is ready
+ 
   if (!isClient) {
     return <div className="p-6">Loading floor plan...</div>;
   }
 
-  // Ensure we have valid data before rendering
+ 
   if (!isClient || !safeFloors?.length || !safeAreas?.length || !safeDesks?.length) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -390,7 +373,7 @@ export default function FloorPlanPage() {
     );
   }
   
-  // Ensure currentFloor is available
+ 
   if (!currentFloor) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -402,7 +385,7 @@ export default function FloorPlanPage() {
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Floor Plan</h1>
@@ -433,7 +416,7 @@ export default function FloorPlanPage() {
           </div>
         </div>
         
-        {/* Stats */}
+        {}
         <div className="grid gap-4 md:grid-cols-4">
           {Array.isArray(floorStats) && floorStats.map((stat, index) => (
             <Card key={`stat-${index}-${stat.title || ''}`}>
@@ -456,7 +439,7 @@ export default function FloorPlanPage() {
           ))}
         </div>
         
-        {/* Floor Plan Tabs */}
+        {}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between">
             <TabsList>
@@ -493,7 +476,7 @@ export default function FloorPlanPage() {
           </div>
           {floors.map((floor) => (
             <TabsContent key={floor.id} value={floor.id} className="space-y-4">
-              {/* Floor Plan Visualization */}
+              {}
               <Card>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
@@ -535,7 +518,7 @@ export default function FloorPlanPage() {
                       transformOrigin: "top left",
                     }}
                   >
-                    {/* This would be replaced with an actual interactive floor plan component */}
+                    {}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <p className="text-muted-foreground">
                         {floor.id === "basement" ? (
@@ -545,7 +528,7 @@ export default function FloorPlanPage() {
                         )}
                       </p>
                     </div>
-                    {/* Sample visualization elements - these would be positioned correctly in a real implementation */}
+                    {}
                     {floor.id !== "basement" && (
                       <>
                         <div className="absolute top-10 left-10 w-40 h-24 border border-blue-500 bg-blue-100 rounded-md flex items-center justify-center">
@@ -600,7 +583,7 @@ export default function FloorPlanPage() {
                 </CardFooter>
               </Card>
               
-              {/* Areas List */}
+              {}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -701,7 +684,7 @@ export default function FloorPlanPage() {
                 </CardContent>
               </Card>
               
-              {/* Desks List */}
+              {}
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">

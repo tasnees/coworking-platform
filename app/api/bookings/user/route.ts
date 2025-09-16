@@ -3,7 +3,11 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 
-export const dynamic = 'force-dynamic'; // Force dynamic route handling
+// This route needs to be dynamic because it uses auth()
+export const dynamic = 'force-dynamic';
+
+// Enable dynamic parameters
+export const dynamicParams = true;
 
 export async function GET() {
   try {

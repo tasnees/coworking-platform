@@ -61,3 +61,33 @@ export async function PATCH(
     return new NextResponse('Internal Error', { status: 500 });
   }
 }
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    
+    // Check if user is admin
+    if (!session?.user?.role || session.user.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Delete the member
+    await prisma.user.delete({
+      where: { id: params.id },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error('Error deleting member:', error);
+    
+    // Handle case where member is not found
+    if ((error as any).code === 'P2025') {
+      return new NextResponse('Member not found', { status: 404 });
+    }
+    
+    return new NextResponse('Internal Error', { status: 500 });
+  }
+}

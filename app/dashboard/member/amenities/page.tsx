@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -192,15 +193,15 @@ export default function AmenitiesPage() {
       status: "completed"
     },
   ]
-  // Initialize client-side flag and state
+ 
   const [isLoading, setIsLoading] = useState(true);
   const [clientSideAmenities, setClientSideAmenities] = useState<typeof amenities | null>(null);
   const [clientSideMaintenance, setClientSideMaintenance] = useState<typeof maintenanceSchedule | null>(null);
 
-  // Load data on client side only
+ 
   useEffect(() => {
     setIsClient(true);
-    // Simulate API call with a small delay
+   
     const timer = setTimeout(() => {
       setClientSideAmenities([...amenities]);
       setClientSideMaintenance([...maintenanceSchedule]);
@@ -222,7 +223,7 @@ export default function AmenitiesPage() {
     }
   }
   const getStatusIcon = (status: string) => {
-    if (!isClient || isLoading) return AlertTriangle; // Fallback icon during SSR/loading
+    if (!isClient || isLoading) return AlertTriangle;
     switch (status) {
       case "operational":
         return CheckCircle2
@@ -246,7 +247,7 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
-  // Show loading state during SSR or while loading
+ 
   if (!isClient || isLoading) {
     return (
       <DashboardLayout userRole="member">
@@ -257,7 +258,7 @@ export default function AmenitiesPage() {
     );
   }
 
-  // Use client-side data when available
+ 
   const displayAmenities = clientSideAmenities || [];
   const displayMaintenance = clientSideMaintenance || [];
 
@@ -270,7 +271,7 @@ export default function AmenitiesPage() {
             Explore all the amenities available to you as a member. Check their status, upcoming maintenance, and usage trends.
           </p>
         </div>
-        {/* Overview Stats */}
+        {}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -333,14 +334,14 @@ export default function AmenitiesPage() {
             </CardContent>
           </Card>
         </div>
-        {/* Tabs */}
+        {}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
             <TabsTrigger value="usage">Usage Statistics</TabsTrigger>
           </TabsList>
-          {/* Overview Tab */}
+          {}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {displayAmenities.map((amenity) => {
@@ -391,7 +392,7 @@ export default function AmenitiesPage() {
               })}
             </div>
           </TabsContent>
-          {/* Maintenance Tab */}
+          {}
           <TabsContent value="maintenance" className="space-y-4">
             <Card>
               <CardHeader>
@@ -463,7 +464,7 @@ export default function AmenitiesPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Usage Statistics Tab */}
+          {}
           <TabsContent value="usage" className="space-y-4">
             <Card>
               <CardHeader>

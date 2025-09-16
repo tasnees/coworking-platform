@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 
-// Import UI components
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Users, Calendar, DollarSign, TrendingUp } from "lucide-react";
 
-// Import Chart.js with SSR disabled to avoid window is not defined errors
 const Line = dynamic(() => import('react-chartjs-2').then((mod) => mod.Line), {
   ssr: false,
   loading: () => <div>Loading chart...</div>,
@@ -17,7 +15,7 @@ export default function AnalyticsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // State for statistics
+ 
   const [stats, setStats] = useState({
     totalMembers: 0,
     newMembersThisMonth: 0,
@@ -30,30 +28,30 @@ export default function AnalyticsPage() {
     churnRate: 0,
   });
   
-  // State for trend data
+ 
   const [trendData, setTrendData] = useState({
     labels: [] as string[],
     checkins: [] as number[],
     revenue: [] as number[],
   });
   
-  // Dynamically import Chart.js and Line component on client side only
+ 
   const [Line, setLine] = useState<any>(null);
   
   useEffect(() => {
-    // This effect only runs on the client side
+   
     setIsMounted(true);
     
-    // Dynamically import Chart.js and Line component
+   
     const loadCharts = async () => {
       try {
-        // Import Chart.js and registerables
+       
         const { Chart, registerables } = await import('chart.js');
         Chart.register(...registerables);
-        // Import Line component from react-chartjs-2
+       
         const { Line: LineChart } = await import('react-chartjs-2');
         setLine(() => LineChart);
-        // Fetch data after charts are loaded
+       
         await fetchAnalyticsData();
       } catch (err) {
         console.error('Failed to load charts:', err);
@@ -63,13 +61,13 @@ export default function AnalyticsPage() {
       }
     };
     
-    // Fetch real analytics data from API
+   
     const fetchAnalyticsData = async () => {
       try {
         setIsLoading(true);
         const response = await fetch('/api/analytics', {
-          credentials: 'include', // Include cookies for auth
-          cache: 'no-store' // Ensure fresh data
+          credentials: 'include',
+          cache: 'no-store'
         });
         
         if (!response.ok) {
@@ -78,7 +76,7 @@ export default function AnalyticsPage() {
         
         const data = await response.json();
         
-        // Update stats and trend data from API response
+       
         setStats({
           totalMembers: data.stats.totalMembers,
           newMembersThisMonth: data.stats.newMembersThisMonth,
@@ -107,15 +105,15 @@ export default function AnalyticsPage() {
     
     loadCharts();
     
-    // Set up auto-refresh every 5 minutes
+   
     const refreshInterval = setInterval(fetchAnalyticsData, 5 * 60 * 1000);
     
-    // Cleanup function
+   
     return () => {
       clearInterval(refreshInterval);
     };
   }, []);
-  // Don't render anything until the component is mounted on the client
+ 
   if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -123,7 +121,7 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-    // Show loading state
+   
   if (isLoading || !Line) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -131,7 +129,7 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-  // Show error state
+ 
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -149,7 +147,7 @@ export default function AnalyticsPage() {
       </div>
     );
   }
-  // Chart.js data and options
+ 
   const lineData = {
     labels: trendData.labels.length > 0 ? trendData.labels : ['Loading...'],
     datasets: [

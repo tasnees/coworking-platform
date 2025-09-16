@@ -1,8 +1,8 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
 
-// Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
   { 
@@ -84,14 +84,14 @@ function MembershipsContent() {
       setIsLoading(true);
       const response = await fetch('/api/memberships', {
         method: 'GET',
-        credentials: 'include', // This is required for cookies to be sent with the request
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
       
       if (response.status === 401) {
-        // Redirect to login if unauthorized
+       
         window.location.href = '/auth/login';
         return;
       }
@@ -112,7 +112,7 @@ function MembershipsContent() {
     }
   };
 
-  // Show loading state
+ 
   if (!isMounted || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -121,7 +121,7 @@ function MembershipsContent() {
     );
   }
 
-  // Show error state
+ 
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -159,7 +159,7 @@ function MembershipsContent() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Include cookies for authentication
+        credentials: 'include',
         body: JSON.stringify({ active: !currentStatus }),
       });
 
@@ -169,7 +169,7 @@ function MembershipsContent() {
         throw new Error(data.message || 'Failed to update plan status');
       }
 
-      // Update the local state to reflect the change
+     
       setMembershipPlans(prevPlans =>
         prevPlans.map(plan =>
           plan.id === planId ? { ...plan, active: !currentStatus } : plan
@@ -207,14 +207,14 @@ function MembershipsContent() {
         },
         body: JSON.stringify({
           ...formData,
-          members: 0, // Initialize with 0 members
+          members: 0,
           features: formData.features || [],
         }),
       });
 
       if (!response.ok) throw new Error('Failed to create plan');
       
-      // Refresh the plans list
+     
       await fetchMembershipPlans();
       setIsEditDialogOpen(false);
       setFormData({
@@ -247,7 +247,7 @@ function MembershipsContent() {
 
       if (!response.ok) throw new Error('Failed to update plan');
       
-      // Refresh the plans list
+     
       await fetchMembershipPlans();
       setIsEditDialogOpen(false);
       setEditingPlan(null);
@@ -259,7 +259,7 @@ function MembershipsContent() {
     }
   };
 
-  // If no membership plans found, show empty state
+ 
   if (membershipPlans.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -395,7 +395,7 @@ function MembershipsContent() {
       </Tabs>
       </div>
       
-      {/* Edit Plan Dialog */}
+      {}
     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
       <DialogContent>
         <DialogHeader>
@@ -489,7 +489,6 @@ function MembershipsContent() {
   );
 }
 
-// Main page component with client-side only rendering
 export default function MembershipsPage() {
   return <MembershipsContent />;
 }

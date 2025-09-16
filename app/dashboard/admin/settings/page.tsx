@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -165,7 +165,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Simulate loading data
+   
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -186,7 +186,7 @@ export default function AdminSettingsPage() {
   const handleSaveProfile = async () => {
     try {
       setState(prev => ({ ...prev, isSaving: true }));
-      // Simulate API call
+     
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       setState(prev => ({
@@ -219,10 +219,10 @@ export default function AdminSettingsPage() {
   const handleDeleteAccount = async () => {
     try {
       setState(prev => ({ ...prev, isSaving: true }));
-      // Simulate API call
+     
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Sign out and redirect after deletion
+     
       await signOut({ redirect: false });
       router.push('/');
       
@@ -246,7 +246,7 @@ export default function AdminSettingsPage() {
     if (newPassword === confirmPassword && newPassword.length >= 8) {
       try {
         setState(prev => ({ ...prev, isSaving: true }));
-        // Simulate API call
+       
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         setState(prev => ({
@@ -279,12 +279,12 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Handle preferences change
+ 
   const handlePreferenceChange = async (key: keyof AdminPreferences, value: boolean) => {
     try {
       setState(prev => ({ ...prev, isSaving: true }));
       
-      // Simulate API call to save preferences
+     
       await new Promise(resolve => setTimeout(resolve, 500));
       
       toast({
@@ -303,12 +303,12 @@ export default function AdminSettingsPage() {
     }
   };
   
-  // Handle notification settings change
+ 
   const handleNotificationChange = async (key: string, value: boolean) => {
     try {
       setState(prev => ({ ...prev, isSaving: true }));
       
-      // Simulate API call to save notification settings
+     
       await new Promise(resolve => setTimeout(resolve, 500));
       
       toast({
@@ -327,7 +327,7 @@ export default function AdminSettingsPage() {
     }
   };
 
-  // Handle loading state
+ 
   if (isLoading || !isClient) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
@@ -336,7 +336,7 @@ export default function AdminSettingsPage() {
     );
   }
 
-  // Handle error state
+ 
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
@@ -375,7 +375,7 @@ export default function AdminSettingsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Profile Tab */}
+        {}
         <TabsContent value="profile" className="space-y-4">
           <Card>
             <CardHeader>
@@ -541,7 +541,7 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
+        {}
         <TabsContent value="security" className="space-y-6">
           <Card>
             <CardHeader>
@@ -586,7 +586,7 @@ export default function AdminSettingsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Password Change Dialog */}
+      {}
       <Dialog open={showPasswordDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showPasswordDialog: open }))}>
         <DialogContent>
           <DialogHeader>
@@ -645,7 +645,7 @@ export default function AdminSettingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Account Dialog */}
+      {}
       <Dialog open={showDeleteDialog} onOpenChange={(open) => setState(prev => ({ ...prev, showDeleteDialog: open }))}>
         <DialogContent>
           <DialogHeader>
@@ -711,14 +711,14 @@ export default function AdminSettingsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Profile Tab */}
+        {}
         <TabsContent value="profile" className="space-y-4">
           <Card>
-            {/* Profile content */}
+            {}
           </Card>
         </TabsContent>
 
-        {/* Preferences Tab */}
+        {}
         <TabsContent value="preferences" className="space-y-4">
         <Card>
           <CardHeader>
@@ -809,7 +809,7 @@ export default function AdminSettingsPage() {
         </Card>
       </TabsContent>
 
-      {/* Notifications Tab */}
+      {}
       <TabsContent value="notifications" className="space-y-4">
         <Card>
           <CardHeader>

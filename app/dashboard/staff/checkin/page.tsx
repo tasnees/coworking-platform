@@ -1,15 +1,10 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { format, isToday } from "date-fns";
 import { Check, User, Clock, QrCode, X, Search, Loader2 } from "lucide-react";
 import { toast } from "react-hot-toast";
-// Assuming DashboardLayout, Card, Table, and Button components are available
-// from a UI library like shadcn/ui.
-// For this self-contained example, we will create mock components.
-// In a real Next.js app, you would import them from your component library.
 
-// Define prop types for components
 interface DashboardLayoutProps {
   children: React.ReactNode;
   userRole: string;
@@ -86,7 +81,6 @@ interface BadgeProps {
   variant?: 'default' | 'secondary' | 'outline';
 }
 
-// Mock components to make this code runnable
 const DashboardLayout = ({ children, userRole }: DashboardLayoutProps) => (
   <div className="p-6 bg-slate-50 min-h-screen">
     <div className="max-w-7xl mx-auto">{children}</div>
@@ -228,7 +222,6 @@ const Badge = ({ children, variant = 'default' }: BadgeProps) => {
   );
 };
 
-// Data types
 interface CheckInHistory {
   id: string;
   memberId: string;
@@ -259,7 +252,6 @@ const mockMembers: Member[] = [
   { id: 'm5', name: 'Michael Brown', email: 'michael.brown@example.com', status: 'checkedOut' },
 ];
 
-// Helper function to safely get array length
 const getSafeLength = (arr: any[] | undefined): number => {
   return Array.isArray(arr) ? arr.length : 0;
 }
@@ -279,27 +271,27 @@ export default function StaffCheckinPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Initialize with empty data for SSR
+ 
   const safeMembers = isClient ? members : [];
   const safeCheckedInToday = isClient ? checkedInToday : [];
   const safeTotalCheckins = isClient ? totalCheckins : 0;
   const safeLoading = isClient ? loading : true;
 
   useEffect(() => {
-    // Only run on client side
+   
     setIsClient(true);
     setCurrentTime(new Date());
     
-    // This effect runs on the client after the component mounts
+   
     setLoading(true);
     
-    // Simulate fetching data
+   
     const loadData = () => {
       try {
-        // In a real app, you would fetch this data from an API
+       
         setMembers(mockMembers);
         
-        // Filter check-ins for today
+       
         const todayCheckins = mockCheckInHistory.filter(item => {
           if (!currentTime) return false;
           const checkInDate = new Date(item.timestamp);
@@ -315,13 +307,13 @@ export default function StaffCheckinPage() {
       }
     };
 
-    // Only load data if we're on the client side
+   
     if (typeof window !== 'undefined') {
       loadData();
     }
   }, [currentTime]);
   
-  // Show loading state during SSR or initial client load
+ 
   if (!isClient) {
     return (
       <DashboardLayout userRole="staff">
@@ -350,19 +342,19 @@ export default function StaffCheckinPage() {
   const handleManualCheckin = async (member: Member) => {
     try {
       setIsProcessing(true);
-      // In a real app, you would make an API call here
-      // await fetch(`/api/members/${member.id}/checkin`, { method: 'POST' });
+     
+     
       
-      // Simulate API call
+     
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Update local state
+     
       const updatedMembers = members.map(m => 
         m.id === member.id ? { ...m, status: 'checkedIn' as const } : m
       );
       setMembers(updatedMembers);
       
-      // Add to check-in history
+     
       const newCheckin: CheckInHistory = {
         id: `checkin-${Date.now()}`,
         memberId: member.id,
@@ -387,8 +379,8 @@ export default function StaffCheckinPage() {
   const startQRScanner = async () => {
     try {
       setShowQRScanner(true);
-      // In a real app, you would implement QR code scanning logic here
-      // This is a simplified version
+     
+     
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'environment' } 
       });
@@ -422,7 +414,7 @@ export default function StaffCheckinPage() {
   return (
     <DashboardLayout userRole="staff">
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Member Check-in</h1>
@@ -430,7 +422,7 @@ export default function StaffCheckinPage() {
           </div>
         </div>
 
-        {/* Status Cards */}
+        {}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -491,7 +483,7 @@ export default function StaffCheckinPage() {
           </Card>
         </div>
 
-        {/* Recent Check-ins Table */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle>Recent Check-ins</CardTitle>
@@ -538,7 +530,7 @@ export default function StaffCheckinPage() {
           </CardContent>
         </Card>
 
-        {/* Member Status Table */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle>Member Status</CardTitle>
@@ -580,7 +572,7 @@ export default function StaffCheckinPage() {
         </Card>
       </div>
 
-      {/* Manual Check-in Dialog */}
+      {}
       <Dialog open={showManualCheckin} onOpenChange={setShowManualCheckin}>
         <div className="space-y-4">
           <div className="relative">
@@ -638,7 +630,7 @@ export default function StaffCheckinPage() {
         </div>
       </Dialog>
 
-      {/* QR Scanner Dialog */}
+      {}
       <Dialog open={showQRScanner} onOpenChange={setShowQRScanner}>
         <div className="sm:max-w-[425px]">
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-black">
@@ -675,7 +667,7 @@ export default function StaffCheckinPage() {
               className="flex-1"
               disabled={isProcessing}
               onClick={() => {
-                // In a real app, this would process the scanned QR code
+               
                 toast.success('QR code scanned successfully!');
                 stopQRScanner();
               }}

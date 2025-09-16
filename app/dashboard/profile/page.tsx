@@ -1,5 +1,4 @@
-// app/dashboard/profile/page.tsx
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
@@ -65,8 +64,8 @@ export default function ProfilePage() {
     try {
       setIsLoading(true);
       
-      // In a real app, you would call an API endpoint to update the user's profile
-      // For now, we'll just update the session
+     
+     
       await update({
         ...session,
         user: {

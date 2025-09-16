@@ -7,7 +7,8 @@ const isStaticExport = process.env.NEXT_PHASE === 'phase-export' ||
                       process.env.NODE_ENV === 'production';
 
 // Static configuration for compatibility with static exports
-export const dynamic = 'force-dynamic';
+// Dynamic behavior is automatically handled by Next.js in production
+export const dynamic = process.env.NODE_ENV === "production" ? "auto" : "force-dynamic";
 export const dynamicParams = true;
 export const revalidate = false;
 

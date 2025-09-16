@@ -9,6 +9,9 @@ import { startOfMonth, endOfMonth, subMonths, eachDayOfInterval, format, isSameD
 // and needs to fetch fresh data on each request
 export const dynamic = 'force-dynamic';
 
+// Enable dynamic parameters
+export const dynamicParams = true;
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

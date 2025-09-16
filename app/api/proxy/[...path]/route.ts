@@ -95,4 +95,8 @@ export async function GET(
   }
 }
 
-export const dynamic = 'force-dynamic';
+// Dynamic behavior is automatically handled by Next.js in production
+export const dynamic = process.env.NODE_ENV === "production" ? "auto" : "force-dynamic";
+
+// Enable dynamic parameters
+export const dynamicParams = true;

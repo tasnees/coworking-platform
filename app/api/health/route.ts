@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Dynamic behavior configuration
+export const dynamic = process.env.NODE_ENV === 'production' ? 'auto' : 'force-dynamic';
+// Enable dynamic parameters
+export const dynamicParams = true;
+// Disable caching for development
+export const revalidate = process.env.NODE_ENV === 'production' ? 60 : 0;
+
+// For production with static exports, we'll use a simpler check
 
 type DatabaseStatus = {
   status: 'connected' | 'error' | 'unknown';
@@ -79,7 +85,7 @@ async function getHealthStatus() {
   }
 }
 
-type HealthResponse = {
+interface HealthResponse {
   status: 'ok' | 'error';
   timestamp: string;
   environment?: string;
@@ -95,9 +101,30 @@ type HealthResponse = {
   };
   error?: string;
   stack?: string;
+  message?: string;
 };
 
 export async function GET() {
+  // For static exports, return a simplified health check
+  if (process.env.NODE_ENV === 'production' && process.env.NEXT_OUTPUT_MODE === 'export') {
+    const staticResponse: HealthResponse = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: 'production (static export)',
+      nodeVersion: process.version,
+      uptime: process.uptime(),
+      message: 'API is running in static export mode. Some features may be limited.'
+    };
+    
+    return NextResponse.json(staticResponse, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+  }
+
+  // Full health check for development and server environments
   try {
     const response = await getHealthStatus();
     const status = response.status === 'ok' ? 200 : 503;

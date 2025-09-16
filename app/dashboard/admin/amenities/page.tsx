@@ -1,7 +1,7 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic.js'
-// Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
   { 
@@ -13,7 +13,6 @@ const DynamicDashboardLayout = dynamic(
     ) 
   }
 )
-// UI Components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -51,8 +50,6 @@ import {
   BarChart,
   Loader2
 } from "lucide-react"
-// Main component with proper loading state
-// Helper function to safely get array length
 const getSafeLength = (arr: any[] | undefined): number => {
   return Array.isArray(arr) ? arr.length : 0;
 }
@@ -65,7 +62,7 @@ export default function AmenitiesPage() {
     setIsMounted(true)
     setIsClient(true)
   }, [])
-  // Show loading state until component is mounted on client
+ 
   if (typeof window === 'undefined' || !isMounted || !isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -318,7 +315,7 @@ export default function AmenitiesPage() {
         return "secondary"
     }
   }
-  // Show loading state until component is mounted on client
+ 
   if (!isMounted) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -329,7 +326,7 @@ export default function AmenitiesPage() {
   return (
     <DynamicDashboardLayout userRole="admin">
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Amenities</h1>
@@ -418,7 +415,7 @@ export default function AmenitiesPage() {
             </DialogContent>
           </Dialog>
         </div>
-        {/* Overview Stats */}
+        {}
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -463,7 +460,7 @@ export default function AmenitiesPage() {
             </CardContent>
           </Card>
         </div>
-        {/* Tabs */}
+        {}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -471,7 +468,7 @@ export default function AmenitiesPage() {
             <TabsTrigger value="access">Membership Access</TabsTrigger>
             <TabsTrigger value="usage">Usage Statistics</TabsTrigger>
           </TabsList>
-          {/* Overview Tab */}
+          {}
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {amenities.map((amenity) => {
@@ -529,7 +526,7 @@ export default function AmenitiesPage() {
               })}
             </div>
           </TabsContent>
-          {/* Maintenance Tab */}
+          {}
           <TabsContent value="maintenance" className="space-y-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -680,7 +677,7 @@ export default function AmenitiesPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Membership Access Tab */}
+          {}
           <TabsContent value="access" className="space-y-4">
             <Card>
               <CardHeader>
@@ -715,7 +712,7 @@ export default function AmenitiesPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          {/* Usage Statistics Tab */}
+          {}
           <TabsContent value="usage" className="space-y-4">
             <Card>
               <CardHeader>
@@ -800,7 +797,7 @@ export default function AmenitiesPage() {
             </Card>
           </TabsContent>
         </Tabs>
-        {/* Edit Dialog */}
+        {}
         <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
@@ -879,7 +876,7 @@ export default function AmenitiesPage() {
             </div>
           </DialogContent>
         </Dialog>
-        {/* Delete Confirmation Dialog */}
+        {}
         <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <DialogContent>
             <DialogHeader>

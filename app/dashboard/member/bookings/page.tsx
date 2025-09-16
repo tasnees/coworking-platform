@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import React, { useState, useEffect, ReactElement } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -40,7 +41,7 @@ export default function BookingsPage(): JSX.Element {
   const [isNewBookingOpen, setIsNewBookingOpen] = useState(false)
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null)
   
-  // Helper function to safely update editingBooking
+ 
   const updateEditingBooking = (updates: Partial<Booking>) => {
     if (!editingBooking) return;
     setEditingBooking({...editingBooking, ...updates});
@@ -60,16 +61,16 @@ export default function BookingsPage(): JSX.Element {
     notes: ""
   })
   const { toast } = useToast()
-  // Set client-side flag
+ 
   useEffect(() => {
     setIsClient(true)
   }, [])
-  // Load bookings on component mount
+ 
   useEffect(() => {
-    // In a real app, you would fetch this from your API
+   
     const loadBookings = async () => {
       try {
-        // Mock data - replace with actual API call
+       
         const mockCurrentBookings: Booking[] = [
           {
             id: 1,
@@ -214,13 +215,13 @@ export default function BookingsPage(): JSX.Element {
     setIsDeleting(id)
     
     try {
-      // In a real app, you would make an API call here
-      // await fetch(`/api/bookings/${id}`, { method: 'DELETE' })
+     
+     
       
-      // Simulate API call
+     
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      // Update local state
+     
       setCurrentBookings(prev => prev.filter(b => b.id !== id))
       setBookingHistory(prev => prev.filter(b => b.id !== id))
       
@@ -244,7 +245,7 @@ export default function BookingsPage(): JSX.Element {
     setEditingBooking(booking)
   }
 
-  // Handle save edit with proper type safety
+ 
   const handleSaveEdit = async (booking: Booking): Promise<void> => {
     if (!editingBooking) {
       return;
@@ -253,18 +254,18 @@ export default function BookingsPage(): JSX.Element {
     setIsSaving(true);
     
     try {
-      // In a real app, you would make an API call here
-      // const response = await fetch(`/api/bookings/${booking.id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(booking)
-      // });
-      // const data = await response.json();
+     
+     
+     
+     
+     
+     
+     
       
-      // Simulate API call
+     
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Update local state
+     
       setCurrentBookings(prev => 
         prev.map(b => b.id === booking.id ? booking : b)
       );
@@ -304,18 +305,18 @@ export default function BookingsPage(): JSX.Element {
     setIsSaving(true)
     
     try {
-      // In a real app, you would make an API call here
-      // const response = await fetch('/api/bookings', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(newBooking)
-      // })
-      // const data = await response.json()
+     
+     
+     
+     
+     
+     
+     
       
-      // Simulate API call
+     
       await new Promise(resolve => setTimeout(resolve, 500))
       
-      // Create new booking with mock ID
+     
       const createdBooking: Booking = {
         id: Math.max(0, ...currentBookings.map(b => b.id), ...bookingHistory.map(b => b.id)) + 1,
         resource: newBooking.resource || "",
@@ -329,10 +330,10 @@ export default function BookingsPage(): JSX.Element {
         cost: newBooking.cost || 0
       }
       
-      // Update local state
+     
       setCurrentBookings(prev => [createdBooking, ...prev])
       
-      // Reset form
+     
       setNewBooking({
         resource: "",
         type: "desk",
@@ -362,7 +363,7 @@ export default function BookingsPage(): JSX.Element {
     }
   }
   const formatBookingDate = (dateString: string) => {
-    if (!isClient || !dateString) return ''; // Return empty string during SSR or if dateString is falsy
+    if (!isClient || !dateString) return '';
     try {
       return new Date(dateString).toLocaleDateString('en-US', { 
         weekday: 'long', 
@@ -372,7 +373,7 @@ export default function BookingsPage(): JSX.Element {
       });
     } catch (error) {
       console.error('Error formatting date:', error);
-      return dateString; // Fallback to original string if date parsing fails
+      return dateString;
     }
   };
   const BookingCard = ({ booking, showActions = true }: { booking: Booking, showActions?: boolean }): JSX.Element => (
@@ -470,7 +471,7 @@ export default function BookingsPage(): JSX.Element {
   ]
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div>
       <div className="flex items-center justify-between">
         <div>
@@ -652,7 +653,7 @@ export default function BookingsPage(): JSX.Element {
             </DialogContent>
           </Dialog>
         </div>
-        {/* Stats Grid */}
+        {}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
             <Card key={stat.title}>
@@ -666,7 +667,7 @@ export default function BookingsPage(): JSX.Element {
             </Card>
           ))}
         </div>
-        {/* Search and Filters */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -714,7 +715,7 @@ export default function BookingsPage(): JSX.Element {
             </div>
           </CardContent>
         </Card>
-        {/* Bookings Tabs */}
+        {}
         <Tabs defaultValue="current" className="space-y-4">
           <TabsList>
             <TabsTrigger value="current">Current Bookings</TabsTrigger>
@@ -765,7 +766,7 @@ export default function BookingsPage(): JSX.Element {
         </Tabs>
       </div>
       
-      {/* Edit Booking Dialog */}
+      {}
       <Dialog 
         open={Boolean(editingBooking)}
         onOpenChange={(open: boolean) => {

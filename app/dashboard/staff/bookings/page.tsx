@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
@@ -13,15 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, Users, CreditCard, Search, Plus, Eye, Edit, Trash2, CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-// Import the DashboardLayout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
   { ssr: false }
 );
 
-// ---
-// DATA INTERFACES
-// ---
 interface Booking {
   id: string;
   memberName: string;
@@ -51,7 +48,6 @@ interface Resource {
   hourlyRate: number;
 }
 
-// Mock data (can be replaced with API calls)
 const mockBookings: Booking[] = [
   {
     id: "1",
@@ -68,7 +64,7 @@ const mockBookings: Booking[] = [
     notes: "Regular workday",
     createdAt: "2023-06-10T10:30:00Z"
   },
-  // Add more mock bookings as needed
+ 
 ];
 
 const mockMembers: Member[] = [
@@ -83,9 +79,6 @@ const mockResources: Resource[] = [
   { id: "4", name: "Event Space", type: "event_space", hourlyRate: 100 },
 ];
 
-// ---
-// HELPER FUNCTIONS
-// ---
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -123,9 +116,6 @@ const getResourceIcon = (type: string): string => {
   }
 };
 
-// ---
-// MAIN COMPONENT
-// ---
 function StaffBookingsPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
@@ -144,7 +134,7 @@ function StaffBookingsPage() {
     if (isAuthenticated === false) {
       router.push('/auth/login');
     } else if (isAuthenticated === true && bookings === null) {
-      // Simulate API call with a small delay
+     
       const timer = setTimeout(() => {
         setBookings([...mockBookings]);
         setIsLoading(false);
@@ -153,7 +143,7 @@ function StaffBookingsPage() {
     }
   }, [isAuthenticated, router, bookings]);
 
-  // Filter bookings based on search and filters
+ 
   const filteredBookings = useMemo(() => {
     if (!bookings || !Array.isArray(bookings)) return [];
     
@@ -180,13 +170,13 @@ function StaffBookingsPage() {
     });
   }, [bookings, searchTerm, statusFilter, resourceTypeFilter]);
 
-  // Calculate stats
+ 
   const totalBookings = bookings?.length || 0;
   const confirmedBookings = bookings?.filter(b => b?.status === 'confirmed').length || 0;
   const pendingBookings = bookings?.filter(b => b?.status === 'pending').length || 0;
   const totalRevenue = bookings?.reduce((sum, b) => sum + (b?.price || 0), 0) || 0;
 
-  // Show loading state until bookings are loaded
+ 
   if (bookings === null) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -197,7 +187,7 @@ function StaffBookingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Bookings</h1>
@@ -211,7 +201,7 @@ function StaffBookingsPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
+      {}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -251,7 +241,7 @@ function StaffBookingsPage() {
         </Card>
       </div>
 
-      {/* Bookings List */}
+      {}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -351,7 +341,7 @@ function StaffBookingsPage() {
         </CardContent>
       </Card>
 
-      {/* View Booking Dialog */}
+      {}
       <Dialog open={!!selectedBooking} onOpenChange={(open) => !open && setSelectedBooking(null)}>
         <DialogContent>
           {selectedBooking && (
@@ -414,7 +404,7 @@ function StaffBookingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Create/Edit Booking Dialog */}
+      {}
       <Dialog open={showCreateDialog || !!editingBooking} onOpenChange={(open) => {
         if (!open) {
           setShowCreateDialog(false);
@@ -524,5 +514,4 @@ function StaffBookingsPage() {
   );
 }
 
-// Export the page component directly - layout is already handled by the root dashboard layout
 export default StaffBookingsPage;

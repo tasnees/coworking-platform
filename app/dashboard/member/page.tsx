@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -51,7 +52,7 @@ export default function MemberDashboard() {
     { name: "Printer", status: "Out of Paper" },
     { name: "Snacks", status: "Available" },
   ]
-  // Example activity data for the dialog
+ 
   const [activityOpen, setActivityOpen] = useState(false)
   const activityStats = [
     { label: "Bookings this month", value: 5 },
@@ -62,7 +63,7 @@ export default function MemberDashboard() {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
-    // Only run on client
+   
     setIsClient(true)
   }, [])
 
@@ -73,7 +74,7 @@ export default function MemberDashboard() {
     router.push("/auth/login")
   }
 
-  // Show loading state during SSR or initial client load
+ 
   if (!isClient) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -83,12 +84,12 @@ export default function MemberDashboard() {
   }
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div>
           <h1 className="text-3xl font-bold tracking-tight">My Dashboard</h1>
           <p className="text-muted-foreground">Welcome! Here’s your coworking activity and quick access to your tools.</p>
         </div>
-        {/* Stats Grid */}
+        {}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat) => (
             <Card key={stat.title}>
@@ -121,7 +122,7 @@ export default function MemberDashboard() {
           ))}
         </div>
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Upcoming Bookings */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Upcoming Bookings</CardTitle>
@@ -146,7 +147,7 @@ export default function MemberDashboard() {
               </div>
             </CardContent>
           </Card>
-          {/* Amenities Status */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Amenities</CardTitle>
@@ -172,7 +173,7 @@ export default function MemberDashboard() {
             </CardContent>
           </Card>
         </div>
-        {/* Quick Actions */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -207,7 +208,7 @@ export default function MemberDashboard() {
             </div>
           </CardContent>
         </Card>
-        {/* Additional Actions */}
+        {}
         <Card>
           <CardHeader>
             <CardTitle>More Tools</CardTitle>
@@ -215,7 +216,7 @@ export default function MemberDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {/* My Activity Dialog Button */}
+              {}
               <Dialog open={activityOpen} onOpenChange={setActivityOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="h-20 flex-col gap-2 bg-transparent">
@@ -240,7 +241,7 @@ export default function MemberDashboard() {
                   </ul>
                 </DialogContent>
               </Dialog>
-              {/* Sign Out Button */}
+              {}
               <Button variant="outline" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-1" />
                 Sign Out

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth-options"
 import "./globals.css"
 import { Toaster } from "@/components/ui/toaster"
 import { Providers } from "./providers"
 import { ErrorBoundary } from "@/components/error-boundary"
+import { ClerkProvider } from '@clerk/nextjs'
+import { dark } from '@clerk/themes'
 
 // Generate static params for all routes
 export function generateStaticParams() {
@@ -79,27 +79,60 @@ export const viewport: Viewport = {
   userScalable: false,
 }
 
-export default async function RootLayout({
+import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const session = await getServerSession(authOptions)
-
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-      </head>
-      <body className="font-sans antialiased min-h-screen bg-background">
-        <ErrorBoundary>
-          <Providers session={session}>
-            {children}
-            <Toaster />
-          </Providers>
-        </ErrorBoundary>
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorPrimary: '#3b82f6',
+        },
+      }}
+    >
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <link rel="icon" href="/favicon.ico" sizes="any" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        </head>
+        <body className="min-h-screen bg-background font-sans antialiased">
+          <ErrorBoundary>
+            <Providers>
+              <header className="border-b border-border bg-card">
+                <div className="container flex h-16 items-center justify-between px-4">
+                  <div className="text-lg font-semibold">Coworking Platform</div>
+                  <nav className="flex items-center gap-4">
+                    <SignedOut>
+                      <SignInButton mode="modal">
+                        <button className="rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground">
+                          Sign In
+                        </button>
+                      </SignInButton>
+                      <SignUpButton mode="modal">
+                        <button className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+                          Sign Up
+                        </button>
+                      </SignUpButton>
+                    </SignedOut>
+                    <SignedIn>
+                      <UserButton afterSignOutUrl="/" />
+                    </SignedIn>
+                  </nav>
+                </div>
+              </header>
+              <main className="flex-1">
+                {children}
+              </main>
+              <Toaster />
+            </Providers>
+          </ErrorBoundary>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }

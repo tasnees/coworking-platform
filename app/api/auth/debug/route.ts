@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 
 // For static exports, we'll provide a basic auth debug endpoint
 // without server-side session checks
-export const dynamic = 'force-static';
+// Static behavior for production, dynamic in development
+export const dynamic = process.env.NODE_ENV === "production" ? "force-static" : "auto";
+
+// Enable dynamic parameters
+export const dynamicParams = true;
 
 export const revalidate = 60; // Revalidate every 60 seconds
 

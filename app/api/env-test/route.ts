@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
 
 // For static exports, we'll create a simplified version that can work client-side
-export const dynamic = 'force-static';
+// Static behavior for production, dynamic in development
+export const dynamic = process.env.NODE_ENV === "production" ? "force-static" : "auto";
+
+// Enable dynamic parameters
+export const dynamicParams = true;
 
 export async function GET() {
   // In a static export, we can't access process.env on the server

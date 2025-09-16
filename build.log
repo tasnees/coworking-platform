@@ -1,0 +1,1206 @@
+  ▲ Next.js 14.2.32
+  - Environments: .env.local, .env.production
+
+   Creating an optimized production build ...
+ ⚠ Compiled with warnings
+
+./middleware.js
+Attempted import error: 'authMiddleware' is not exported from '@clerk/nextjs' (imported as 'authMiddleware').
+
+   Skipping linting
+   Checking validity of types ...
+   Collecting page data ...
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+[2025-09-16T15:52:10.163Z] MongoDB connection opened
+MongoDB connection opened
+[2025-09-16T15:52:10.232Z] MongoDB connection opened
+[2025-09-16T15:52:10.235Z] MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+MongoDB connection opened
+MongoDB connection opened
+Created new MongoDB connection in production mode
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+[2025-09-16T15:52:11.226Z] ✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+✅ Successfully connected to MongoDB
+   Generating static pages (0/61) ...
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+[2025-09-16T15:52:12.348Z] MongoDB connection opened
+[2025-09-16T15:52:12.351Z] MongoDB connection opened
+[2025-09-16T15:52:12.352Z] MongoDB connection opened
+Error fetching dashboard stats: n [Error]: Dynamic server usage: Route /api/admin/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at c (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9380.js:1:42186)
+    at d (C:\Users\21625\Desktop\coworking-platform\.next\server\app\api\bookings\user\route.js:1:5170)
+    at n (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\4910.js:1:6839)
+    at async x (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\4910.js:1:4163)
+    at async c (C:\Users\21625\Desktop\coworking-platform\.next\server\app\api\admin\stats\route.js:1:1014)
+    at async C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:38411
+    at async e_.execute (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:27880)
+    at async e_.handle (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:39943)
+    at async exportAppRoute (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\export\routes\app-route.js:77:26)
+    at async exportPageImpl (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\export\worker.js:175:20) {
+  description: "Route /api/admin/stats couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+[DB Utils][2025-09-16T15:52:12.261Z] 🌐 Establishing database connection...
+[DB Utils][2025-09-16T15:52:12.263Z] 🔌 Connection attempt 1/3...
+[DB Utils][2025-09-16T15:52:12.326Z] ✅ Connection is alive
+[DB Utils][2025-09-16T15:52:12.326Z] 🏓 Testing database connection with ping...
+[DB Utils][2025-09-16T15:52:12.377Z] ✅ Ping successful
+[DB Utils][2025-09-16T15:52:12.377Z] ✅ Successfully connected to database: coworking-platform
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/auth/login". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+   Generating static pages (15/61) 
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/auth/forgot-password". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error fetching resources: n [Error]: Dynamic server usage: Route /api/resources couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at c (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9380.js:1:42186)
+    at d (C:\Users\21625\Desktop\coworking-platform\.next\server\app\api\bookings\user\route.js:1:5170)
+    at s (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\2857.js:25:19236)
+    at u (C:\Users\21625\Desktop\coworking-platform\.next\server\app\api\resources\route.js:1:2097)
+    at C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:38417
+    at C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/resources couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error fetching analytics: n [Error]: Dynamic server usage: Route /api/analytics couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at c (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9380.js:1:42186)
+    at d (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:17:4587)
+    at s (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\2857.js:25:19236)
+    at g (C:\Users\21625\Desktop\coworking-platform\.next\server\app\api\analytics\route.js:1:2167)
+    at C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:38417
+    at C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/analytics couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/auth/signup". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/checkin". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/memberships". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/analytics". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/bookings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/floorplan". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/members". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/amenities". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/hours". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/amenities". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+   Generating static pages (30/61) 
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/wifi". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/settings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+✅ Successfully connected to MongoDB
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/memberships". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+MongoDB URI: mongodb+srv://grabatassnim:****@cluster0.av4bvfl.mongodb.net/coworking-platform?retryWrites=true&w=majority
+Database name: coworking-platform
+Created new MongoDB connection in production mode
+MongoDB connection opened
+MongoDB connection opened
+MongoDB connection opened
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/auth/register". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/env-test". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/staff/checkin". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/profile". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/staff". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/staff/members". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/test-signup". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/staff/memberships". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+   Generating static pages (45/61) 
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/staff/settings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/checkin". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/unauthorized". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error fetching user bookings: n [Error]: Dynamic server usage: Route /api/bookings/user couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error
+    at c (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9380.js:1:42186)
+    at d (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:17:4587)
+    at s (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\2857.js:25:19236)
+    at l (C:\Users\21625\Desktop\coworking-platform\.next\server\app\api\bookings\user\route.js:1:2124)
+    at C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-route.runtime.prod.js:6:38417
+    at C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\server\lib\trace\tracer.js:140:36
+    at NoopContextManager.with (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:7062)
+    at ContextAPI.with (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:518)
+    at NoopTracer.startActiveSpan (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18093)
+    at ProxyTracer.startActiveSpan (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\@opentelemetry\api\index.js:1:18854) {
+  description: "Route /api/bookings/user couldn't be rendered statically because it used `headers`. See more info here: https://nextjs.org/docs/messages/dynamic-server-error",
+  digest: 'DYNAMIC_SERVER_USAGE'
+}
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/bookings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/staff/bookings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/home". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/member/profile". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/wifi". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547) {
+  digest: '2162857159'
+}
+
+Error occurred prerendering page "/dashboard/admin/settings". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+
+Error occurred prerendering page "/dashboard/admin/floorplan". Read more: https://nextjs.org/docs/messages/prerender-error
+
+Error: @clerk/clerk-react: Missing publishableKey. You can get your key at https://dashboard.clerk.com/last-active?path=api-keys.
+    at Object.throwMissingPublishableKeyError (C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:23:1550)
+    at C:\Users\21625\Desktop\coworking-platform\.next\server\chunks\9571.js:19:54887
+    at nj (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:46252)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47572)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nI (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47011)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:47718)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+    at nM (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:61157)
+    at nN (C:\Users\21625\Desktop\coworking-platform\node_modules\next\dist\compiled\next-server\app-page.runtime.prod.js:12:64547)
+ ✓ Generating static pages (61/61)
+
+> Export encountered errors on following paths:
+	/_not-found/page: /_not-found
+	/auth/forgot-password/page: /auth/forgot-password
+	/auth/login/page: /auth/login
+	/auth/register/page: /auth/register
+	/auth/signup/page: /auth/signup
+	/dashboard/admin/amenities/page: /dashboard/admin/amenities
+	/dashboard/admin/analytics/page: /dashboard/admin/analytics
+	/dashboard/admin/bookings/page: /dashboard/admin/bookings
+	/dashboard/admin/checkin/page: /dashboard/admin/checkin
+	/dashboard/admin/floorplan/page: /dashboard/admin/floorplan
+	/dashboard/admin/hours/page: /dashboard/admin/hours
+	/dashboard/admin/members/page: /dashboard/admin/members
+	/dashboard/admin/memberships/page: /dashboard/admin/memberships
+	/dashboard/admin/page: /dashboard/admin
+	/dashboard/admin/settings/page: /dashboard/admin/settings
+	/dashboard/admin/wifi/page: /dashboard/admin/wifi
+	/dashboard/member/amenities/page: /dashboard/member/amenities
+	/dashboard/member/bookings/page: /dashboard/member/bookings
+	/dashboard/member/checkin/page: /dashboard/member/checkin
+	/dashboard/member/floorplan/page: /dashboard/member/floorplan
+	/dashboard/member/memberships/page: /dashboard/member/memberships
+	/dashboard/member/page: /dashboard/member
+	/dashboard/member/profile/page: /dashboard/member/profile
+	/dashboard/member/settings/page: /dashboard/member/settings
+	/dashboard/member/wifi/page: /dashboard/member/wifi
+	/dashboard/page: /dashboard
+	/dashboard/profile/page: /dashboard/profile
+	/dashboard/staff/bookings/page: /dashboard/staff/bookings
+	/dashboard/staff/checkin/page: /dashboard/staff/checkin
+	/dashboard/staff/members/page: /dashboard/staff/members
+	/dashboard/staff/memberships/page: /dashboard/staff/memberships
+	/dashboard/staff/page: /dashboard/staff
+	/dashboard/staff/settings/page: /dashboard/staff/settings
+	/env-test/page: /env-test
+	/home/page: /home
+	/page: /
+	/test-signup/page: /test-signup
+	/unauthorized/page: /unauthorized

@@ -65,7 +65,6 @@ interface MemberFormData {
   role?: string;
 }
 
-// Badge component for member status
 function Badge({ variant, children }: { variant: 'default' | 'destructive' | 'outline', children: React.ReactNode }) {
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -129,6 +128,11 @@ export default function AdminMembersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
+  const [filters, setFilters] = useState({
+    status: '',
+    membershipType: ''
+  });
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [newMember, setNewMember] = useState<Partial<MemberFormData>>({
     name: '',
     email: '',
@@ -143,7 +147,7 @@ export default function AdminMembersPage() {
 
   const router = useRouter();
 
-  // Update form when editingMember changes
+ 
   useEffect(() => {
     if (editingMember) {
       setNewMember({
@@ -161,7 +165,7 @@ export default function AdminMembersPage() {
         confirmPassword: ''
       });
     } else {
-      // Reset form for new member
+     
       setNewMember({
         id: '',
         name: '',
@@ -179,16 +183,28 @@ export default function AdminMembersPage() {
     }
   }, [editingMember]);
 
-  // Filter members based on search term
+ 
   useEffect(() => {
-    const filtered = members.filter(member => 
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = members.filter(member => {
+     
+      const matchesSearch = searchTerm === '' || 
+        member.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+     
+      const matchesStatus = !filters.status || member.status === filters.status;
+      
+     
+      const matchesMembershipType = !filters.membershipType || 
+        member.membershipType === filters.membershipType;
+      
+      return matchesSearch && matchesStatus && matchesMembershipType;
+    });
+    
     setFilteredMembers(filtered);
-  }, [searchTerm, members]);
+  }, [searchTerm, members, filters]);
 
-  // Fetch members on component mount
+ 
   useEffect(() => {
     const fetchMembers = async () => {
       try {
@@ -285,7 +301,7 @@ export default function AdminMembersPage() {
       return false;
     }
 
-    // Create a new form event to pass to handleSubmit
+   
     const formEvent = new Event('submit') as unknown as React.FormEvent<HTMLFormElement>;
     handleSubmit(formEvent);
     return true;
@@ -303,7 +319,7 @@ export default function AdminMembersPage() {
       
       const method = editingMember ? 'PATCH' : 'POST';
       
-      // Prepare the data to send
+     
       const requestData: any = {
         name: newMember.name,
         email: newMember.email,
@@ -313,12 +329,12 @@ export default function AdminMembersPage() {
         notes: newMember.notes,
       };
       
-      // Only include membershipType for members
+     
       if (newMember.role === 'member') {
         requestData.membershipType = newMember.membershipType || 'flex';
       }
       
-      // Only include password if it's a new member or password is being changed
+     
       if (!editingMember || newMember.password) {
         requestData.password = newMember.password;
       }
@@ -339,7 +355,7 @@ export default function AdminMembersPage() {
       const data = await response.json();
       
       if (editingMember) {
-        // Update existing member in the list
+       
         setMembers(prev => prev.map(member => 
           member.id === editingMember.id 
             ? { 
@@ -353,7 +369,7 @@ export default function AdminMembersPage() {
             : member
         ));
       } else {
-        // Add new member to the list
+       
         const newMemberData: Member = {
           id: data.id,
           name: data.name,
@@ -371,7 +387,7 @@ export default function AdminMembersPage() {
         setMembers(prev => [newMemberData, ...prev]);
       }
       
-      // Reset form
+     
       setNewMember({
         name: '',
         email: '',
@@ -418,6 +434,36 @@ export default function AdminMembersPage() {
     { id: 'enterprise', name: 'Enterprise', type: 'office', price: 499, active: false }
   ].filter((plan): plan is Plan & { active: true } => plan.active === true);
 
+  const exportToCSV = () => {
+    const headers = ['Name', 'Email', 'Membership', 'Status', 'Last Visit', 'Join Date', 'Phone'];
+    
+   
+    const csvContent = [
+      headers.join(','),
+      ...filteredMembers.map(member => [
+        `"${member.name}"`,
+        `"${member.email}"`,
+        `"${plans.find(p => p.type === member.membershipType)?.name || member.membershipType}"`,
+        `"${member.status}"`,
+        `"${member.lastVisit ? format(new Date(member.lastVisit), 'MMM d, yyyy') : 'Never'}"`,
+        `"${format(new Date(member.joinDate), 'MMM d, yyyy')}"`,
+        `"${member.phone || ''}"`
+      ].join(','))
+    ].join('\n');
+
+   
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+   
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `members_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -448,10 +494,66 @@ export default function AdminMembersPage() {
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm">
-                Filter
-              </Button>
-              <Button variant="outline" size="sm">
+              <DropdownMenu open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 p-4 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status-filter">Status</Label>
+                    <select
+                      id="status-filter"
+                      value={filters.status}
+                      onChange={(e) => setFilters({...filters, status: e.target.value})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="active">Active</option>
+                      <option value="suspended">Suspended</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="membership-filter">Membership Type</Label>
+                    <select
+                      id="membership-filter"
+                      value={filters.membershipType}
+                      onChange={(e) => setFilters({...filters, membershipType: e.target.value})}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">All Types</option>
+                      {plans.map((plan) => (
+                        <option key={plan.id} value={plan.type}>
+                          {plan.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setFilters({ status: '', membershipType: '' })}
+                    >
+                      Reset
+                    </Button>
+                    <Button 
+                      variant="default" 
+                      size="sm"
+                      onClick={() => setIsFilterOpen(false)}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={exportToCSV}
+              >
                 Export
               </Button>
             </div>
@@ -474,7 +576,9 @@ export default function AdminMembersPage() {
               <TableRow key={member.id}>
                 <TableCell className="font-medium">{member.name}</TableCell>
                 <TableCell>{member.email}</TableCell>
-                <TableCell>{member.plan}</TableCell>
+                <TableCell>
+                  {plans.find(p => p.type === member.membershipType)?.name || member.membershipType}
+                </TableCell>
                 <TableCell>
                   {getStatusBadge(member.membership)}
                 </TableCell>
@@ -536,7 +640,7 @@ export default function AdminMembersPage() {
         </Table>
       </div>
 
-      {/* Add/Edit Member Dialog */}
+      {}
       <Dialog open={isAddMemberOpen} onOpenChange={setIsAddMemberOpen}>
         <DialogContent>
           <DialogHeader>
@@ -718,7 +822,7 @@ export default function AdminMembersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>

@@ -1,19 +1,36 @@
-"use client"
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Users, Calendar, DollarSign, TrendingUp, MapPin, Clock, Wifi, Coffee, BarChart, Settings, LogOut } from "lucide-react"
+import { 
+  Users, 
+  Calendar, 
+  DollarSign, 
+  TrendingUp, 
+  MapPin, 
+  Clock, 
+  Wifi, 
+  Coffee, 
+  BarChart, 
+  Settings, 
+  LogOut, 
+  Loader2 
+} from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import * as React from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { UserRole } from "@/lib/auth-types"
 
 interface Stat {
   title: string;
   value: string;
   change: string;
   changeType: 'positive' | 'negative';
-  icon: React.ComponentType<{ className?: string }>;
+  icon: string;
   className?: string;
 }
 
@@ -30,7 +47,22 @@ interface SpaceStatus {
   total: number;
   occupied: number;
   available: number;
+  capacity?: number;
 }
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Users,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  MapPin,
+  Clock,
+  Wifi,
+  Coffee,
+  BarChart,
+  Settings,
+  LogOut
+} as const;
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -39,158 +71,200 @@ export default function AdminDashboard() {
   const [recentBookings, setRecentBookings] = useState<Booking[]>([])
   const [spaceStatus, setSpaceStatus] = useState<SpaceStatus[]>([])
   const [isLoading, setIsLoading] = useState(true)
-
-  // Mock stats data
-  const mockStats: Stat[] = [
-    {
-      title: 'Total Members',
-      value: '124',
-      change: '+12%',
-      changeType: 'positive',
-      icon: Users
-    },
-    {
-      title: 'Active Bookings',
-      value: '24',
-      change: '+4%',
-      changeType: 'positive',
-      icon: Calendar
-    },
-    {
-      title: 'Revenue',
-      value: '$12,450',
-      change: '+8.2%',
-      changeType: 'positive',
-      icon: DollarSign
-    },
-    {
-      title: 'Available Spaces',
-      value: '18/30',
-      change: '-2',
-      changeType: 'negative',
-      icon: MapPin
-    }
+  const [error, setError] = useState<string | null>(null)
+  
+ 
+  const mockSpaceStatus: SpaceStatus[] = [
+    { name: 'Desks', total: 20, occupied: 12, available: 8 },
+    { name: 'Meeting Rooms', total: 5, occupied: 2, available: 3 },
+    { name: 'Private Offices', total: 8, occupied: 5, available: 3 },
   ]
 
-  useEffect(() => {
-    // Only run on client
-    setIsClient(true)
-    
-    // Set mock data
-    setStats(mockStats)
-    
-    // Simulate data fetching
-    const loadData = async () => {
-      try {
-        // In a real app, you would fetch this data from an API
-        const statsData: Stat[] = [
+ 
+  const fetchDashboardData = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+     
+      if (process.env.NODE_ENV === 'development') {
+        setStats([
           {
-            title: "Total Members",
-            value: "1,234",
-            change: "+12%",
-            changeType: "positive",
-            icon: Users,
+            title: 'Total Members',
+            value: '124',
+            change: '+12%',
+            changeType: 'positive',
+            icon: 'Users'
           },
           {
-            title: "Active Bookings",
-            value: "89",
-            change: "+5%",
-            changeType: "positive",
-            icon: Calendar,
+            title: 'Active Bookings',
+            value: '24',
+            change: '+5%',
+            changeType: 'positive',
+            icon: 'Calendar'
           },
           {
-            title: "Monthly Revenue",
-            value: "$45,231",
-            change: "+18%",
-            changeType: "positive",
-            icon: DollarSign,
+            title: 'Total Revenue',
+            value: '$12,540',
+            change: '+8.2%',
+            changeType: 'positive',
+            icon: 'DollarSign',
+            className: 'bg-green-100 dark:bg-green-900'
           },
           {
-            title: "Occupancy Rate",
-            value: "78%",
-            change: "-2%",
-            changeType: "negative",
-            icon: TrendingUp,
+            title: 'Available Spaces',
+            value: '14',
+            change: '-3%',
+            changeType: 'negative',
+            icon: 'MapPin',
+            className: 'bg-purple-100 dark:bg-purple-900'
+          }
+        ])
+        
+        setRecentBookings([
+          {
+            id: 1,
+            member: 'Alex Johnson',
+            resource: 'Meeting Room A',
+            time: '10:00 AM - 11:30 AM',
+            status: 'active'
           },
-        ]
-
-        const bookingsData: Booking[] = [
-          { id: 1, member: "John Doe", resource: "Desk A-12", time: "9:00 AM - 5:00 PM", status: "active" },
-          { id: 2, member: "Jane Smith", resource: "Meeting Room B", time: "2:00 PM - 4:00 PM", status: "upcoming" },
-          { id: 3, member: "Mike Johnson", resource: "Private Office 3", time: "10:00 AM - 6:00 PM", status: "active" },
-          { id: 4, member: "Sarah Wilson", resource: "Desk C-05", time: "1:00 PM - 7:00 PM", status: "upcoming" },
-        ]
-
-        const spaceStatusData: SpaceStatus[] = [
-          { name: "Hot Desks", total: 50, occupied: 38, available: 12 },
-          { name: "Meeting Rooms", total: 8, occupied: 3, available: 5 },
-          { name: "Private Offices", total: 12, occupied: 9, available: 3 },
-          { name: "Phone Booths", total: 6, occupied: 2, available: 4 },
-        ]
-
-        setStats(statsData)
-        setRecentBookings(bookingsData)
-        setSpaceStatus(spaceStatusData)
-      } catch (error) {
-        console.error("Error loading dashboard data:", error)
-      } finally {
-        setIsLoading(false)
+          {
+            id: 2,
+            member: 'Sam Wilson',
+            resource: 'Desk #24',
+            time: '9:00 AM - 5:00 PM',
+            status: 'active'
+          },
+          {
+            id: 3,
+            member: 'Taylor Swift',
+            resource: 'Private Office #3',
+            time: '2:00 PM - 4:00 PM',
+            status: 'upcoming'
+          }
+        ])
+        
+        setSpaceStatus(mockSpaceStatus)
+        return
       }
-    }
-
-    loadData()
-  }, [])
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("user")
-      router.push("/auth/login")
+      
+     
+      const response = await fetch('/api/admin/stats', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data')
+      }
+      
+      const data = await response.json()
+      setStats(data.stats || [])
+      setRecentBookings(data.recentBookings || [])
+      setSpaceStatus(data.spaceStatus || [])
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err)
+      setError('Failed to load dashboard data. Please try again later.')
+    } finally {
+      setIsLoading(false)
     }
   }
-
-  // Show loading state during initial data load
-  if (!isClient || isLoading) {
+  
+  useEffect(() => {
+    setIsClient(true)
+    fetchDashboardData()
+    
+   
+    const interval = setInterval(fetchDashboardData, 5 * 60 * 1000)
+    
+    return () => clearInterval(interval)
+  }, [])
+  
+  if (!isClient) {
+    return null
+  }
+  
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+  
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="bg-destructive/10 text-destructive p-4 rounded-lg max-w-md text-center">
+          <p className="font-medium">Error loading dashboard</p>
+          <p className="text-sm mt-2">{error}</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={fetchDashboardData}
+          >
+            Retry
+          </Button>
+        </div>
       </div>
     )
   }
 
+  const handleLogout = async () => {
+    try {
+     
+      const { SignOutButton } = await import('@clerk/nextjs')
+      return <SignOutButton redirectUrl="/" />
+    } catch (error) {
+      console.error('Error during sign out:', error)
+      return null
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {/* Header */}
+      {}
       <div className="space-y-1">
         <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's what's happening at your coworking space today.</p>
+        <p className="text-muted-foreground">Welcome back! Here's what's happening at your workspace today.</p>
       </div>
       
-      {/* Stats Grid */}
+      {}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
-          <Card key={index} className="min-w-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium truncate">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold truncate">{stat.value}</div>
-              <p className="text-xs text-muted-foreground truncate">
-                <span className={stat.changeType === "positive" ? "text-green-600" : "text-red-600"}>
-                  {stat.change}
-                </span>{" "}
-                from last month
-              </p>
+          <Card key={stat.title}>
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <div className={`p-3 rounded-lg ${stat.className || 'bg-blue-100 dark:bg-blue-900'}`}>
+                  {iconMap[stat.icon] ? 
+                    React.createElement(iconMap[stat.icon], { className: "h-6 w-6 text-blue-600 dark:text-blue-300" }) : 
+                    null
+                  }
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">
+                    <span className={stat.changeType === "positive" ? "text-green-600" : "text-red-600"}>
+                      {stat.change}
+                    </span>{" "}
+                    from last month
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Main Content Grid */}
+      {}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - 2/3 width on large screens */}
+        {}
         <div className="space-y-6 lg:col-span-2">
-          {/* Recent Bookings */}
+          {}
           <Card className="h-full">
             <CardHeader>
               <CardTitle>Recent Bookings</CardTitle>
@@ -219,7 +293,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
           
-          {/* Space Utilization */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Space Utilization</CardTitle>
@@ -243,45 +317,67 @@ export default function AdminDashboard() {
           </Card>
         </div>
         
-        {/* Right Column - 1/3 width on large screens */}
+        {}
         <div className="space-y-6">
-          {/* Quick Actions */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage your coworking space efficiently</CardDescription>
+              <CardDescription>Manage your workspace</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Button asChild className="h-20 flex-col gap-1.5 p-2">
-                  <Link href="/dashboard/admin/floorplan" className="flex flex-col items-center justify-center">
-                    <MapPin className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">View Floor Plan</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/hours" className="flex flex-col items-center justify-center">
-                    <Clock className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">Manage Hours</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/wifi" className="flex flex-col items-center justify-center">
-                    <Wifi className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">WiFi Settings</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/amenities" className="flex flex-col items-center justify-center">
-                    <Coffee className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">Amenities</span>
-                  </Link>
-                </Button>
-              </div>
+            <CardContent className="grid gap-2">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => router.push('/dashboard/admin/bookings')}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                New Booking
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => router.push('/dashboard/admin/members')}
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Manage Members
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => router.push('/dashboard/admin/floorplan')}
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                Manage Spaces
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => router.push('/dashboard/admin/memberships')}
+              >
+                <DollarSign className="mr-2 h-4 w-4" />
+                Memberships & Billing
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => router.push('/dashboard/admin/wifi')}
+              >
+                <Wifi className="mr-2 h-4 w-4" />
+                WiFi Settings
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => router.push('/dashboard/admin/amenities')}
+              >
+                <Coffee className="mr-2 h-4 w-4" />
+                Amenities
+              </Button>
             </CardContent>
           </Card>
           
-          {/* Additional Tools */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Additional Tools</CardTitle>
@@ -307,7 +403,7 @@ export default function AdminDashboard() {
         </div>
       </div>
       
-      {/* Logout Button */}
+      {}
       <div className="flex justify-end pt-2">
         <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
           <LogOut className="h-4 w-4 mr-1" />

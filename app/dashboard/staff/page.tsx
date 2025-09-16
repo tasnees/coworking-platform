@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -74,7 +75,6 @@ interface Resource {
   nextAvailable: string
 }
 
-// Utility functions
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -126,7 +126,7 @@ export default function StaffDashboard() {
   const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   
-  // State for form data
+ 
   const [newMember, setNewMember] = useState<Partial<Member>>({});
   const [editMember, setEditMember] = useState<Partial<Member>>({});
   const [newBooking, setNewBooking] = useState<Partial<Booking>>({
@@ -146,43 +146,43 @@ export default function StaffDashboard() {
   });
   const [newResource, setNewResource] = useState<Partial<Resource>>({});
   
-  // Mock data - replace with actual data fetching
+ 
   const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
 
-  // Handlers
+ 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to add member
+   
     setShowAddMemberDialog(false);
     setNewMember({});
   };
 
   const handleEditMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to update member
+   
     setShowEditMemberDialog(false);
     setEditMember({});
   };
 
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to create booking
+   
     setShowCreateBookingDialog(false);
     setNewBooking({});
   };
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to add resource
+   
     setShowManageResourcesDialog(false);
     setNewResource({});
   };
 
   useEffect(() => {
     setIsClient(true);
-    // Initialize with sample data
+   
     setRecentBookings([
       {
         id: '1',
@@ -240,10 +240,10 @@ export default function StaffDashboard() {
     );
   }
 
-  // Define the dialogs in a separate variable to keep the return statement clean
+ 
   const dialogs = (
     <>
-      {/* Add Member Dialog */}
+      {}
       <Dialog open={showAddMemberDialog} onOpenChange={setShowAddMemberDialog}>
         <DialogContent>
           <DialogHeader>
@@ -300,7 +300,7 @@ export default function StaffDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Booking Details Dialog */}
+      {}
       <Dialog open={showBookingDetails} onOpenChange={setShowBookingDetails}>
         <DialogContent>
           <DialogHeader>
@@ -343,7 +343,7 @@ export default function StaffDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Create Booking Dialog */}
+      {}
       <Dialog open={showCreateBookingDialog} onOpenChange={setShowCreateBookingDialog}>
         <DialogContent>
           <DialogHeader>
@@ -441,7 +441,7 @@ export default function StaffDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Resources Dialog */}
+      {}
       <Dialog open={showManageResourcesDialog} onOpenChange={setShowManageResourcesDialog}>
         <DialogContent>
           <DialogHeader>
@@ -542,7 +542,7 @@ export default function StaffDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Member Dialog */}
+      {}
       <Dialog open={showEditMemberDialog} onOpenChange={setShowEditMemberDialog}>
         <DialogContent>
           <DialogHeader>

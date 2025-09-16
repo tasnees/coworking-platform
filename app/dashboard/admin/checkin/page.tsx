@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { format, formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { Calendar as CalendarIcon, Clock, CheckCircle, XCircle, Clock as ClockIcon, MoreVertical, User, Plus, Loader2 } from 'lucide-react';
-// Using relative paths to the UI components
 import { Button } from '../../../../components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '../../../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
@@ -19,7 +18,6 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../../../components/
 import { cn } from '../../../../lib/utils';
 import { Calendar } from '../../../../components/ui/calendar';
 
-// Types
 type CheckInStatus = 'scheduled' | 'completed' | 'cancelled' | 'missed';
 
 interface User {
@@ -39,7 +37,6 @@ interface ScheduledCheckIn {
   updatedAt: string;
 }
 
-// Main CheckInPage component
 export default function CheckInPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState('upcoming');
@@ -55,27 +52,27 @@ export default function CheckInPage() {
   const { toast } = useToast();
   const router = useRouter();
   
-  // Form state
+ 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
-  // Fetch check-ins based on the active tab
-  // Fetch users for the dropdown
+ 
+ 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // Fetch users from your API
+       
         const response = await fetch('/api/admin/members');
         if (!response.ok) {
           throw new Error('Failed to fetch members');
         }
         const data = await response.json();
         
-        // Transform the API response to match our User type
+       
         const memberUsers = data.map((member: any) => ({
           id: member.id,
           name: member.name,
           email: member.email,
-          // Add any additional fields you need
+         
         }));
         
         setUsers(memberUsers);
@@ -97,7 +94,7 @@ export default function CheckInPage() {
       try {
         setIsLoading(true);
         
-        // Fetch check-ins from the API
+       
         const response = await fetch(`/api/checkin`);
         if (!response.ok) {
           throw new Error('Failed to fetch check-ins');
@@ -105,7 +102,7 @@ export default function CheckInPage() {
         
         const data = await response.json();
         
-        // Transform the API response to match our ScheduledCheckIn type
+       
         const formattedCheckIns: ScheduledCheckIn[] = data.map((checkIn: any) => ({
           id: checkIn.id,
           user: {
@@ -120,7 +117,7 @@ export default function CheckInPage() {
           updatedAt: checkIn.updatedAt || checkIn.createdAt,
         }));
         
-        // Filter check-ins based on the active tab
+       
         const filteredCheckIns = formattedCheckIns.filter(checkIn => {
           if (activeTab === 'upcoming') return checkIn.status === 'scheduled';
           if (activeTab === 'completed') return checkIn.status === 'completed';
@@ -154,14 +151,14 @@ export default function CheckInPage() {
   
   const handleStatusChange = async (checkInId: string, newStatus: CheckInStatus) => {
     try {
-      // In a real app, you would make an API call to update the status
-      // await fetch(`/api/admin/check-ins/${checkInId}`, {
-      //   method: 'PATCH',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ status: newStatus }),
-      // });
+     
+     
+     
+     
+     
+     
       
-      // Update local state for demo
+     
       setCheckIns(prev => 
         prev.map(checkIn => 
           checkIn.id === checkInId 
@@ -187,10 +184,10 @@ export default function CheckInPage() {
   const handleCreateCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Ensure checkInDate is defined
+   
     const selectedDate = checkInDate || new Date();
     
-    // Validate form
+   
     const errors: Record<string, string> = {};
     if (!selectedUserId) errors.user = 'Please select a member';
     if (!checkInTime) errors.time = 'Please select a time';
@@ -203,19 +200,19 @@ export default function CheckInPage() {
     setIsSubmitting(true);
     
     try {
-      // Combine date and time
+     
       const [hours, minutes] = checkInTime.split(':').map(Number);
       const checkInDateTime = new Date(selectedDate);
       checkInDateTime.setHours(hours, minutes);
       
-      // Create check-in data
+     
       const checkInData = {
         userId: selectedUserId,
         checkInTime: checkInDateTime.toISOString(),
         notes: notes || undefined,
       };
       
-      // Make API call to create check-in
+     
       const response = await fetch('/api/checkin', {
         method: 'POST',
         headers: {
@@ -229,10 +226,10 @@ export default function CheckInPage() {
         throw new Error(error.message || 'Failed to create check-in');
       }
       
-      // Parse the API response
+     
       const apiCheckIn = await response.json();
       
-      // Create the new check-in object from API response
+     
       const newCheckIn: ScheduledCheckIn = {
         id: apiCheckIn.id,
         user: users.find(u => u.id === selectedUserId) || { id: selectedUserId, name: 'Unknown', email: '' },
@@ -243,10 +240,10 @@ export default function CheckInPage() {
         updatedAt: apiCheckIn.updatedAt || apiCheckIn.createdAt,
       };
       
-      // Update local state
+     
       setCheckIns(prev => [newCheckIn, ...prev]);
       
-      // Reset form
+     
       setSelectedUserId('');
       setCheckInDate(new Date());
       setCheckInTime('09:00');

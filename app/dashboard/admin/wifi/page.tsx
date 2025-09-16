@@ -1,7 +1,7 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-// Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/dialog"
 import { Wifi, WifiOff, RefreshCw, Copy, Users, Activity, Shield, AlertTriangle, Download, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
-// Dynamically import the dashboard layout with SSR disabled
 const DashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
   { 
@@ -33,7 +32,6 @@ const DashboardLayout = dynamic(
     ) 
   }
 );
-// Main page component
 export default function WifiSettingsPage() {
   const [activeTab, setActiveTab] = useState("networks")
   const [showPassword, setShowPassword] = useState(false)
@@ -60,7 +58,7 @@ export default function WifiSettingsPage() {
   const [isCodeDialogOpen, setIsCodeDialogOpen] = useState(false)
   const [newAccessCode, setNewAccessCode] = useState({
     type: 'day',
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default: 1 week from now
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     usageLimit: 1,
     network: 'guest',
     code: ''
@@ -131,13 +129,13 @@ export default function WifiSettingsPage() {
     }
   }
   const handleCreateNetwork = () => {
-    // Basic validation
+   
     if (!newNetwork.name || !newNetwork.type || !newNetwork.password || !newNetwork.bandwidth) {
       alert('Please fill in all required fields');
       return;
     }
 
-    // Create new network object
+   
     const newId = wifiNetworks.length > 0 ? Math.max(...wifiNetworks.map(n => n.id)) + 1 : 1;
     const networkToAdd = {
       id: newId,
@@ -150,13 +148,13 @@ export default function WifiSettingsPage() {
       usagePercent: 0,
     };
 
-    // In a real app, you would make an API call here to save the network
+   
     console.log('Creating new network:', networkToAdd);
     
-    // Show success message
+   
     alert(`Network "${newNetwork.name}" created successfully!`);
     
-    // Reset form and close dialog
+   
     setNewNetwork({
       name: '',
       type: '',
@@ -166,7 +164,7 @@ export default function WifiSettingsPage() {
     });
     setIsDialogOpen(false);
     
-    // Update the state with the new network
+   
     setWifiNetworks([...wifiNetworks, networkToAdd]);
   };
 
@@ -184,7 +182,7 @@ export default function WifiSettingsPage() {
         return "secondary"
     }
   }
-  // Client-side only rendering
+ 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -199,7 +197,7 @@ export default function WifiSettingsPage() {
   return (
     <DashboardLayout userRole="admin">
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">WiFi Settings</h1>
@@ -210,7 +208,7 @@ export default function WifiSettingsPage() {
             Refresh Status
           </Button>
         </div>
-        {/* Status Overview */}
+        {}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle>WiFi Status</CardTitle>
@@ -248,7 +246,7 @@ export default function WifiSettingsPage() {
             </div>
           </CardContent>
         </Card>
-        {/* Tabs */}
+        {}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="networks">Networks</TabsTrigger>
@@ -256,7 +254,7 @@ export default function WifiSettingsPage() {
             <TabsTrigger value="codes">Access Codes</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
-          {/* Networks Tab */}
+          {}
           <TabsContent value="networks" className="space-y-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -436,7 +434,7 @@ export default function WifiSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Access Control Tab */}
+          {}
           <TabsContent value="access" className="space-y-4">
             <Card>
               <CardHeader>
@@ -592,7 +590,7 @@ export default function WifiSettingsPage() {
                     try {
                       setIsSaving(true);
                       
-                      // Validate inputs
+                     
                       if (!guestSettings.selectedNetwork) {
                         toast.error('Please select a network');
                         return;
@@ -608,7 +606,7 @@ export default function WifiSettingsPage() {
                         return;
                       }
                       
-                      // Prepare the data to save
+                     
                       const settingsToSave = {
                         network: guestSettings.selectedNetwork,
                         password: guestSettings.password,
@@ -620,10 +618,10 @@ export default function WifiSettingsPage() {
                       
                       console.log('Saving guest settings:', settingsToSave);
                       
-                      // Simulate API call with a delay
+                     
                       await new Promise(resolve => setTimeout(resolve, 1000));
                       
-                      // Update the networks list with the new password
+                     
                       setWifiNetworks(currentNetworks => 
                         currentNetworks.map(network => 
                           network.name === guestSettings.selectedNetwork 
@@ -632,7 +630,7 @@ export default function WifiSettingsPage() {
                         )
                       );
                       
-                      // Show success message
+                     
                       toast.success('Guest WiFi settings saved successfully!', {
                         duration: 3000,
                       });
@@ -661,7 +659,7 @@ export default function WifiSettingsPage() {
               </CardFooter>
             </Card>
           </TabsContent>
-          {/* Access Codes Tab */}
+          {}
           <TabsContent value="codes" className="space-y-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
@@ -683,10 +681,10 @@ export default function WifiSettingsPage() {
                       try {
                         setIsGenerating(true);
                         
-                        // Generate a random code
+                       
                         const code = `CODE-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
                         
-                        // Create new access code
+                       
                         const newCode = {
                           id: Date.now(),
                           code,
@@ -698,21 +696,21 @@ export default function WifiSettingsPage() {
                           network: newAccessCode.network
                         };
                         
-                        // In a real app, you would make an API call here
+                       
                         console.log('Generating new access code:', newCode);
                         
-                        // Simulate API call
+                       
                         await new Promise(resolve => setTimeout(resolve, 1000));
                         
-                        // Add to access codes list
+                       
                         setAccessCodes(prev => [newCode, ...prev]);
                         
-                        // Show success message
+                       
                         toast.success('Access code generated successfully!', {
                           duration: 3000,
                         });
                         
-                        // Reset form and close dialog
+                       
                         setNewAccessCode({
                           type: 'day',
                           expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -801,7 +799,7 @@ export default function WifiSettingsPage() {
                           variant="outline" 
                           onClick={() => {
                             setIsCodeDialogOpen(false);
-                            // Reset form
+                           
                             setNewAccessCode({
                               type: 'day',
                               expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -867,7 +865,7 @@ export default function WifiSettingsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Security Tab */}
+          {}
           <TabsContent value="security" className="space-y-4">
             <Card>
               <CardHeader>

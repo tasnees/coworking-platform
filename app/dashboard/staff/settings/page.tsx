@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -53,7 +54,7 @@ export default function StaffSettingsContent() {
   const [showPasswordDialog, setShowPasswordDialog] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
-  // Mock staff profile data
+ 
   const [profile, setProfile] = useState<StaffProfile>({
     id: "staff-001",
     name: "Sarah Johnson",
@@ -84,7 +85,7 @@ export default function StaffSettingsContent() {
   const handleSaveProfile = () => {
     setProfile(editedProfile)
     setIsEditing(false)
-    // In real app, this would make API call
+   
   }
 
   const handleCancelEdit = () => {
@@ -94,7 +95,7 @@ export default function StaffSettingsContent() {
 
   const handlePasswordChange = () => {
     if (newPassword === confirmPassword && newPassword.length >= 8) {
-      // In real app, this would make API call
+     
       setShowPasswordDialog(false)
       setCurrentPassword("")
       setNewPassword("")
@@ -104,14 +105,14 @@ export default function StaffSettingsContent() {
 
   const handlePreferenceChange = (key: keyof StaffPreferences, value: boolean | string) => {
     setPreferences(prev => ({ ...prev, [key]: value }))
-    // In real app, this would make API call
+   
   }
 
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Show loading state until component is mounted
+ 
   if (!isMounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -122,13 +123,13 @@ export default function StaffSettingsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Staff Profile</h1>
         <p className="text-muted-foreground">Manage your personal information and preferences</p>
       </div>
 
-      {/* Profile Summary Card */}
+      {}
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center space-x-4">
@@ -150,7 +151,7 @@ export default function StaffSettingsContent() {
         </CardContent>
       </Card>
 
-      {/* Main Content */}
+      {}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -158,7 +159,7 @@ export default function StaffSettingsContent() {
           <TabsTrigger value="security">Security</TabsTrigger>
         </TabsList>
 
-        {/* Profile Tab */}
+        {}
         <TabsContent value="profile" className="space-y-4">
           <Card>
             <CardHeader>
@@ -282,7 +283,7 @@ export default function StaffSettingsContent() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Preferences Tab */}
+          {}
           <TabsContent value="preferences" className="space-y-4">
             <Card>
               <CardHeader>
@@ -323,7 +324,7 @@ export default function StaffSettingsContent() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Security Tab */}
+          {}
           <TabsContent value="security" className="space-y-4">
             <Card>
               <CardHeader>

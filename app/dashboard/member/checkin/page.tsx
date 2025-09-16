@@ -1,4 +1,5 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -36,7 +37,7 @@ export default function MemberCheckInPage() {
   const [showQrDialog, setShowQrDialog] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
   const [scanResult, setScanResult] = useState<string | null>(null)
-  // Mock locations for check-in
+ 
   const locations: Location[] = [
     {
       id: "main-entrance",
@@ -63,20 +64,20 @@ export default function MemberCheckInPage() {
       currentOccupancy: 12
     }
   ]
-  // Check-in history state
+ 
   const [checkInHistory, setCheckInHistory] = useState<CheckInSession[]>([]);
   
-  // Load check-in history on component mount
+ 
   useEffect(() => {
     const loadCheckInHistory = async () => {
       try {
         const response = await fetch('/api/checkin');
         if (response.ok) {
           const data = await response.json();
-          // Transform API data to match our CheckInSession interface
+         
           const history = data.checkIns.map((checkIn: any) => ({
             id: checkIn.id,
-            location: 'Main Workspace', // You might want to include location in your API response
+            location: 'Main Workspace',
             checkInTime: checkIn.checkInTime,
             checkOutTime: checkIn.checkOutTime,
             duration: checkIn.duration || '',
@@ -86,7 +87,7 @@ export default function MemberCheckInPage() {
         }
       } catch (error) {
         console.error('Error loading check-in history:', error);
-        // Fallback to mock data if API fails
+       
         setCheckInHistory([
           {
             id: '1',
@@ -118,26 +119,26 @@ export default function MemberCheckInPage() {
     
     loadCheckInHistory();
   }, []);
-  // Generate QR code for check-in
+ 
   const generateCheckInQr = (location: Location) => {
     const qrData = {
       type: "member_checkin",
       locationId: location.id,
       locationName: location.name,
       timestamp: new Date().toISOString(),
-      memberId: "current_member", // In real app, this would be from auth
-      token: Math.random().toString(36).substring(2, 15) // Mock token
+      memberId: "current_member",
+      token: Math.random().toString(36).substring(2, 15)
     }
     return JSON.stringify(qrData)
   }
-  // Simulate QR code scan
+ 
   const handleQrScan = (location: Location) => {
     const qrData = generateCheckInQr(location)
     setScanResult(qrData)
     setSelectedLocation(location)
     setShowQrDialog(true)
   }
-  // Handle check-in
+ 
   const handleCheckIn = async () => {
     try {
       const response = await fetch('/api/checkin', {
@@ -158,7 +159,7 @@ export default function MemberCheckInPage() {
       setIsCheckedIn(true);
       setShowQrDialog(false);
       
-      // Show success message
+     
       toast.success(`You've checked in at ${(location as any).name}`);
       
     } catch (error) {
@@ -166,7 +167,7 @@ export default function MemberCheckInPage() {
       toast.error(error instanceof Error ? error.message : 'An error occurred during check-in');
     }
   }
-  // Handle check-out
+ 
   const handleCheckOut = async () => {
     if (!currentSession) return;
     
@@ -174,20 +175,20 @@ export default function MemberCheckInPage() {
       const checkOutTime = new Date().toISOString();
       const duration = calculateDuration(currentSession.checkInTime, checkOutTime);
       
-      // In a real app, you would call an API to update the check-in record
-      // For now, we'll just update the UI
+     
+     
       const completedSession = {
         ...currentSession,
         checkOutTime,
         duration,
-        amenitiesUsed: ["WiFi", "Coffee"] // Mock amenities
+        amenitiesUsed: ["WiFi", "Coffee"]
       };
       
       setCheckInHistory(prev => [completedSession, ...prev]);
       setCurrentSession(null);
       setIsCheckedIn(false);
       
-      // Show success message
+     
       toast.success(`You have been checked out, you were checked in for ${duration}`);
       
     } catch (error) {
@@ -195,7 +196,7 @@ export default function MemberCheckInPage() {
       toast.error(error instanceof Error ? error.message : 'An error occurred during check-out');
     }
   }
-  // Calculate duration between check-in and check-out
+ 
   const calculateDuration = (startTime: string, endTime: string): string => {
     const start = new Date(startTime)
     const end = new Date(endTime)
@@ -204,7 +205,7 @@ export default function MemberCheckInPage() {
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60))
     return `${hours}h ${minutes}m`
   }
-  // Format date/time for display
+ 
   const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
       weekday: 'short',
@@ -214,7 +215,7 @@ export default function MemberCheckInPage() {
       minute: '2-digit'
     })
   }
-  // Get current time
+ 
   const getCurrentTime = () => {
     return new Date().toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -229,7 +230,7 @@ export default function MemberCheckInPage() {
     }, 1000)
     return () => clearInterval(timer)
   }, [])
-  // Wait for client-side rendering to avoid hydration issues
+ 
   const [isMounted, setIsMounted] = useState(false)
   useEffect(() => {
     setIsMounted(true)
@@ -244,12 +245,12 @@ export default function MemberCheckInPage() {
   return (
     <DashboardLayout userRole="member">
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Check-In</h1>
           <p className="text-muted-foreground">Check in to the workspace and track your visit.</p>
         </div>
-        {/* Current Status Card */}
+        {}
         <Card className={isCheckedIn ? "border-green-500" : "border-blue-500"}>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
@@ -390,7 +391,7 @@ export default function MemberCheckInPage() {
             )}
           </TabsContent>
         </Tabs>
-        {/* QR Code Dialog */}
+        {}
         <Dialog open={showQrDialog} onOpenChange={setShowQrDialog}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>

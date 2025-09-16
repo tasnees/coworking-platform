@@ -1,7 +1,7 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import dynamic from 'next/dynamic'
-// Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
   { 
@@ -40,7 +40,6 @@ import {
   Check
 } from "lucide-react"
 
-// Define types for better type safety
 type Weekday = {
   id: string;
   day: string;
@@ -78,7 +77,7 @@ function HoursContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Mock data for regular hours
+ 
   const mockRegularHours: Weekday[] = [
     { id: 'monday', day: 'Monday', open: '09:00', close: '18:00', is24Hours: false, isClosed: false },
     { id: 'tuesday', day: 'Tuesday', open: '09:00', close: '18:00', is24Hours: false, isClosed: false },
@@ -89,13 +88,13 @@ function HoursContent() {
     { id: 'sunday', day: 'Sunday', open: '', close: '', is24Hours: false, isClosed: true },
   ];
 
-  // Mock data for special hours
+ 
   const mockSpecialHours: SpecialDay[] = [
     { id: '1', name: 'New Year\'s Day', date: '2024-01-01', isClosed: true, open: '', close: '', is24Hours: false },
     { id: '2', name: 'Christmas Day', date: '2024-12-25', isClosed: true, open: '', close: '', is24Hours: false },
   ];
 
-  // Mock data for membership access
+ 
   const mockMembershipAccess: MembershipAccess[] = [
     { id: '1', name: '24/7 Access', accessHours: '00:00 - 23:59', has24HourAccess: true },
     { id: '2', name: 'Business Hours', accessHours: '09:00 - 18:00', has24HourAccess: false },
@@ -105,10 +104,10 @@ function HoursContent() {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Simulate API call with a delay
+       
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Initialize with mock data
+       
         setRegularHours(mockRegularHours);
         setSpecialHours(mockSpecialHours);
         setMembershipAccess(mockMembershipAccess);
@@ -123,7 +122,7 @@ function HoursContent() {
     initializeData();
   }, []);
 
-  // Show loading state if not mounted, still loading, or data not initialized
+ 
   if (!isMounted || isLoading || regularHours === null || specialHours === null || membershipAccess === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -162,23 +161,23 @@ function HoursContent() {
                 setIsSaving(true);
                 setError(null);
                 
-                // In a real app, you would make an API call here to save the data
-                // For example:
-                // const response = await fetch('/api/hours', {
-                //   method: 'POST',
-                //   headers: { 'Content-Type': 'application/json' },
-                //   body: JSON.stringify({
-                //     regularHours,
-                //     specialHours,
-                //     membershipAccess
-                //   })
-                // });
-                // if (!response.ok) throw new Error('Failed to save changes');
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
+               
                 
-                // Simulate API call
+               
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // Show success message
+               
                 setSaveSuccess(true);
                 setTimeout(() => setSaveSuccess(false), 3000);
                 
@@ -468,7 +467,6 @@ function HoursContent() {
   );
 }
 
-// Main page component with client-side only rendering
 const HoursPage: React.FC = () => {
   return <HoursContent />;
 };

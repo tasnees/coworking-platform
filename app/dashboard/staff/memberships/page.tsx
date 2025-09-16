@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Home, Settings, Users, Sun, Moon, Calendar, Clock, CreditCard, Star, CheckCircle, TrendingUp, Package, Zap, Shield } from "lucide-react";
 
-// Helper function to safely access window object
 type SafeWindow = {
   document?: Document;
   URL?: {
@@ -14,10 +13,7 @@ type SafeWindow = {
 
 const safeWindow: SafeWindow = typeof window !== 'undefined' ? window : {};
 
-// The `lucide-react` library is used here, and it is assumed to be available.
-// If you are using a different icon library, you may need to adjust the imports.
 
-// A reusable button component with Tailwind CSS styling.
 const NavButton = ({ text, onClick, icon: Icon, isActive = false }: { text: string; onClick: () => void; icon?: React.ElementType; isActive?: boolean }) => (
   <button
     onClick={onClick}
@@ -29,7 +25,6 @@ const NavButton = ({ text, onClick, icon: Icon, isActive = false }: { text: stri
   </button>
 );
 
-// A simple Dialog component to replace shadcn/ui Dialog
 const Dialog = ({ children, open, onOpenChange }: { children: React.ReactNode; open: boolean; onOpenChange: (open: boolean) => void }) => {
   if (!open) return null;
   return (
@@ -51,7 +46,6 @@ const DialogHeader = ({ children }: { children: React.ReactNode }) => <div class
 const DialogTitle = ({ children }: { children: React.ReactNode }) => <h3 className="text-lg font-bold">{children}</h3>;
 const DialogDescription = ({ children }: { children: React.ReactNode }) => <p className="text-sm text-gray-500">{children}</p>;
 
-// A simple Card component to replace shadcn/ui Card
 const Card = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
   <div className={`rounded-xl border bg-card text-card-foreground shadow ${className}`}>
     {children}
@@ -62,7 +56,6 @@ const CardTitle = ({ children, className = "" }: { children: React.ReactNode; cl
 const CardDescription = ({ children }: { children: React.ReactNode }) => <p className="text-sm text-muted-foreground">{children}</p>;
 const CardContent = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => <div className={`p-6 pt-0 ${className}`}>{children}</div>;
 
-// A simple Badge component to replace shadcn/ui Badge
 const Badge = ({ children, variant = "default" }: { children: React.ReactNode; variant?: "default" | "secondary" | "destructive" }) => {
   const baseClasses = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
   const variants = {
@@ -73,7 +66,6 @@ const Badge = ({ children, variant = "default" }: { children: React.ReactNode; v
   return <span className={`${baseClasses} ${variants[variant]}`}>{children}</span>;
 };
 
-// A simple Button component to replace shadcn/ui Button
 const Button = ({ 
   children, 
   onClick, 
@@ -116,7 +108,6 @@ const Button = ({
   );
 };
 
-// A simple Progress component to replace shadcn/ui Progress
 const Progress = ({ value, className = "" }: { value: number; className?: string }) => (
   <div className={`relative w-full h-2 overflow-hidden rounded-full bg-secondary ${className}`}>
     <div
@@ -126,7 +117,6 @@ const Progress = ({ value, className = "" }: { value: number; className?: string
   </div>
 );
 
-// A simple Tabs component to replace shadcn/ui Tabs
 const Tabs = ({ children, value, onValueChange, className = "" }: { children: React.ReactNode; value: string; onValueChange: (value: string) => void; className?: string }) => (
   <div className={className}>
     {children}
@@ -136,11 +126,7 @@ const TabsList = ({ children, className = "" }: { children: React.ReactNode; cla
 const TabsTrigger = ({ children, value, className = "" }: { children: React.ReactNode; value: string; className?: string }) => <button className={`inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow ${className}`}>{children}</button>;
 const TabsContent = ({ children, value, className = "" }: { children: React.ReactNode; value: string; className?: string }) => <div className={className}>{children}</div>;
 
-/**
- * The main layout for the dashboard, including a sidebar and main content area.
- * @param {object} props - Component properties.
- * @param {React.ReactNode} props.children - The content to be rendered in the main area.
- */
+
 const DashboardLayout = ({ children, onNavigate }: { children: React.ReactNode; onNavigate: (page: string) => void }) => {
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [activePage, setActivePage] = useState('memberships');
@@ -151,7 +137,7 @@ const DashboardLayout = ({ children, onNavigate }: { children: React.ReactNode; 
 
   return (
     <div className={`flex min-h-screen ${isDarkTheme ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-900'}`}>
-      {/* Sidebar */}
+      {}
       <aside className={`w-64 p-6 transition-all duration-300 ${isDarkTheme ? 'bg-gray-800' : 'bg-white'} rounded-r-2xl shadow-lg`}>
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-2xl font-bold text-indigo-500">My Dashboard</h1>
@@ -167,7 +153,7 @@ const DashboardLayout = ({ children, onNavigate }: { children: React.ReactNode; 
         </nav>
       </aside>
 
-      {/* Main Content */}
+      {}
       <main className="flex-1 p-8">
         <div className={`p-8 transition-colors duration-300 rounded-2xl shadow-lg ${isDarkTheme ? 'bg-gray-800' : 'bg-white'}`}>
           {children}
@@ -177,7 +163,6 @@ const DashboardLayout = ({ children, onNavigate }: { children: React.ReactNode; 
   );
 };
 
-// Type definitions
 type PlanType = "basic" | "standard" | "premium" | "enterprise";
 type BillingCycle = "monthly" | "quarterly" | "annually";
 type MembershipStatus = "active" | "inactive" | "pending";
@@ -223,7 +208,6 @@ interface BillingHistory {
   invoiceUrl?: string;
 }
 
-// Mock data generation functions
 const generateMockMembership = (): MembershipPlan => ({
   id: "premium-001",
   name: "Premium Plan",
@@ -290,7 +274,6 @@ const generateMockBillingHistory = (): BillingHistory[] => [
   }
 ];
 
-// Corrected available plans mock data with unique IDs
 const availablePlans: MembershipPlan[] = [
   {
     id: "basic-001",
@@ -419,15 +402,15 @@ const MembershipsPage = () => {
     setShowAutoRenewDialog(false);
   };
 
-  // Initialize data on client-side only
+ 
   useEffect(() => {
-    // Only run on client
+   
     if (typeof window === 'undefined') return;
     
     const loadData = async () => {
       try {
         setIsLoading(true);
-        // Simulate API call
+       
         await new Promise(resolve => setTimeout(resolve, 500));
         
         setCurrentMembership(generateMockMembership());
@@ -445,7 +428,7 @@ const MembershipsPage = () => {
     loadData();
   }, []);
 
-  // Helper functions
+ 
   const getPlanIcon = (type: string) => {
     switch (type) {
       case "basic": return <Package className="h-5 w-5" />;
@@ -478,7 +461,7 @@ const MembershipsPage = () => {
     return Math.min((used / total) * 100, 100);
   };
 
-  // Event handlers
+ 
   const handleDownloadInvoice = useCallback((invoiceId: string, description: string) => {
     if (!currentMembership || !safeWindow.document || !safeWindow.URL) {
       console.error('Cannot generate invoice: window or document not available');
@@ -541,12 +524,12 @@ Thank you for your business!
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">My Membership</h1>
         <p className="text-muted-foreground">Manage your membership plan and billing information.</p>
       </div>
-      {/* Current Membership Card */}
+      {}
       <Card className="border-purple-500">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -602,7 +585,7 @@ Thank you for your business!
           <TabsTrigger value="billing">Billing</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
-          {/* Usage Stats */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -627,7 +610,7 @@ Thank you for your business!
               </div>
             </CardContent>
           </Card>
-          {/* Quick Actions */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
@@ -675,7 +658,7 @@ Thank you for your business!
               </ul>
             </CardContent>
           </Card>
-          {/* Available Plans */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Available Plans</CardTitle>
@@ -734,7 +717,7 @@ Thank you for your business!
           </Card>
         </TabsContent>
         <TabsContent value="billing" className="space-y-4">
-          {/* Billing Summary */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -771,7 +754,7 @@ Thank you for your business!
               </div>
             </CardContent>
           </Card>
-          {/* Billing History */}
+          {}
           <Card>
             <CardHeader>
               <CardTitle>Billing History</CardTitle>
@@ -819,7 +802,7 @@ Thank you for your business!
           </Card>
         </TabsContent>
       </Tabs>
-      {/* Upgrade Dialog */}
+      {}
       <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -851,7 +834,7 @@ Thank you for your business!
           </div>
         </DialogContent>
       </Dialog>
-      {/* Auto-Renewal Confirmation Dialog */}
+      {}
       <Dialog open={showAutoRenewDialog} onOpenChange={setShowAutoRenewDialog}>
         <DialogContent>
           <DialogHeader>
@@ -883,5 +866,4 @@ Thank you for your business!
   )
 };
 
-// Export the page component directly - layout is already handled by the root dashboard layout
 export default MembershipsPage;

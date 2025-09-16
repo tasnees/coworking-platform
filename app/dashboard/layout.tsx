@@ -2,10 +2,10 @@
 
 import { ReactNode, Suspense, Component } from 'react';
 import type { ErrorInfo as ReactErrorInfo } from 'react';
-import { SessionProvider } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { UserButton, useAuth, useUser } from '@clerk/nextjs';
 import DashboardLayout from '@/components/dashboard-layout';
+import { UserRole } from '@/lib/auth-types';
 
 // Loading component for the dashboard
 function DashboardLoading() {
@@ -87,14 +87,32 @@ function DashboardErrorBoundary({ children }: { children: ReactNode }) {
   );
 }
 
-// Wrapper to ensure auth is loaded
+// Wrapper to ensure auth is loaded and user has required role
 function AuthWrapper({ children }: { children: ReactNode }) {
-  const { isLoading } = useAuth();
-  
-  if (isLoading) {
+  const { isLoaded: isAuthLoaded, userId } = useAuth();
+  const { isLoaded: isUserLoaded, user } = useUser();
+  const router = useRouter();
+
+  // Show loading state while auth is loading
+  if (!isAuthLoaded || !isUserLoaded) {
     return <DashboardLoading />;
   }
+
+  // Redirect to sign-in if not authenticated
+  if (!userId || !user) {
+    router.push('/auth/sign-in');
+    return null;
+  }
+
+  // Get user role from metadata
+  const role = (user.publicMetadata.role as UserRole) || 'member';
   
+  // Redirect to appropriate dashboard based on role
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith(`/dashboard/${role}`)) {
+    router.push(`/dashboard/${role}`);
+    return <DashboardLoading />;
+  }
+
   return <>{children}</>;
 }
 
@@ -104,14 +122,14 @@ export default function DashboardRootLayout({
   children: React.ReactNode
 }) {
   return (
-    <SessionProvider>
-      <AuthProvider>
+    <DashboardErrorBoundary>
+      <Suspense fallback={<DashboardLoading />}>
         <AuthWrapper>
-          <DashboardErrorBoundary>
+          <DashboardLayout>
             {children}
-          </DashboardErrorBoundary>
+          </DashboardLayout>
         </AuthWrapper>
-      </AuthProvider>
-    </SessionProvider>
+      </Suspense>
+    </DashboardErrorBoundary>
   )
 }
