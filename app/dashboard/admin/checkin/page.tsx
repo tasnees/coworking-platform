@@ -61,20 +61,26 @@ export default function CheckInPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        // In a real app, fetch users from your API
-        // const response = await fetch('/api/users');
-        // const data = await response.json();
+        const response = await fetch('/api/admin/members');
+        if (!response.ok) throw new Error('Failed to fetch members');
+        const data = await response.json();
         
-        // Mock users for demonstration
-        const mockUsers: User[] = [
-          { id: '1', name: 'John Doe', email: 'john@example.com' },
-          { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-          { id: '3', name: 'Bob Johnson', email: 'bob@example.com' },
-        ];
+        // Map the API response to match our User interface
+        const memberUsers: User[] = data.map((member: any) => ({
+          id: member.id,
+          name: member.name || 'Unnamed Member',
+          email: member.email || 'No email',
+          image: member.image
+        }));
         
-        setUsers(mockUsers);
+        setUsers(memberUsers);
       } catch (error) {
         console.error('Error fetching users:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load members. Please try again.',
+          variant: 'destructive',
+        });
       }
     };
     
@@ -85,48 +91,42 @@ export default function CheckInPage() {
     const fetchCheckIns = async () => {
       try {
         setIsLoading(true);
-        // In a real app, you would fetch this from your API
-        // const response = await fetch(`/api/admin/check-ins?status=${activeTab}`);
-        // const data = await response.json();
         
-        // Mock data for demonstration
-        const mockCheckIns: ScheduledCheckIn[] = [
-          {
-            id: '1',
-            user: { id: '1', name: 'John Doe', email: 'john@example.com' },
-            checkInTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
-            status: 'scheduled',
-            notes: 'Initial consultation',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            id: '2',
-            user: { id: '2', name: 'Jane Smith', email: 'jane@example.com' },
-            checkInTime: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
-            status: 'scheduled',
-            notes: 'Follow-up meeting',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-          {
-            id: '3',
-            user: { id: '3', name: 'Bob Johnson', email: 'bob@example.com' },
-            checkInTime: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-            status: 'completed',
-            notes: 'Completed successfully',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
-        ];
+        // Fetch check-ins from the API
+        const response = await fetch('/api/admin/check-ins');
         
-        setCheckIns(mockCheckIns.filter(checkIn => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch check-ins');
+        }
+        
+        const data = await response.json();
+        
+        // Filter check-ins based on active tab
+        const filteredCheckIns = data.filter((checkIn: any) => {
           if (activeTab === 'upcoming') return checkIn.status === 'scheduled';
           if (activeTab === 'completed') return checkIn.status === 'completed';
           if (activeTab === 'cancelled') return checkIn.status === 'cancelled';
           if (activeTab === 'missed') return checkIn.status === 'missed';
           return true;
+        });
+        
+        // Map the API response to match our ScheduledCheckIn interface
+        const formattedCheckIns: ScheduledCheckIn[] = filteredCheckIns.map((checkIn: any) => ({
+          id: checkIn.id,
+          user: {
+            id: checkIn.user.id,
+            name: checkIn.user.name,
+            email: checkIn.user.email,
+            image: checkIn.user.image
+          },
+          checkInTime: checkIn.checkInTime,
+          status: checkIn.status,
+          notes: checkIn.notes || undefined,
+          createdAt: checkIn.createdAt,
+          updatedAt: checkIn.updatedAt
         }));
+        
+        setCheckIns(formattedCheckIns);
       } catch (error) {
         console.error('Error fetching check-ins:', error);
         toast({
@@ -151,25 +151,37 @@ export default function CheckInPage() {
   
   const handleStatusChange = async (checkInId: string, newStatus: CheckInStatus) => {
     try {
-      // In a real app, you would make an API call to update the status
-      // await fetch(`/api/admin/check-ins/${checkInId}`, {
-      //   method: 'PATCH',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ status: newStatus }),
-      // });
+      // Make API call to update the status
+      const response = await fetch(`/api/admin/check-ins/${checkInId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
       
-      // Update local state for demo
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update check-in status');
+      }
+      
+      const updatedCheckIn = await response.json();
+      
+      // Update local state
       setCheckIns(prev => 
         prev.map(checkIn => 
           checkIn.id === checkInId 
-            ? { ...checkIn, status: newStatus, updatedAt: new Date().toISOString() } 
+            ? { 
+                ...checkIn, 
+                status: updatedCheckIn.status, 
+                updatedAt: updatedCheckIn.updatedAt,
+                notes: updatedCheckIn.notes || checkIn.notes
+              } 
             : checkIn
         )
       );
       
       toast({
         title: 'Success',
-        description: `Check-in ${newStatus} successfully.`,
+        description: `Check-in marked as ${newStatus} successfully.`,
       });
     } catch (error) {
       console.error('Error updating check-in status:', error);
@@ -204,34 +216,39 @@ export default function CheckInPage() {
       const checkInDateTime = new Date(checkInDate);
       checkInDateTime.setHours(hours, minutes);
       
-      // In a real app, you would make an API call to create the check-in
-      // const response = await fetch('/api/admin/check-ins', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({
-      //     userId: selectedUserId,
-      //     checkInTime: checkInDateTime.toISOString(),
-      //     notes,
-      //   }),
-      // });
-      // const newCheckIn = await response.json();
+      // Make API call to create the check-in
+      const response = await fetch('/api/admin/check-ins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUserId,
+          checkInTime: checkInDateTime.toISOString(),
+          notes: notes || undefined,
+        }),
+      });
       
-      // For demo purposes, create a mock check-in
-      const selectedUser = users.find(user => user.id === selectedUserId);
-      if (!selectedUser) throw new Error('Selected user not found');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create check-in');
+      }
       
-      const newCheckIn: ScheduledCheckIn = {
-        id: Math.random().toString(36).substr(2, 9),
-        user: selectedUser,
-        checkInTime: checkInDateTime.toISOString(),
-        status: 'scheduled',
-        notes: notes || undefined,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      const newCheckIn = await response.json();
       
-      // Update local state
-      setCheckIns(prev => [newCheckIn, ...prev]);
+      // Update local state with the new check-in
+      setCheckIns(prev => [{
+        id: newCheckIn.id,
+        user: {
+          id: newCheckIn.user.id,
+          name: newCheckIn.user.name,
+          email: newCheckIn.user.email,
+          image: newCheckIn.user.image
+        },
+        checkInTime: newCheckIn.checkInTime,
+        status: newCheckIn.status,
+        notes: newCheckIn.notes || undefined,
+        createdAt: newCheckIn.createdAt,
+        updatedAt: newCheckIn.updatedAt
+      }, ...prev]);
       
       // Reset form
       setSelectedUserId('');
@@ -249,7 +266,7 @@ export default function CheckInPage() {
       console.error('Error creating check-in:', error);
       toast({
         title: 'Error',
-        description: 'Failed to schedule check-in. Please try again.',
+        description: error instanceof Error ? error.message : 'Failed to schedule check-in. Please try again.',
         variant: 'destructive',
       });
     } finally {

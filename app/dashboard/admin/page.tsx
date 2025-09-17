@@ -7,6 +7,9 @@ import { Users, Calendar, DollarSign, TrendingUp, MapPin, Clock, Wifi, Coffee, B
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
 
 interface Stat {
   title: string;
@@ -74,71 +77,120 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     // Only run on client
-    setIsClient(true)
+    setIsClient(true);
     
-    // Set mock data
-    setStats(mockStats)
-    
-    // Simulate data fetching
     const loadData = async () => {
       try {
-        // In a real app, you would fetch this data from an API
-        const statsData: Stat[] = [
+        // Set loading state
+        setIsLoading(true);
+        
+        // Initialize with mock data in case of errors
+        const mockStats: Stat[] = [
           {
-            title: "Total Members",
-            value: "1,234",
-            change: "+12%",
-            changeType: "positive",
-            icon: Users,
+            title: 'Total Members',
+            value: '0',
+            change: '0%',
+            changeType: 'positive',
+            icon: Users
           },
           {
-            title: "Active Bookings",
-            value: "89",
-            change: "+5%",
-            changeType: "positive",
-            icon: Calendar,
+            title: 'Active Bookings',
+            value: '0',
+            change: '0%',
+            changeType: 'positive',
+            icon: Calendar
           },
           {
-            title: "Monthly Revenue",
-            value: "$45,231",
-            change: "+18%",
-            changeType: "positive",
-            icon: DollarSign,
+            title: 'Monthly Revenue',
+            value: '$0',
+            change: '0%',
+            changeType: 'positive',
+            icon: DollarSign
           },
           {
-            title: "Occupancy Rate",
-            value: "78%",
-            change: "-2%",
-            changeType: "negative",
-            icon: TrendingUp,
-          },
-        ]
+            title: 'Occupancy Rate',
+            value: '0%',
+            change: '0%',
+            changeType: 'positive',
+            icon: TrendingUp
+          }
+        ];
 
-        const bookingsData: Booking[] = [
-          { id: 1, member: "John Doe", resource: "Desk A-12", time: "9:00 AM - 5:00 PM", status: "active" },
-          { id: 2, member: "Jane Smith", resource: "Meeting Room B", time: "2:00 PM - 4:00 PM", status: "upcoming" },
-          { id: 3, member: "Mike Johnson", resource: "Private Office 3", time: "10:00 AM - 6:00 PM", status: "active" },
-          { id: 4, member: "Sarah Wilson", resource: "Desk C-05", time: "1:00 PM - 7:00 PM", status: "upcoming" },
-        ]
+        // Try to fetch real data
+        try {
+          // Fetch stats from API
+          const statsResponse = await fetch('/api/admin/dashboard-stats');
+          if (statsResponse.ok) {
+            const { stats: statsData } = await statsResponse.json();
+            
+            // Define the icon map with proper types
+            const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+              'Total Members': Users,
+              'Active Bookings': Calendar,
+              'Monthly Revenue': DollarSign,
+              'Occupancy Rate': TrendingUp,
+            };
+            
+            // Map the stats to include icons
+            const statsWithIcons = statsData.map((stat: { title: string }) => ({
+              ...stat,
+              icon: iconMap[stat.title] || BarChart
+            }));
+            
+            setStats(statsWithIcons);
+          } else {
+            setStats(mockStats);
+          }
+        } catch (error) {
+          console.error("Error fetching stats:", error);
+          setStats(mockStats);
+        }
 
-        const spaceStatusData: SpaceStatus[] = [
-          { name: "Hot Desks", total: 50, occupied: 38, available: 12 },
-          { name: "Meeting Rooms", total: 8, occupied: 3, available: 5 },
-          { name: "Private Offices", total: 12, occupied: 9, available: 3 },
-          { name: "Phone Booths", total: 6, occupied: 2, available: 4 },
-        ]
+        // Load recent bookings
+        try {
+          const today = new Date();
+          const recentBookingsResponse = await fetch('/api/admin/bookings/recent');
+          
+          if (recentBookingsResponse.ok) {
+            const bookings = await recentBookingsResponse.json();
+            const bookingsData: Booking[] = bookings.map((booking: any) => ({
+              id: booking.id,
+              member: booking.user?.name || 'Unknown Member',
+              resource: `${booking.resource?.type || 'Resource'} - ${booking.resource?.name || 'Unknown'}`,
+              time: `${new Date(booking.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${new Date(booking.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+              status: new Date() >= new Date(booking.startTime) && new Date() <= new Date(booking.endTime) ? 'active' : 'upcoming',
+            }));
+            setRecentBookings(bookingsData);
+          } else {
+            setRecentBookings([]);
+          }
+        } catch (error) {
+          console.error("Error fetching recent bookings:", error);
+          setRecentBookings([]);
+        }
 
-        setStats(statsData)
-        setRecentBookings(bookingsData)
-        setSpaceStatus(spaceStatusData)
+        // Load space status
+        try {
+          const spaceStatusResponse = await fetch('/api/admin/space-status');
+          
+          if (spaceStatusResponse.ok) {
+            const spaceStatusData = await spaceStatusResponse.json();
+            setSpaceStatus(spaceStatusData);
+          } else {
+            setSpaceStatus([]);
+          }
+        } catch (error) {
+          console.error("Error fetching space status:", error);
+          setSpaceStatus([]);
+        }
       } catch (error) {
-        console.error("Error loading dashboard data:", error)
+        console.error("Error loading dashboard data:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    loadData()
+    loadData();
   }, [])
 
   const handleLogout = () => {

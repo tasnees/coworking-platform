@@ -79,7 +79,9 @@ let collections: {
 
 async function getCollections() {
   if (!collections) {
-    const { db } = await clientPromise;
+    const client = await clientPromise;
+    const db = client.db();
+    
     if (!db) {
       throw new Error('Failed to connect to MongoDB');
     }
@@ -293,7 +295,7 @@ export default async function MongoDBAdapter(): Promise<Adapter> {
             { _id: userId },
             { $set: update },
             { returnDocument: 'after' }
-          ) as WithId<UserDocument> | null;
+          ).then(res => res.value as UserDocument | null);
           
           if (!result) {
             throw new Error('User not found');
@@ -442,7 +444,7 @@ export default async function MongoDBAdapter(): Promise<Adapter> {
             { sessionToken: session.sessionToken },
             { $set: update },
             { returnDocument: 'after' }
-          ) as WithId<SessionDocument> | null;
+          ).then(res => res.value as SessionDocument | null);
           
           if (!result) {
             console.error('Session not found for update:', session.sessionToken);

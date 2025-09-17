@@ -300,13 +300,16 @@ export default function BookingsPage() {
       
       const newBooking = await response.json();
       
+      // Get member name for display
+      const member = members.find(m => m.id === formData.member);
+      
       // Update local state with the new booking
       setBookings(prev => [{
-        ...newBooking,
-        member: members.find(m => m.id === formData.member)?.name || 'Unknown',
+        id: newBooking.id,
+        member: member?.name || 'Unknown',
         resource: selectedResource.name,
         type: selectedResource.type,
-        status: 'confirmed',
+        status: newBooking.status || 'confirmed',
         date: formData.date,
         startTime: formData.startTime,
         endTime: formData.endTime,
@@ -377,289 +380,287 @@ export default function BookingsPage() {
     }
   }
   return (
-    <DashboardLayout userRole="admin">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Bookings Management</h1>
-            <p className="text-muted-foreground">Manage space reservations and availability</p>
-          </div>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                New Booking
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create New Booking</DialogTitle>
-                <DialogDescription>Book a space for a member or walk-in customer.</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                handleCreateBooking(e);
-              }}>
-                <div className="grid gap-4 py-4">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Bookings Management</h1>
+          <p className="text-muted-foreground">Manage space reservations and availability</p>
+        </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              New Booking
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create New Booking</DialogTitle>
+              <DialogDescription>Book a space for a member or walk-in customer.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              handleCreateBooking(e);
+            }}>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="member">Member</Label>
+                  <Select 
+                    value={formData.member} 
+                    onValueChange={(value) => setFormData({...formData, member: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a member" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {members.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.name} ({member.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.member && (
+                    <p className="text-sm text-red-500">{formErrors.member}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="resource">Resource</Label>
+                  <Select 
+                    value={formData.resource} 
+                    onValueChange={(value) => setFormData({...formData, resource: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a resource" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {resources.map((resource) => (
+                        <SelectItem key={resource.id} value={resource.id}>
+                          {resource.name} - ${resource.hourlyRate}/hr
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.resource && (
+                    <p className="text-sm text-red-500">{formErrors.resource}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="date">Date</Label>
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    min={format(new Date(), 'yyyy-MM-dd')}
+                    className={formErrors.date ? 'border-red-500' : ''}
+                  />
+                  {formErrors.date && (
+                    <p className="text-sm text-red-500">{formErrors.date}</p>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="member">Member</Label>
-                    <Select 
-                      value={formData.member} 
-                      onValueChange={(value) => setFormData({...formData, member: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a member" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {members.map((member) => (
-                          <SelectItem key={member.id} value={member.id}>
-                            {member.name} ({member.email})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {formErrors.member && (
-                      <p className="text-sm text-red-500">{formErrors.member}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="resource">Resource</Label>
-                    <Select 
-                      value={formData.resource} 
-                      onValueChange={(value) => setFormData({...formData, resource: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a resource" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {resources.map((resource) => (
-                          <SelectItem key={resource.id} value={resource.id}>
-                            {resource.name} - ${resource.hourlyRate}/hr
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {formErrors.resource && (
-                      <p className="text-sm text-red-500">{formErrors.resource}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
+                    <Label htmlFor="startTime">Start Time</Label>
                     <Input 
-                      id="date" 
-                      type="date" 
-                      name="date"
-                      value={formData.date}
+                      id="startTime" 
+                      type="time" 
+                      name="startTime"
+                      value={formData.startTime}
                       onChange={handleInputChange}
-                      min={format(new Date(), 'yyyy-MM-dd')}
-                      className={formErrors.date ? 'border-red-500' : ''}
+                      className={formErrors.startTime ? 'border-red-500' : ''}
                     />
-                    {formErrors.date && (
-                      <p className="text-sm text-red-500">{formErrors.date}</p>
+                    {formErrors.startTime && (
+                      <p className="text-sm text-red-500">{formErrors.startTime}</p>
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="startTime">Start Time</Label>
-                      <Input 
-                        id="startTime" 
-                        type="time" 
-                        name="startTime"
-                        value={formData.startTime}
-                        onChange={handleInputChange}
-                        className={formErrors.startTime ? 'border-red-500' : ''}
-                      />
-                      {formErrors.startTime && (
-                        <p className="text-sm text-red-500">{formErrors.startTime}</p>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="endTime">End Time</Label>
-                      <Input 
-                        id="endTime" 
-                        type="time" 
-                        name="endTime"
-                        value={formData.endTime}
-                        onChange={handleInputChange}
-                        className={formErrors.endTime ? 'border-red-500' : ''}
-                      />
-                      {formErrors.endTime && (
-                        <p className="text-sm text-red-500">{formErrors.endTime}</p>
-                      )}
-                    </div>
-                  </div>
-                  
                   <div className="space-y-2">
-                    <Label htmlFor="notes">Notes (Optional)</Label>
-                    <textarea
-                      id="notes"
-                      name="notes"
-                      value={formData.notes}
+                    <Label htmlFor="endTime">End Time</Label>
+                    <Input 
+                      id="endTime" 
+                      type="time" 
+                      name="endTime"
+                      value={formData.endTime}
                       onChange={handleInputChange}
-                      className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      placeholder="Any special requirements or notes..."
+                      className={formErrors.endTime ? 'border-red-500' : ''}
                     />
+                    {formErrors.endTime && (
+                      <p className="text-sm text-red-500">{formErrors.endTime}</p>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={() => document.getElementById('close-dialog')?.click()}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : 'Create Booking'}
-                  </Button>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes (Optional)</Label>
+                  <textarea
+                    id="notes"
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="Any special requirements or notes..."
+                  />
                 </div>
-              </form>
-              {/* Hidden close button for programmatic closing */}
-              <button id="close-dialog" className="hidden" onClick={() => {}} />
-            </DialogContent>
-          </Dialog>
-        </div>
-        {/* Filters and Search */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search bookings..." className="pl-8" />
-                </div>
-                <Select defaultValue="all">
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
-              <Tabs value={viewMode} onValueChange={setViewMode}>
-                <TabsList>
-                  <TabsTrigger value="day">Day</TabsTrigger>
-                  <TabsTrigger value="week">Week</TabsTrigger>
-                  <TabsTrigger value="month">Month</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-          </CardContent>
-        </Card>
-        <div className="grid gap-6 lg:grid-cols-3">
-          {/* Calendar */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5" />
-                Calendar
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                className="rounded-md border"
-              />
-            </CardContent>
-          </Card>
-          
-          {/* Bookings List */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Today's Bookings</CardTitle>
-                  <CardDescription>{selectedDate?.toDateString() || "Select a date to view bookings"}</CardDescription>
-                </div>
+              
+              <div className="flex justify-end gap-2 mt-4">
                 <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => window.location.reload()}
-                  disabled={isLoading}
+                  type="button" 
+                  variant="outline"
+                  onClick={() => document.getElementById('close-dialog')?.click()}
+                  disabled={isSubmitting}
                 >
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                  Refresh
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : 'Create Booking'}
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {bookings.map(booking => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{booking.member}</p>
-                        <Badge variant={getStatusColor(booking.status as any)}>{booking.status}</Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {booking.resource}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {booking.startTime} - {booking.endTime}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        Edit
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+            </form>
+            {/* Hidden close button for programmatic closing */}
+            <button id="close-dialog" className="hidden" onClick={() => {}} />
+          </DialogContent>
+        </Dialog>
+      </div>
+      {/* Filters and Search */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex gap-2">
+              <div className="relative">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search bookings..." className="pl-8" />
               </div>
-            </CardContent>
-          </Card>
-        </div>
-        {/* Resource Availability */}
+              <Select defaultValue="all">
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Tabs value={viewMode} onValueChange={setViewMode}>
+              <TabsList>
+                <TabsTrigger value="day">Day</TabsTrigger>
+                <TabsTrigger value="week">Week</TabsTrigger>
+                <TabsTrigger value="month">Month</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        </CardContent>
+      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Calendar */}
         <Card>
           <CardHeader>
-            <CardTitle>Resource Availability</CardTitle>
-            <CardDescription>Current status of all bookable resources</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              Calendar
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {resources.map((resource) => (
-                <div key={resource.id} className="p-4 border rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium">{resource.name}</h4>
-                    <Badge variant="outline">{resource.type}</Badge>
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              className="rounded-md border"
+            />
+          </CardContent>
+        </Card>
+        
+        {/* Bookings List */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Today's Bookings</CardTitle>
+                <CardDescription>{selectedDate?.toDateString() || "Select a date to view bookings"}</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => window.location.reload()}
+                disabled={isLoading}
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {bookings.map(booking => (
+                <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{booking.member}</p>
+                      <Badge variant={getStatusColor(booking.status as any)}>{booking.status}</Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {booking.resource}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {booking.startTime} - {booking.endTime}
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-sm text-muted-foreground mb-2">
-                    Capacity: {resource.capacity} • ${resource.hourlyRate}/hr
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      Edit
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      Cancel
+                    </Button>
                   </div>
-                  <Badge variant="secondary" className="w-full justify-center">
-                    Available
-                  </Badge>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+      {/* Resource Availability */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Resource Availability</CardTitle>
+          <CardDescription>Current status of all bookable resources</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {resources.map((resource) => (
+              <div key={resource.id} className="p-4 border rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium">{resource.name}</h4>
+                  <Badge variant="outline">{resource.type}</Badge>
+                </div>
+                <div className="text-sm text-muted-foreground mb-2">
+                  Capacity: {resource.capacity} • ${resource.hourlyRate}/hr
+                </div>
+                <Badge variant="secondary" className="w-full justify-center">
+                  Available
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   )
 }
