@@ -59,7 +59,7 @@ const navigation: NavigationItem[] = [
     name: 'Memberships', 
     href: (role) => `/dashboard/${role}/memberships`, 
     icon: CreditCard, 
-    roles: ['admin', 'staff', 'member'] 
+    roles: ['admin', 'member'] 
   },
   { 
     name: 'Check-In', 

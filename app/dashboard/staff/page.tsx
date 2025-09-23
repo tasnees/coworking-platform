@@ -63,16 +63,18 @@ interface Booking {
 }
 
 interface Member {
-  id: string
-  name: string
-  email: string
-  membershipType: "basic" | "standard" | "premium" | "enterprise"
-  status: "active" | "inactive" | "suspended" | "pending"
-  joinDate: string
-  lastVisit: string
-  totalBookings: number
-  totalSpent: number
-  credits: number
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  notes?: string;
+  membershipType: "basic" | "standard" | "premium" | "enterprise";
+  status: "active" | "inactive" | "suspended" | "pending";
+  joinDate: string;
+  lastVisit: string;
+  totalBookings: number;
+  totalSpent: number;
+  credits: number;
 }
 
 interface Resource {
@@ -140,7 +142,12 @@ export default function StaffDashboard() {
   const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const router = useRouter();
-  
+
+  // State for data
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+
   // State for form data
   const [newMember, setNewMember] = useState<Partial<Member>>({});
   const [editMember, setEditMember] = useState<Partial<Member>>({});

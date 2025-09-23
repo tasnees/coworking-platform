@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
-import dynamic from 'next/dynamic.js'
+import dynamic from 'next/dynamic'
 // Dynamically import the dashboard layout with SSR disabled
 const DynamicDashboardLayout = dynamic(
   () => import('@/components/dashboard-layout'),
@@ -744,14 +744,14 @@ export default function AmenitiesPage() {
                             <span className="text-muted-foreground">Daily</span>
                             <span>{amenity.usageStats.daily} uses</span>
                           </div>
-                          <Progress value={(amenity.usageStats.daily / 150) * 100} className="h-2" />
+                          <Progress value={Math.min((amenity.usageStats.daily / 150) * 100, 100)} className="h-2" />
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Weekly</span>
                             <span>{amenity.usageStats.weekly} uses</span>
                           </div>
-                          <Progress value={(amenity.usageStats.weekly / 1000) * 100} className="h-2" />
+                          <Progress value={Math.min((amenity.usageStats.weekly / 1000) * 100, 100)} className="h-2" />
                         </div>
                         <div className="space-y-1">
                           <div className="flex items-center justify-between text-sm">
