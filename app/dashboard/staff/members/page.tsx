@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogFooter, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -716,7 +716,7 @@ export default function StaffMembersPage() {
               <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSubmitForm}>
+              <Button onClick={showCreateDialog ? handleCreateMember : handleEditMember}>
                 {showCreateDialog ? 'Create Member' : 'Save Changes'}
               </Button>
             </DialogFooter>
