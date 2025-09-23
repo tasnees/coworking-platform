@@ -20,14 +20,14 @@ const envSchema = z.object({
   GITHUB_CLIENT_SECRET: z.string().optional(),
   
   // NextAuth
-  NEXTAUTH_DEBUG: z.string().optional().transform(val => val === 'true'),
+  NEXTAUTH_DEBUG: z.string().optional().transform((val: string | undefined) => val === 'true'),
   
   // Deployment
   VERCEL_URL: z.string().optional(),
   VERCEL_ENV: z.enum(['development', 'preview', 'production']).optional(),
   
   // Feature Flags
-  ENABLE_ANALYTICS: z.string().optional().default('false').transform(val => val === 'true'),
+  ENABLE_ANALYTICS: z.string().optional().default('false').transform((val: string) => val === 'true'),
   
   // API Keys
   RESEND_API_KEY: z.string().optional(),

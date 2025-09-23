@@ -131,7 +131,7 @@ export const authController = {
       }
 
       // 3. Find user document with instance methods
-      const user = await User.findById(userDoc._id).exec() as (IUserDocument & { _id: Types.ObjectId }) | null;
+      const user = await User.findById(userDoc._id).exec() as IUserDocument | null;
       if (!user) {
         logger.warn(`User not found after initial lookup: ${email}`);
         throw new Error('Invalid credentials');
@@ -156,7 +156,7 @@ export const authController = {
 
       // Create response with proper typing for user fields
       const userResponse = {
-        id: user._id.toString(),
+        id: (user._id as any).toString(),
         email: user.email,
         role: user.role as Role,
         ...(user.firstName && { firstName: user.firstName }),
@@ -201,7 +201,7 @@ export const authController = {
       const newRefreshToken = generateRefreshToken(user);
 
       const userResponse = {
-        id: user._id.toString(),
+        id: (user._id as any).toString(),
         email: user.email,
         role: user.role as Role,
         ...(user.firstName && { firstName: user.firstName }),
