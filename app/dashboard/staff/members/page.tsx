@@ -1,5 +1,5 @@
 "use client"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -237,25 +237,27 @@ export default function StaffMembersPage() {
     notes: ""
   });
 
-  // Initialize members on client side to avoid hydration issues
-  useEffect(() => {
-    setIsClient(true);
-    // Simulate API call with a small delay
-    const timer = setTimeout(() => {
-      // Ensure all required fields are present
-      const validMembers = mockMembers.map(member => ({
-        ...member,
-        company: member.company || '',
-        notes: member.notes || '',
-        address: member.address || '',
-        city: member.city || '',
-        country: member.country || ''
-      })) as Member[];
-      setMembers(validMembers);
+  // Fetch members from the API
+  const fetchMembers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/staff/members');
+      if (!response.ok) throw new Error('Failed to fetch members');
+      const data = await response.json();
+      setMembers(data);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      // Fallback to empty array if API fails
+      setMembers([]);
+    } finally {
       setIsLoading(false);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [])
+    }
+  }, []);
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
   // Only process members on client side
   const filteredMembers = useMemo(() => {
     if (!isClient || !Array.isArray(members)) return [];
@@ -274,16 +276,16 @@ export default function StaffMembersPage() {
   }, [members, searchQuery, statusFilter, typeFilter, isClient]);
   // Memoize statistics to prevent unnecessary recalculations
   const { totalMembers, activeMembers, inactiveMembers, suspendedMembers, newMembersThisMonth } = useMemo(() => {
-    if (!isClient || !Array.isArray(members)) { 
-      return { 
-        totalMembers: 0, 
-        activeMembers: 0, 
-        inactiveMembers: 0, 
-        suspendedMembers: 0, 
-        newMembersThisMonth: 0 
+    if (!isClient || !Array.isArray(members)) {
+      return {
+        totalMembers: 0,
+        activeMembers: 0,
+        inactiveMembers: 0,
+        suspendedMembers: 0,
+        newMembersThisMonth: 0
       };
     }
-    
+
     const now = new Date();
     return {
       totalMembers: members.length,
@@ -294,7 +296,7 @@ export default function StaffMembersPage() {
         try {
           if (!m?.joinDate) return false;
           const joinDate = new Date(m.joinDate);
-          return joinDate.getMonth() === now.getMonth() && 
+          return joinDate.getMonth() === now.getMonth() &&
                  joinDate.getFullYear() === now.getFullYear();
         } catch (e) {
           console.error('Error processing join date:', e);
@@ -334,28 +336,60 @@ export default function StaffMembersPage() {
       default: return "default"
     }
   }
-  const handleCreateMember = () => {
-    const newMember: Member = {
-      id: Date.now().toString(),
-      ...formData,
-      joinDate: new Date().toISOString().split('T')[0],
-      totalVisits: 0
+  const handleCreateMember = async () => {
+    if (!formData.name || !formData.email) {
+      alert('Name and email are required');
+      return;
     }
-    setMembers(members ? [...members, newMember] : [newMember])
-    setShowCreateDialog(false)
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      membershipType: "basic",
-      status: "active",
-      company: "",
-      address: "",
-      city: "",
-      country: "",
-      notes: ""
-    })
-  }
+
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/staff/members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || '',
+          membershipType: formData.membershipType,
+          notes: formData.notes || ''
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create member');
+      }
+
+      const result = await response.json();
+      alert(result.message);
+
+      // Refresh the members list
+      await fetchMembers();
+
+      // Reset form
+      setShowCreateDialog(false);
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        membershipType: "basic",
+        status: "active",
+        company: "",
+        address: "",
+        city: "",
+        country: "",
+        notes: ""
+      });
+    } catch (error) {
+      console.error('Error creating member:', error);
+      alert(error instanceof Error ? error.message : 'An error occurred while creating the member');
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const handleEditMember = () => {
     if (editingMember && members) {
       setMembers(members.map(m =>
@@ -678,22 +712,14 @@ export default function StaffMembersPage() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateDialog(false)
-                  setShowEditDialog(false)
-                }}
-              >
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
                 Cancel
               </Button>
-              <Button
-                onClick={showCreateDialog ? handleCreateMember : handleEditMember}
-              >
-                {showCreateDialog ? "Create Member" : "Save Changes"}
+              <Button onClick={handleSubmitForm}>
+                {showCreateDialog ? 'Create Member' : 'Save Changes'}
               </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
         {/* View Dialog */}
@@ -742,5 +768,5 @@ export default function StaffMembersPage() {
           </DialogContent>
         </Dialog>
       </div>
-  )
+  );
 }

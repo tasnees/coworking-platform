@@ -31,7 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-type MembershipStatus = 'active' | 'suspended' | 'cancelled';
+type MembershipStatus = 'active' | 'suspended' | 'cancelled' | 'pending';
 type MembershipType = 'flex' | 'dedicated' | 'team' | 'enterprise';
 type UserStatus = 'active' | 'inactive' | 'suspended' | 'pending' | 'cancelled';
 type MemberStatus = 'active' | 'suspended' | 'cancelled';
@@ -85,6 +85,8 @@ const getStatusBadge = (status: MembershipStatus) => {
       return <Badge variant="destructive">Suspended</Badge>;
     case 'cancelled':
       return <Badge variant="outline">Cancelled</Badge>;
+    case 'pending':
+      return <Badge variant="outline">Pending</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -92,27 +94,27 @@ const getStatusBadge = (status: MembershipStatus) => {
 
 const getMemberActions = (member: Member) => {
   const actions = [];
-  
+
   if (member.status !== 'active') {
-    actions.push({ 
-      name: 'Activate', 
-      icon: <CheckCircle className="h-4 w-4 mr-2" />, 
+    actions.push({
+      name: 'Activate',
+      icon: <CheckCircle className="h-4 w-4 mr-2" />,
       action: 'activate',
       variant: 'default'
     });
   }
   if (member.status !== 'suspended') {
-    actions.push({ 
-      name: 'Suspend', 
-      icon: <XCircle className="h-4 w-4 mr-2" />, 
+    actions.push({
+      name: 'Suspend',
+      icon: <XCircle className="h-4 w-4 mr-2" />,
       action: 'suspend',
       variant: 'warning'
     });
   }
   if (member.status !== 'cancelled' && member.status !== 'inactive') {
-    actions.push({ 
-      name: 'Cancel', 
-      icon: <XCircle className="h-4 w-4 mr-2" />, 
+    actions.push({
+      name: 'Cancel',
+      icon: <XCircle className="h-4 w-4 mr-2" />,
       action: 'cancel',
       variant: 'destructive'
     });
@@ -182,59 +184,55 @@ export default function AdminMembersPage() {
   }, [fetchMembers]);
 
   // Handle member status update
-  const handleStatusUpdate = async (memberId: string, newStatus: MemberStatus) => {
+  const handleApproveMember = async (memberId: string, action: 'approve' | 'reject') => {
     try {
       setUpdatingMemberId(memberId);
-      const response = await fetch(`/api/admin/members/${memberId}`, {
+
+      const response = await fetch('/api/admin/members', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ memberId, action }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update member status');
+        throw new Error(errorData.message || `Failed to ${action} member`);
       }
-      
+
+      const result = await response.json();
+
       // Update the local state
-      setMembers(prevMembers => 
-        prevMembers.map(member => 
-          member.id === memberId 
-            ? { 
-                ...member, 
-                status: newStatus, 
-                membership: newStatus,
-                // If status is cancelled, update membership end date
-                ...(newStatus === 'cancelled' && { 
-                  membershipEndDate: new Date().toISOString() 
-                })
-              } 
+      setMembers(prevMembers =>
+        prevMembers.map(member =>
+          member.id === memberId
+            ? {
+                ...member,
+                status: action === 'approve' ? 'active' : 'cancelled',
+                membership: action === 'approve' ? 'active' : 'cancelled'
+              }
             : member
         )
       );
-      
+
       // Also update filtered members
-      setFilteredMembers(prev => 
-        prev.map(member => 
-          member.id === memberId 
-            ? { 
-                ...member, 
-                status: newStatus, 
-                membership: newStatus,
-                ...(newStatus === 'cancelled' && { 
-                  membershipEndDate: new Date().toISOString() 
-                })
-              } 
+      setFilteredMembers(prev =>
+        prev.map(member =>
+          member.id === memberId
+            ? {
+                ...member,
+                status: action === 'approve' ? 'active' : 'cancelled',
+                membership: action === 'approve' ? 'active' : 'cancelled'
+              }
             : member
         )
       );
-      
-      toast.success(`Member status updated to ${newStatus}`);
+
+      toast.success(result.message);
     } catch (error) {
       console.error('Error updating member status:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update member status');
+      toast.error(error instanceof Error ? error.message : `Failed to ${action} member`);
     } finally {
       setUpdatingMemberId(null);
     }
@@ -578,6 +576,38 @@ export default function AdminMembersPage() {
                 <TableCell>{member.plan}</TableCell>
                 <TableCell>
                   {getStatusBadge(member.membership)}
+                  {member.status === 'pending' && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleApproveMember(member.id, 'approve')}
+                        disabled={updatingMemberId === member.id}
+                        className="h-8 px-2 text-xs"
+                      >
+                        {updatingMemberId === member.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        ) : (
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                        )}
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleApproveMember(member.id, 'reject')}
+                        disabled={updatingMemberId === member.id}
+                        className="h-8 px-2 text-xs text-red-600 border-red-200 hover:bg-red-50"
+                      >
+                        {updatingMemberId === member.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        ) : (
+                          <XCircle className="h-3 w-3 mr-1" />
+                        )}
+                        Reject
+                      </Button>
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   {member.lastVisit ? format(new Date(member.lastVisit), 'MMM d, yyyy') : 'Never'}

@@ -5,17 +5,17 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { 
-  Users, 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
+import {
+  Users,
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
   Loader2 as Loader,
-  CreditCard, 
-  Eye, 
-  Edit, 
+  CreditCard,
+  Eye,
+  Edit,
   UserPlus,
   Trash2,
   Search,
@@ -23,13 +23,27 @@ import {
   Plus,
   PhoneCall,
   ActivitySquare,
-  Settings2
+  Settings2,
+  Menu,
+  Bell,
+  LogOut
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import ProtectedRoute from "../../../components/ProtectedRoute"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
+import { LogoutButton } from "@/components/auth/LogoutButton"
 
 interface Booking {
   id: string
@@ -53,7 +67,7 @@ interface Member {
   name: string
   email: string
   membershipType: "basic" | "standard" | "premium" | "enterprise"
-  status: "active" | "inactive" | "suspended"
+  status: "active" | "inactive" | "suspended" | "pending"
   joinDate: string
   lastVisit: string
   totalBookings: number
@@ -125,6 +139,7 @@ export default function StaffDashboard() {
   const [showManageResourcesDialog, setShowManageResourcesDialog] = useState(false);
   const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const router = useRouter();
   
   // State for form data
   const [newMember, setNewMember] = useState<Partial<Member>>({});
@@ -146,17 +161,58 @@ export default function StaffDashboard() {
   });
   const [newResource, setNewResource] = useState<Partial<Resource>>({});
   
-  // Mock data - replace with actual data fetching
-  const [recentBookings, setRecentBookings] = useState<Booking[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [resources, setResources] = useState<Resource[]>([]);
-
-  // Handlers
+  // State for loading and error handling
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to add member
-    setShowAddMemberDialog(false);
-    setNewMember({});
+    if (!newMember.name || !newMember.email) {
+      setError('Name and email are required');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await fetch('/api/staff/members', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: newMember.name,
+          email: newMember.email,
+          phone: newMember.phone || '',
+          membershipType: newMember.membershipType || 'flex',
+          notes: newMember.notes || ''
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create member');
+      }
+
+      const result = await response.json();
+
+      setSuccess(`Member created successfully with pending status. ${result.message}`);
+
+      // Reset form
+      setNewMember({});
+      setShowAddMemberDialog(false);
+
+      // Optionally refresh the members list
+      // await loadMembers();
+
+    } catch (error) {
+      console.error('Error creating member:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred while creating the member');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleEditMember = async (e: React.FormEvent) => {
@@ -251,6 +307,16 @@ export default function StaffDashboard() {
             <DialogDescription>Add a new member to the system</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddMember} className="space-y-4">
+            {error && (
+              <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                {success}
+              </div>
+            )}
             <div className="grid gap-4">
               <div>
                 <Label htmlFor="name">Name</Label>
@@ -272,6 +338,15 @@ export default function StaffDashboard() {
                 />
               </div>
               <div>
+                <Label htmlFor="phone">Phone (Optional)</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  value={newMember.phone || ''}
+                  onChange={(e) => setNewMember({...newMember, phone: e.target.value})}
+                />
+              </div>
+              <div>
                 <Label htmlFor="membershipType">Membership Type</Label>
                 <Select
                   value={newMember.membershipType || ''}
@@ -289,12 +364,23 @@ export default function StaffDashboard() {
                   </SelectContent>
                 </Select>
               </div>
+              <div>
+                <Label htmlFor="notes">Notes (Optional)</Label>
+                <Textarea
+                  id="notes"
+                  value={newMember.notes || ''}
+                  onChange={(e) => setNewMember({...newMember, notes: e.target.value})}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setShowAddMemberDialog(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Add Member</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? <Loader className="h-4 w-4 animate-spin mr-2" /> : null}
+                Add Member
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -601,216 +687,281 @@ export default function StaffDashboard() {
 
   return (
     <ProtectedRoute allowedRoles={["admin", "staff"]}>
-      <div className="space-y-6 p-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Staff Dashboard</h1>
-          <p className="text-muted-foreground">Manage members, bookings, and resources</p>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="members">Members</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ActivitySquare className="h-5 w-5" />
-                    Recent Activity
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {recentBookings.length > 0 ? (
-                    <div className="space-y-4">
-                      {recentBookings.slice(0, 5).map((booking) => (
-                        <div key={booking.id} className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{booking.memberName}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {booking.resourceName} • {booking.startTime} - {booking.endTime}
-                            </p>
-                          </div>
-                          <Badge 
-                            variant={
-                              booking.status === "confirmed" ? "default" :
-                              booking.status === "completed" ? "secondary" :
-                              booking.status === "pending" ? "outline" : "destructive"
-                            }
-                          >
-                            {booking.status}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No recent activity</p>
-                  )}
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button 
-                    className="w-full"
-                    onClick={() => setShowAddMemberDialog(true)}
-                  >
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Add New Member
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setShowCreateBookingDialog(true)}
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Create Booking
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setShowManageResourcesDialog(true)}
-                  >
-                    <Settings2 className="h-4 w-4 mr-2" />
-                    Manage Resources
-                  </Button>
-                </CardContent>
-              </Card>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center">
+              <h1 className="text-xl font-bold text-primary">OmniSpace</h1>
+              <Badge variant="secondary" className="ml-2 text-xs">
+                STAFF
+              </Badge>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="bookings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>All Bookings</CardTitle>
-                <CardDescription>Manage and monitor member bookings</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {recentBookings.length > 0 ? (
-                  <div className="space-y-4">
-                    {recentBookings.map((booking) => (
-                      <div key={booking.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{booking.memberName}</h4>
-                            <p className="text-sm text-muted-foreground">{booking.memberEmail}</p>
-                            <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground flex-wrap">
-                              <span>{booking.resourceName}</span>
-                              <span>•</span>
-                              <span>{booking.date}</span>
-                              <span>•</span>
-                              <span>{booking.startTime} - {booking.endTime}</span>
-                            </div>
-                          </div>
-                          <Badge 
-                            variant={
-                              booking.status === "confirmed" ? "default" :
-                              booking.status === "completed" ? "secondary" :
-                              booking.status === "pending" ? "outline" : "destructive"
-                            }
-                          >
-                            {booking.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
+
+            <div className="flex items-center gap-x-4">
+              <Button variant="ghost" size="sm" aria-label="Notifications">
+                <Bell className="h-5 w-5" />
+              </Button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                    aria-label="User menu"
+                  >
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src="/placeholder-user.jpg"
+                        alt="Staff User"
+                      />
+                      <AvatarFallback>SU</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        Staff User
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        staff@omnispaces.com
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/staff/settings')}>
+                    <Settings2 className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <div className="w-full">
+                    <LogoutButton
+                      className="w-full justify-start px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                      redirectPath="/auth/login"
+                    />
                   </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No bookings found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="members" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Members</CardTitle>
-                <CardDescription>Manage member accounts and memberships</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {members.length > 0 ? (
-                  <div className="space-y-4">
-                    {members.map((member) => (
-                      <div key={member.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{member.name}</h4>
-                            <p className="text-sm text-muted-foreground">{member.email}</p>
-                            <div className="flex items-center gap-2 mt-2 text-sm">
-                              <Badge variant="outline">{member.membershipType}</Badge>
-                              <Badge 
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+
+        {/* Main content */}
+        <main className="p-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Staff Dashboard</h1>
+            <p className="text-muted-foreground">Manage members, bookings, and resources</p>
+          </div>
+
+          <div className="mt-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+              <TabsList>
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="bookings">Bookings</TabsTrigger>
+                <TabsTrigger value="members">Members</TabsTrigger>
+                <TabsTrigger value="resources">Resources</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-4">
+                <div className="grid gap-6 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ActivitySquare className="h-5 w-5" />
+                        Recent Activity
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {recentBookings.length > 0 ? (
+                        <div className="space-y-4">
+                          {recentBookings.slice(0, 5).map((booking) => (
+                            <div key={booking.id} className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{booking.memberName}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.resourceName} • {booking.startTime} - {booking.endTime}
+                                </p>
+                              </div>
+                              <Badge
                                 variant={
-                                  member.status === "active" ? "default" :
-                                  member.status === "inactive" ? "secondary" : "destructive"
+                                  booking.status === "confirmed" ? "default" :
+                                  booking.status === "completed" ? "secondary" :
+                                  booking.status === "pending" ? "outline" : "destructive"
                                 }
                               >
-                                {member.status}
+                                {booking.status}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground text-sm">No recent activity</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Quick Actions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button
+                        className="w-full"
+                        onClick={() => setShowAddMemberDialog(true)}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add New Member
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowCreateBookingDialog(true)}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Create Booking
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => setShowManageResourcesDialog(true)}
+                      >
+                        <Settings2 className="h-4 w-4 mr-2" />
+                        Manage Resources
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="bookings" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Bookings</CardTitle>
+                    <CardDescription>Manage and monitor member bookings</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {recentBookings.length > 0 ? (
+                      <div className="space-y-4">
+                        {recentBookings.map((booking) => (
+                          <div key={booking.id} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{booking.memberName}</h4>
+                                <p className="text-sm text-muted-foreground">{booking.memberEmail}</p>
+                                <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground flex-wrap">
+                                  <span>{booking.resourceName}</span>
+                                  <span>•</span>
+                                  <span>{booking.date}</span>
+                                  <span>•</span>
+                                  <span>{booking.startTime} - {booking.endTime}</span>
+                                </div>
+                              </div>
+                              <Badge
+                                variant={
+                                  booking.status === "confirmed" ? "default" :
+                                  booking.status === "completed" ? "secondary" :
+                                  booking.status === "pending" ? "outline" : "destructive"
+                                }
+                              >
+                                {booking.status}
                               </Badge>
                             </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No members found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="resources" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Resources</CardTitle>
-                <CardDescription>Manage available workspaces and resources</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {resources.length > 0 ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {resources.map((resource) => (
-                      <div key={resource.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{resource.name}</h4>
-                            <p className="text-sm text-muted-foreground capitalize">
-                              {resource.type.replace('_', ' ')}
-                            </p>
-                            <div className="mt-2 space-y-1 text-sm">
-                              <p>Capacity: {resource.capacity} person{resource.capacity !== 1 ? 's' : ''}</p>
-                              <p>Status: 
-                                <Badge 
-                                  variant={
-                                    resource.status === "available" ? "default" :
-                                    resource.status === "occupied" ? "secondary" :
-                                    resource.status === "reserved" ? "outline" : "destructive"
-                                  }
-                                  className="ml-2"
-                                >
-                                  {resource.status}
-                                </Badge>
-                              </p>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No bookings found</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="members" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Members</CardTitle>
+                    <CardDescription>Manage member accounts and memberships</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {members.length > 0 ? (
+                      <div className="space-y-4">
+                        {members.map((member) => (
+                          <div key={member.id} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{member.name}</h4>
+                                <p className="text-sm text-muted-foreground">{member.email}</p>
+                                <div className="flex items-center gap-2 mt-2 text-sm">
+                                  <Badge variant="outline">{member.membershipType}</Badge>
+                                  <Badge
+                                    variant={
+                                      member.status === "active" ? "default" :
+                                      member.status === "inactive" ? "secondary" : "destructive"
+                                    }
+                                  >
+                                    {member.status}
+                                  </Badge>
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground text-sm">No resources found</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No members found</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="resources" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Resources</CardTitle>
+                    <CardDescription>Manage available workspaces and resources</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {resources.length > 0 ? (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {resources.map((resource) => (
+                          <div key={resource.id} className="border rounded-lg p-4">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <h4 className="font-medium">{resource.name}</h4>
+                                <p className="text-sm text-muted-foreground capitalize">
+                                  {resource.type.replace('_', ' ')}
+                                </p>
+                                <div className="mt-2 space-y-1 text-sm">
+                                  <p>Capacity: {resource.capacity} person{resource.capacity !== 1 ? 's' : ''}</p>
+                                  <p>Status:
+                                    <Badge
+                                      variant={
+                                        resource.status === "available" ? "default" :
+                                        resource.status === "occupied" ? "secondary" :
+                                        resource.status === "reserved" ? "outline" : "destructive"
+                                      }
+                                      className="ml-2"
+                                    >
+                                      {resource.status}
+                                    </Badge>
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No resources found</p>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </main>
       </div>
       {dialogs}
     </ProtectedRoute>

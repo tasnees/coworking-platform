@@ -90,9 +90,85 @@ export async function GET() {
     });
 
     return NextResponse.json(formattedMembers);
+
   } catch (error) {
-    console.error('Error fetching members:', error);
-    return new NextResponse('Internal Error', { status: 500 });
+    console.error('Error fetching members for admin:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    // Check if user is admin
+    if (!session?.user?.role || session.user.role !== 'admin') {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    const data = await request.json();
+    const { memberId, action } = data;
+
+    if (!memberId || !action) {
+      return NextResponse.json(
+        { message: 'Member ID and action are required' },
+        { status: 400 }
+      );
+    }
+
+    // Find the member to approve
+    const member = await prisma.user.findUnique({
+      where: { id: memberId }
+    });
+
+    if (!member) {
+      return NextResponse.json(
+        { message: 'Member not found' },
+        { status: 404 }
+      );
+    }
+
+    if (member.status !== 'pending') {
+      return NextResponse.json(
+        { message: 'Member is not in pending status' },
+        { status: 400 }
+      );
+    }
+
+    // Update member status based on action
+    const newStatus = action === 'approve' ? 'active' : 'rejected';
+
+    const updatedMember = await prisma.user.update({
+      where: { id: memberId },
+      data: {
+        status: newStatus
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        status: true,
+        membershipType: true,
+        createdAt: true,
+        updatedAt: true
+      }
+    });
+
+    return NextResponse.json({
+      message: `Member ${action}d successfully`,
+      member: {
+        id: updatedMember.id,
+        name: updatedMember.name || 'No Name',
+        email: updatedMember.email || 'No Email',
+        status: updatedMember.status,
+        membershipType: updatedMember.membershipType || 'flex',
+        updatedAt: updatedMember.updatedAt.toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error updating member status:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 

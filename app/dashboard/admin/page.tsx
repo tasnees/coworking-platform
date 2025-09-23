@@ -8,6 +8,16 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { PrismaClient } from '@prisma/client'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { LogoutButton } from "@/components/auth/LogoutButton"
 
 const prisma = new PrismaClient()
 
@@ -210,162 +220,189 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's what's happening at your coworking space today.</p>
-      </div>
-      
-      {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <Card key={index} className="min-w-0">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium truncate">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold truncate">{stat.value}</div>
-              <p className="text-xs text-muted-foreground truncate">
-                <span className={stat.changeType === "positive" ? "text-green-600" : "text-red-600"}>
-                  {stat.change}
-                </span>{" "}
-                from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <header className="bg-white shadow-sm border-b">
+        <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold text-primary">OmniSpace</h1>
+            <Badge variant="secondary" className="ml-2 text-xs">
+              ADMIN
+            </Badge>
+          </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - 2/3 width on large screens */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Recent Bookings */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Recent Bookings</CardTitle>
-              <CardDescription>Latest space reservations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentBookings.length > 0 ? (
-                  recentBookings.map((booking) => (
-                    <div key={`booking-${booking.id}`} className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">{booking.member}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {booking.resource} • {booking.time}
-                        </p>
+          <div className="flex items-center gap-x-4">
+            <Button variant="ghost" size="sm" aria-label="Notifications">
+              <BarChart className="h-5 w-5" />
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="relative h-8 w-8 rounded-full"
+                  aria-label="User menu"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src="/placeholder-user.jpg"
+                      alt="Admin User"
+                    />
+                    <AvatarFallback>AU</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      Admin User
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      admin@omnispaces.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push('/dashboard/admin/settings')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="w-full">
+                  <LogoutButton
+                    className="w-full justify-start px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                    redirectPath="/auth/login"
+                  />
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content */}
+      <main className="p-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Manage your coworking space operations</p>
+        </div>
+
+        <div className="mt-6">
+          {/* Stats Grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {stats.map((stat, index) => (
+              <Card key={index}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">
+                    <span className={stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}>
+                      {stat.change}
+                    </span>
+                    {' '}from last month
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid gap-6 mt-6 md:grid-cols-2">
+            {/* Recent Bookings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Bookings</CardTitle>
+                <CardDescription>Latest booking activity</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {recentBookings.map((booking, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium">{booking.member}</p>
+                        <p className="text-sm text-muted-foreground">{booking.resource}</p>
                       </div>
-                      <Badge variant={booking.status === "active" ? "default" : "secondary"}>
+                      <Badge
+                        variant={
+                          booking.status === 'active' ? 'default' :
+                          booking.status === 'upcoming' ? 'secondary' : 'outline'
+                        }
+                      >
                         {booking.status}
                       </Badge>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">No recent bookings found</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Space Utilization */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Space Utilization</CardTitle>
-              <CardDescription>Real-time occupancy status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {spaceStatus.map((space) => (
-                  <div key={`space-${space.name.replace(/\s+/g, '-').toLowerCase()}`} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{space.name}</span>
-                      <span className="text-muted-foreground">
-                        {space.occupied}/{space.total}
-                      </span>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Space Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Space Status</CardTitle>
+                <CardDescription>Current utilization</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {spaceStatus.map((space, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>{space.name}</span>
+                        <span>{space.occupied}/{space.total}</span>
+                      </div>
+                      <Progress
+                        value={(space.occupied / space.total) * 100}
+                        className="h-2"
+                      />
                     </div>
-                    <Progress value={(space.occupied / space.total) * 100} className="h-2" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {/* Right Column - 1/3 width on large screens */}
-        <div className="space-y-6">
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Manage your coworking space efficiently</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Button asChild className="h-20 flex-col gap-1.5 p-2">
-                  <Link href="/dashboard/admin/floorplan" className="flex flex-col items-center justify-center">
-                    <MapPin className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">View Floor Plan</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/hours" className="flex flex-col items-center justify-center">
-                    <Clock className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">Manage Hours</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/wifi" className="flex flex-col items-center justify-center">
-                    <Wifi className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">WiFi Settings</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/amenities" className="flex flex-col items-center justify-center">
-                    <Coffee className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">Amenities</span>
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          
-          {/* Additional Tools */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Additional Tools</CardTitle>
-              <CardDescription>Access more administrative tools</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/analytics" className="flex flex-col items-center justify-center">
-                    <BarChart className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">Analytics</span>
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" className="h-20 flex-col gap-1.5 p-2 bg-transparent">
-                  <Link href="/dashboard/admin/settings" className="flex flex-col items-center justify-center">
-                    <Settings className="h-5 w-5 mb-1" />
-                    <span className="text-xs text-center leading-tight">Settings</span>
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common administrative tasks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Button asChild className="h-20 flex-col">
+                    <Link href="/dashboard/admin/members">
+                      <Users className="h-6 w-6 mb-2" />
+                      Manage Members
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-20 flex-col">
+                    <Link href="/dashboard/admin/bookings">
+                      <Calendar className="h-6 w-6 mb-2" />
+                      View Bookings
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-20 flex-col">
+                    <Link href="/dashboard/admin/analytics">
+                      <BarChart className="h-6 w-6 mb-2" />
+                      Analytics
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="h-20 flex-col">
+                    <Link href="/dashboard/admin/settings">
+                      <Settings className="h-6 w-6 mb-2" />
+                      Settings
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-      
-      {/* Logout Button */}
-      <div className="flex justify-end pt-2">
-        <Button variant="outline" onClick={handleLogout} className="w-full sm:w-auto">
-          <LogOut className="h-4 w-4 mr-1" />
-          Sign Out
-        </Button>
-      </div>
+      </main>
     </div>
-  )
+  );
 }
