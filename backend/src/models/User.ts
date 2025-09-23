@@ -227,8 +227,9 @@ userSchema.set('toJSON', {
 export const User = mongoose.model<IUser>('User', userSchema);
 
 // Export the IUserDocument type for use in other files
-export type IUserDocument = Document<unknown, Record<string, unknown>, IUser> & 
+export type IUserDocument = Document<unknown, Record<string, unknown>, IUser> &
   Omit<IUser, keyof Document> & {
+    _id: mongoose.Types.ObjectId;
     comparePassword(candidatePassword: string): Promise<boolean>;
     matchPassword(candidatePassword: string): Promise<boolean>;
     getSignedJwtToken(): string;

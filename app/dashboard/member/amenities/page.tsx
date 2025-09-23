@@ -1,10 +1,10 @@
-"use client"
+"use client";
+
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import DashboardLayout from "@/components/dashboard-layout"
 import {
   Coffee,
   Printer,
@@ -249,11 +249,9 @@ export default function AmenitiesPage() {
   // Show loading state during SSR or while loading
   if (!isClient || isLoading) {
     return (
-      <DashboardLayout userRole="member">
-        <div className="flex h-screen w-full items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
-        </div>
-      </DashboardLayout>
+      <div className="flex h-screen w-full items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
@@ -262,293 +260,291 @@ export default function AmenitiesPage() {
   const displayMaintenance = clientSideMaintenance || [];
 
   return (
-    <DashboardLayout userRole="member">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Amenities</h1>
-          <p className="text-muted-foreground">
-            Explore all the amenities available to you as a member. Check their status, upcoming maintenance, and usage trends.
-          </p>
-        </div>
-        {/* Overview Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Amenities</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{displayAmenities.length}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-green-600">+2</span> from last month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Operational</CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {displayAmenities.filter(a => a.status === "operational").length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {displayAmenities.length > 0 
-                  ? `${Math.round((displayAmenities.filter(a => a.status === "operational").length / displayAmenities.length) * 100)}% of total amenities`
-                  : 'No amenities available'}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Under Maintenance</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {displayAmenities.filter(a => a.status === "maintenance").length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {displayAmenities.length > 0 
-                  ? `${Math.round((displayAmenities.filter(a => a.status === "maintenance").length / displayAmenities.length) * 100)}% of total amenities`
-                  : 'No amenities available'}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Scheduled Maintenance</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {displayMaintenance.filter(m => m.status === "scheduled").length}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {displayMaintenance.length > 0 
-                  ? `Next: ${displayMaintenance.find(m => m.status === "scheduled")?.date || "N/A"}`
-                  : 'No scheduled maintenance'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-            <TabsTrigger value="usage">Usage Statistics</TabsTrigger>
-          </TabsList>
-          {/* Overview Tab */}
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {displayAmenities.map((amenity) => {
-                const StatusIcon = getStatusIcon(amenity.status)
-                return (
-                  <Card key={amenity.id} className="overflow-hidden">
-                    <CardHeader className="pb-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <div className="rounded-full bg-primary/10 p-2">
-                            <amenity.icon className="h-5 w-5 text-primary" />
-                          </div>
-                          <CardTitle className="text-base">{amenity.name}</CardTitle>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Amenities</h1>
+        <p className="text-muted-foreground">
+          Explore all the amenities available to you as a member. Check their status, upcoming maintenance, and usage trends.
+        </p>
+      </div>
+      {/* Overview Stats */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Amenities</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{displayAmenities.length}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className="text-green-600">+2</span> from last month
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Operational</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {displayAmenities.filter(a => a.status === "operational").length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {displayAmenities.length > 0 
+                ? `${Math.round((displayAmenities.filter(a => a.status === "operational").length / displayAmenities.length) * 100)}% of total amenities`
+                : 'No amenities available'}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Under Maintenance</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {displayAmenities.filter(a => a.status === "maintenance").length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {displayAmenities.length > 0 
+                ? `${Math.round((displayAmenities.filter(a => a.status === "maintenance").length / displayAmenities.length) * 100)}% of total amenities`
+                : 'No amenities available'}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Scheduled Maintenance</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {displayMaintenance.filter(m => m.status === "scheduled").length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {displayMaintenance.length > 0 
+                ? `Next: ${displayMaintenance.find(m => m.status === "scheduled")?.date || "N/A"}`
+                : 'No scheduled maintenance'}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+          <TabsTrigger value="usage">Usage Statistics</TabsTrigger>
+        </TabsList>
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {displayAmenities.map((amenity) => {
+              const StatusIcon = getStatusIcon(amenity.status)
+              return (
+                <Card key={amenity.id} className="overflow-hidden">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full bg-primary/10 p-2">
+                          <amenity.icon className="h-5 w-5 text-primary" />
                         </div>
-                        <Badge variant={getStatusColor(amenity.status)}>
-                          <StatusIcon className="mr-1 h-3 w-3" />
-                          {amenity.status === "operational"
-                            ? "Operational"
-                            : amenity.status === "maintenance"
-                            ? "Maintenance"
-                            : "Out of Order"}
+                        <CardTitle className="text-base">{amenity.name}</CardTitle>
+                      </div>
+                      <Badge variant={getStatusColor(amenity.status)}>
+                        <StatusIcon className="mr-1 h-3 w-3" />
+                        {amenity.status === "operational"
+                          ? "Operational"
+                          : amenity.status === "maintenance"
+                          ? "Maintenance"
+                          : "Out of Order"}
+                      </Badge>
+                    </div>
+                    <CardDescription>{amenity.description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-2">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Category:</span> {amenity.category}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Location:</span> {amenity.location}
+                      </div>
+                      {amenity.lastMaintenance && (
+                        <div>
+                          <span className="text-muted-foreground">Last Maintenance:</span> {amenity.lastMaintenance}
+                        </div>
+                      )}
+                      {amenity.nextMaintenance && (
+                        <div>
+                          <span className="text-muted-foreground">Next Maintenance:</span> {amenity.nextMaintenance}
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        </TabsContent>
+        {/* Maintenance Tab */}
+        <TabsContent value="maintenance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance Schedule</CardTitle>
+              <CardDescription>Upcoming and past maintenance for amenities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {displayMaintenance.map((maintenance) => (
+                  <div key={maintenance.id} className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{maintenance.amenity}</p>
+                        <Badge variant={getMaintenanceStatusColor(maintenance.status)}>
+                          {maintenance.status}
                         </Badge>
                       </div>
-                      <CardDescription>{amenity.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <span className="text-muted-foreground">Category:</span> {amenity.category}
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Location:</span> {amenity.location}
-                        </div>
-                        {amenity.lastMaintenance && (
-                          <div>
-                            <span className="text-muted-foreground">Last Maintenance:</span> {amenity.lastMaintenance}
-                          </div>
-                        )}
-                        {amenity.nextMaintenance && (
-                          <div>
-                            <span className="text-muted-foreground">Next Maintenance:</span> {amenity.nextMaintenance}
-                          </div>
-                        )}
+                      <p className="text-sm text-muted-foreground">
+                        {maintenance.date} • {maintenance.type} • {maintenance.technician}
+                      </p>
+                      <p className="text-sm text-muted-foreground">{maintenance.notes}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Maintenance Alerts</CardTitle>
+              <CardDescription>Amenities that require attention</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 text-yellow-600" />
+                    <div>
+                      <h4 className="font-medium text-yellow-800">Conference Displays</h4>
+                      <p className="text-sm text-yellow-700">
+                        Currently under maintenance. Scheduled repair: July 25, 2025
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <div className="flex items-start gap-2">
+                    <Clock className="mt-0.5 h-4 w-4 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium text-blue-800">Coffee Machine</h4>
+                      <p className="text-sm text-blue-700">
+                        Regular maintenance due in 23 days (August 15, 2025)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <div className="flex items-start gap-2">
+                    <Clock className="mt-0.5 h-4 w-4 text-blue-600" />
+                    <div>
+                      <h4 className="font-medium text-blue-800">High-Speed WiFi</h4>
+                      <p className="text-sm text-blue-700">
+                        Regular maintenance due in 18 days (August 10, 2025)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        {/* Usage Statistics Tab */}
+        <TabsContent value="usage" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Amenity Usage Statistics</CardTitle>
+              <CardDescription>Track usage patterns for your amenities</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {amenities.map((amenity) => (
+                  <div key={amenity.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <amenity.icon className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="font-medium">{amenity.name}</h3>
                       </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </div>
-          </TabsContent>
-          {/* Maintenance Tab */}
-          <TabsContent value="maintenance" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Maintenance Schedule</CardTitle>
-                <CardDescription>Upcoming and past maintenance for amenities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {displayMaintenance.map((maintenance) => (
-                    <div key={maintenance.id} className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-primary/10">
+                          <BarChart className="mr-1 h-3 w-3" />
+                          {amenity.usageStats.daily} uses/day
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{maintenance.amenity}</p>
-                          <Badge variant={getMaintenanceStatusColor(maintenance.status)}>
-                            {maintenance.status}
-                          </Badge>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Daily</span>
+                          <span>{amenity.usageStats.daily} uses</span>
                         </div>
+                        <Progress value={(amenity.usageStats.daily / 150) * 100} className="h-2" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Weekly</span>
+                          <span>{amenity.usageStats.weekly} uses</span>
+                        </div>
+                        <Progress value={(amenity.usageStats.weekly / 1000) * 100} className="h-2" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Monthly</span>
+                          <span>{amenity.usageStats.monthly} uses</span>
+                        </div>
+                        <Progress value={(amenity.usageStats.monthly / 4000) * 100} className="h-2" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Most Popular Amenities</CardTitle>
+              <CardDescription>Ranked by daily usage</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {[...amenities]
+                  .sort((a, b) => b.usageStats.daily - a.usageStats.daily)
+                  .slice(0, 5)
+                  .map((amenity, index) => (
+                    <div key={amenity.id} className="flex items-center justify-between rounded-lg border p-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{amenity.name}</p>
+                          <p className="text-sm text-muted-foreground">{amenity.category}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{amenity.usageStats.daily} uses/day</p>
                         <p className="text-sm text-muted-foreground">
-                          {maintenance.date} • {maintenance.type} • {maintenance.technician}
+                          {amenity.usageStats.monthly} uses/month
                         </p>
-                        <p className="text-sm text-muted-foreground">{maintenance.notes}</p>
                       </div>
                     </div>
                   ))}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Maintenance Alerts</CardTitle>
-                <CardDescription>Amenities that require attention</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                    <div className="flex items-start gap-2">
-                      <AlertTriangle className="mt-0.5 h-4 w-4 text-yellow-600" />
-                      <div>
-                        <h4 className="font-medium text-yellow-800">Conference Displays</h4>
-                        <p className="text-sm text-yellow-700">
-                          Currently under maintenance. Scheduled repair: July 25, 2025
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <div className="flex items-start gap-2">
-                      <Clock className="mt-0.5 h-4 w-4 text-blue-600" />
-                      <div>
-                        <h4 className="font-medium text-blue-800">Coffee Machine</h4>
-                        <p className="text-sm text-blue-700">
-                          Regular maintenance due in 23 days (August 15, 2025)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <div className="flex items-start gap-2">
-                      <Clock className="mt-0.5 h-4 w-4 text-blue-600" />
-                      <div>
-                        <h4 className="font-medium text-blue-800">High-Speed WiFi</h4>
-                        <p className="text-sm text-blue-700">
-                          Regular maintenance due in 18 days (August 10, 2025)
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          {/* Usage Statistics Tab */}
-          <TabsContent value="usage" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Amenity Usage Statistics</CardTitle>
-                <CardDescription>Track usage patterns for your amenities</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {amenities.map((amenity) => (
-                    <div key={amenity.id} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <amenity.icon className="h-4 w-4 text-muted-foreground" />
-                          <h3 className="font-medium">{amenity.name}</h3>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-primary/10">
-                            <BarChart className="mr-1 h-3 w-3" />
-                            {amenity.usageStats.daily} uses/day
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Daily</span>
-                            <span>{amenity.usageStats.daily} uses</span>
-                          </div>
-                          <Progress value={(amenity.usageStats.daily / 150) * 100} className="h-2" />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Weekly</span>
-                            <span>{amenity.usageStats.weekly} uses</span>
-                          </div>
-                          <Progress value={(amenity.usageStats.weekly / 1000) * 100} className="h-2" />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Monthly</span>
-                            <span>{amenity.usageStats.monthly} uses</span>
-                          </div>
-                          <Progress value={(amenity.usageStats.monthly / 4000) * 100} className="h-2" />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle>Most Popular Amenities</CardTitle>
-                <CardDescription>Ranked by daily usage</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[...amenities]
-                    .sort((a, b) => b.usageStats.daily - a.usageStats.daily)
-                    .slice(0, 5)
-                    .map((amenity, index) => (
-                      <div key={amenity.id} className="flex items-center justify-between rounded-lg border p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-medium">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <p className="font-medium">{amenity.name}</p>
-                            <p className="text-sm text-muted-foreground">{amenity.category}</p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{amenity.usageStats.daily} uses/day</p>
-                          <p className="text-sm text-muted-foreground">
-                            {amenity.usageStats.monthly} uses/month
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }

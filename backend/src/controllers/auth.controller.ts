@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { Types } from 'mongoose';
 import { User, IUserDocument } from '../models/User';
 import { generateToken, generateRefreshToken } from '../utils/tokens';
 import { logger } from '../utils/logger';
@@ -144,11 +143,7 @@ export const authController = {
         throw new Error('Invalid credentials');
       }
 
-      // 5. Update last login timestamp
-      user.lastLogin = new Date();
-      await user.save();
-
-      // 6. Generate tokens
+      // 6. Generate tokens (user is guaranteed to have _id at this point) 
       const token = generateToken(user);
       const refreshToken = generateRefreshToken(user);
 
@@ -156,7 +151,7 @@ export const authController = {
 
       // Create response with proper typing for user fields
       const userResponse = {
-        id: (user._id as any).toString(),
+        id: user._id.toString(),
         email: user.email,
         role: user.role as Role,
         ...(user.firstName && { firstName: user.firstName }),
@@ -201,7 +196,7 @@ export const authController = {
       const newRefreshToken = generateRefreshToken(user);
 
       const userResponse = {
-        id: (user._id as any).toString(),
+        id: user._id.toString(),
         email: user.email,
         role: user.role as Role,
         ...(user.firstName && { firstName: user.firstName }),
