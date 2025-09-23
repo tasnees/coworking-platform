@@ -1,6 +1,33 @@
+"use client";
+
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
 export default function Home() {
+  const { data: session, status } = useSession();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [lastLogin, setLastLogin] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      setIsAuthenticated(true);
+    } else if (status === 'unauthenticated') {
+      setIsAuthenticated(false);
+      setLastLogin(null);
+    }
+  }, [session, status]);
+
+  const handleLastLoginClick = () => {
+    if (isAuthenticated) {
+      // If authenticated, redirect to dashboard
+      window.location.href = '/dashboard';
+    } else {
+      // If not authenticated, redirect to login
+      window.location.href = '/auth/login';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -10,15 +37,23 @@ export default function Home() {
             <div className="text-2xl font-bold">OmniSpace</div>
             <div className="flex items-center space-x-4">
               <span className="text-sm bg-blue-500 px-3 py-1 rounded-full">Beta</span>
-              <span className="text-sm">Last Login</span>
-              <Link 
-                href="/auth/login" 
+              <button
+                onClick={handleLastLoginClick}
+                className="text-sm font-medium hover:underline cursor-pointer transition-colors"
+                title={isAuthenticated ? "Go to Dashboard" : "Sign In"}
+                disabled={status === 'loading'}
+              >
+                {status === 'loading' ? 'Loading...' :
+                 isAuthenticated ? 'Dashboard' : 'Last Login'}
+              </button>
+              <Link
+                href="/auth/login"
                 className="text-sm font-medium hover:underline"
               >
                 Sign In
               </Link>
-              <Link 
-                href="/auth/register" 
+              <Link
+                href="/auth/register"
                 className="bg-white text-blue-600 px-4 py-2 rounded-md font-medium hover:bg-gray-100"
               >
                 Get Started
@@ -36,8 +71,8 @@ export default function Home() {
             Streamline your coworking space with our comprehensive platform. From smart bookings to AI-powered insights, manage everything in one place while delivering an exceptional member experience.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link 
-              href="/auth/register" 
+            <Link
+              href="/auth/register"
               className="bg-white text-blue-600 px-8 py-3 rounded-md font-medium text-lg hover:bg-gray-100"
             >
               Start Free Trial
