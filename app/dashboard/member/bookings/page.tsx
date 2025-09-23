@@ -34,6 +34,7 @@ interface Booking {
 }
 export default function BookingsPage(): JSX.Element {
   const [isClient, setIsClient] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState("all")
   const [filterType, setFilterType] = useState("all")
@@ -66,96 +67,36 @@ export default function BookingsPage(): JSX.Element {
   }, [])
   // Load bookings on component mount
   useEffect(() => {
-    // In a real app, you would fetch this from your API
-    const loadBookings = async () => {
-      try {
-        // Mock data - replace with actual API call
-        const mockCurrentBookings: Booking[] = [
-          {
-            id: 1,
-            resource: "Desk A-12",
-            type: "desk",
-            date: "2024-01-28",
-            startTime: "09:00",
-            endTime: "17:00",
-            status: "confirmed",
-            notes: "Near the window",
-            cost: 25
-          },
-          {
-            id: 2,
-            resource: "Meeting Room B",
-            type: "meeting-room",
-            date: "2024-01-30",
-            startTime: "14:00",
-            endTime: "16:00",
-            status: "pending",
-            attendees: 6,
-            notes: "Team planning session",
-            cost: 80
-          },
-          {
-            id: 3,
-            resource: "Phone Booth 3",
-            type: "phone-booth",
-            date: new Date().toISOString().split('T')[0],
-            startTime: "10:30",
-            endTime: "11:30",
-            status: "confirmed",
-            notes: "Client call",
-            cost: 15
-          }
-        ]
-        
-        const mockBookingHistory: Booking[] = [
-          {
-            id: 4,
-            resource: "Desk C-05",
-            type: "desk",
-            date: "2024-01-20",
-            startTime: "09:00",
-            endTime: "17:00",
-            status: "completed",
-            cost: 25
-          },
-          {
-            id: 5,
-            resource: "Meeting Room A",
-            type: "meeting-room",
-            date: "2024-01-18",
-            startTime: "13:00",
-            endTime: "15:00",
-            status: "completed",
-            attendees: 4,
-            cost: 60
-          },
-          {
-            id: 6,
-            resource: "Event Space",
-            type: "event-space",
-            date: "2024-01-15",
-            startTime: "18:00",
-            endTime: "22:00",
-            status: "cancelled",
-            attendees: 20,
-            cost: 200
-          }
-        ]
-        
-        setCurrentBookings(mockCurrentBookings)
-        setBookingHistory(mockBookingHistory)
-      } catch (error) {
-        console.error('Error loading bookings:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load bookings. Please try again.",
-          variant: "destructive"
-        })
-      }
-    }
-    
     loadBookings()
   }, [])
+
+  const loadBookings = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/bookings/user')
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch bookings')
+      }
+
+      const bookings = await response.json()
+      setCurrentBookings(bookings.filter((b: Booking) =>
+        new Date(b.startTime) >= new Date() && b.status !== 'completed'
+      ))
+      setBookingHistory(bookings.filter((b: Booking) =>
+        new Date(b.startTime) < new Date() || b.status === 'completed'
+      ))
+    } catch (error) {
+      console.error('Error loading bookings:', error)
+      toast({
+        title: "Error",
+        description: "Failed to load bookings. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "confirmed":
@@ -300,38 +241,37 @@ export default function BookingsPage(): JSX.Element {
       })
       return
     }
-    
+
     setIsSaving(true)
-    
+
     try {
-      // In a real app, you would make an API call here
-      // const response = await fetch('/api/bookings', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(newBooking)
-      // })
-      // const data = await response.json()
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Create new booking with mock ID
-      const createdBooking: Booking = {
-        id: Math.max(0, ...currentBookings.map(b => b.id), ...bookingHistory.map(b => b.id)) + 1,
-        resource: newBooking.resource || "",
-        type: newBooking.type || "desk",
-        date: newBooking.date || "",
-        startTime: newBooking.startTime || "",
-        endTime: newBooking.endTime || "",
-        status: "pending",
-        attendees: newBooking.attendees,
-        notes: newBooking.notes,
-        cost: newBooking.cost || 0
+      // Create datetime strings for the API
+      const startDateTime = `${newBooking.date}T${newBooking.startTime}:00`
+      const endDateTime = `${newBooking.date}T${newBooking.endTime}:00`
+
+      const response = await fetch('/api/bookings/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resourceId: newBooking.resource, // Using resource name as ID for now
+          resourceName: newBooking.resource,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          notes: newBooking.notes,
+          attendees: newBooking.attendees || 1
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create booking')
       }
-      
-      // Update local state
-      setCurrentBookings(prev => [createdBooking, ...prev])
-      
+
+      const createdBooking = await response.json()
+
+      // Reload bookings to get the updated list
+      await loadBookings()
+
       // Reset form
       setNewBooking({
         resource: "",
@@ -343,9 +283,9 @@ export default function BookingsPage(): JSX.Element {
         cost: 0,
         notes: ""
       })
-      
+
       setIsNewBookingOpen(false)
-      
+
       toast({
         title: "Success",
         description: "Booking has been created successfully and is pending confirmation."
@@ -354,7 +294,7 @@ export default function BookingsPage(): JSX.Element {
       console.error('Error creating booking:', error)
       toast({
         title: "Error",
-        description: "Failed to create booking. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create booking. Please try again.",
         variant: "destructive"
       })
     } finally {
