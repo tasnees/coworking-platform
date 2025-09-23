@@ -68,7 +68,7 @@ export async function GET() {
     });
 
     // Transform the data to match the frontend's expected format
-    const formattedMembers = members.map((member: UserWithMembership): MemberResponse => {
+    const formattedMembers = members.map((member): MemberResponse => {
       const createdAt = member.createdAt instanceof Date ? member.createdAt : new Date(member.createdAt);
       const lastLogin = member.lastLogin ? (member.lastLogin instanceof Date ? member.lastLogin : new Date(member.lastLogin)) : null;
       const membershipEndDate = member.membershipEndDate ? (member.membershipEndDate instanceof Date ? member.membershipEndDate : new Date(member.membershipEndDate)) : null;

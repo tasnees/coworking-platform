@@ -68,6 +68,8 @@ interface TableBodyProps {
 
 interface TableRowProps {
   children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
 }
 
 interface TableHeadProps {
@@ -191,8 +193,11 @@ const TableBody = ({ children }: TableBodyProps) => (
   </tbody>
 );
 
-const TableRow = ({ children }: TableRowProps) => (
-  <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+const TableRow = ({ children, className = "", onClick }: TableRowProps) => (
+  <tr 
+    className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${className}`}
+    onClick={onClick}
+  >
     {children}
   </tr>
 );
