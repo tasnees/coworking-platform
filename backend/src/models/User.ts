@@ -12,7 +12,7 @@ export interface IUser extends Document {
   password: string;
   phone?: string;
   avatar?: string;
-  role: 'member' | 'staff' | 'admin';
+  role: 'MEMBER' | 'STAFF' | 'ADMIN';
   membershipType?: string;
   membershipStatus?: 'active' | 'inactive' | 'suspended';
   tokenVersion: number;
@@ -51,8 +51,7 @@ const userSchema = new Schema<IUser>({
   firstName: {
     type: String,
     required: [true, 'First name is required'],
-    trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    trim: true
   },
   lastName: {
     type: String,
@@ -70,8 +69,8 @@ const userSchema = new Schema<IUser>({
   password: {
     type: String,
     required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters'],
-    select: false
+    minlength: [6, 'Password must be at least 6 characters long'],
+    select: false 
   },
   phone: {
     type: String,
@@ -83,8 +82,8 @@ const userSchema = new Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ['member', 'staff', 'admin'],
-    default: 'member'
+    enum: ['MEMBER', 'STAFF', 'ADMIN'],
+    default: 'MEMBER'
   },
   membershipType: {
     type: String,

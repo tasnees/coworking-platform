@@ -3,7 +3,7 @@
 import { useState, type ReactNode, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { useUser, UserButton, useAuth } from '@clerk/nextjs'
+import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -40,77 +40,74 @@ const navigation: NavigationItem[] = [
     name: 'Dashboard', 
     href: (role) => `/dashboard/${role}`, 
     icon: LayoutDashboard, 
-    roles: ['admin', 'staff', 'member'] 
+    roles: ['ADMIN', 'STAFF', 'MEMBER'] 
   },
   { 
     name: 'Bookings', 
     href: (role) => `/dashboard/${role}/bookings`, 
     icon: Calendar, 
-    roles: ['admin', 'staff', 'member'] 
+    roles: ['ADMIN', 'STAFF', 'MEMBER'] 
   },
   { 
     name: 'Members', 
     href: (role) => `/dashboard/${role}/members`, 
     icon: Users, 
-    roles: ['admin', 'staff'] 
+    roles: ['ADMIN', 'STAFF'] 
   },
   { 
     name: 'Memberships', 
     href: (role) => `/dashboard/${role}/memberships`, 
     icon: CreditCard, 
-    roles: ['admin', 'staff', 'member'] 
+    roles: ['ADMIN', 'STAFF', 'MEMBER'] 
   },
   { 
     name: 'Check-In', 
     href: (role) => `/dashboard/${role}/checkin`, 
     icon: QrCode, 
-    roles: ['admin', 'staff', 'member'] 
+    roles: ['ADMIN', 'STAFF', 'MEMBER'] 
   },
   { 
     name: 'Analytics', 
     href: (role) => `/dashboard/${role}/analytics`, 
     icon: BarChart3, 
-    roles: ['admin'] 
+    roles: ['ADMIN'] 
   },
   { 
     name: 'Settings', 
     href: (role) => `/dashboard/${role}/settings`, 
     icon: Settings, 
-    roles: ['admin', 'staff', 'member'] 
+    roles: ['ADMIN', 'STAFF', 'MEMBER'] 
   },
 ]
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  userRole?: 'admin' | 'staff' | 'member';
+  userRole?: 'ADMIN' | 'STAFF' | 'MEMBER';
 }
 
 export default function DashboardLayout({ children, userRole: initialUserRole }: DashboardLayoutProps) {
-  const { user, isLoaded } = useUser()
+  const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  
-  // Use the provided userRole prop or fall back to the one from useUser
-  const userRole = initialUserRole || (user?.publicMetadata?.role as 'admin' | 'staff' | 'member') || 'member'
-  
+
+  // Use the provided userRole prop or fall back to the one from session
+  const userRole = initialUserRole || (session?.user as any)?.role || 'MEMBER'
+
   const handleSignOut = async () => {
     try {
-      const response = await fetch('/api/auth/signout', { method: 'POST' });
-      if (response.ok) {
-        window.location.href = '/auth/sign-in';
-      }
+      await signOut({ callbackUrl: '/auth/signin' });
     } catch (error) {
       console.error('Error signing out:', error);
-      window.location.href = '/auth/sign-in';
+      window.location.href = '/auth/signin';
     }
   };
 
-  const [activeRole, setActiveRole] = useState<'admin' | 'staff' | 'member'>(userRole || 'member');
+  const [activeRole, setActiveRole] = useState<'ADMIN' | 'STAFF' | 'MEMBER'>(userRole || 'MEMBER');
   const pathname = usePathname();
   const router = useRouter();
-  
+
   // Use provided userRole or extract from pathname
-  const role = userRole || (pathname?.split('/')[2] as 'admin' | 'staff' | 'member') || 'member';
-  
+  const role = userRole || (pathname?.split('/')[2] as 'ADMIN' | 'STAFF' | 'MEMBER') || 'MEMBER';
+
   useEffect(() => {
     if (userRole) {
       setActiveRole(userRole)
@@ -119,19 +116,21 @@ export default function DashboardLayout({ children, userRole: initialUserRole }:
 
   // Check if current path is active
   const isActive = (href: (role: string) => string) => {
-    return pathname === href(role as 'admin' | 'staff' | 'member');
+    return pathname === href(role as 'ADMIN' | 'STAFF' | 'MEMBER');
   }
 
   // Handle authentication state
   useEffect(() => {
-    if (isLoaded && !user) {
+    if (status === 'loading') return; // Still loading
+
+    if (status === 'unauthenticated') {
       const callbackUrl = encodeURIComponent(window.location.pathname + window.location.search);
-      router.push(`/auth/sign-in?redirect_url=${callbackUrl}`);
+      router.push(`/auth/signin?redirect_url=${callbackUrl}`);
     }
-  }, [user, isLoaded, router]);
+  }, [status, router]);
 
   // Show loading state while checking auth or if not mounted
-  if (!isLoaded) {
+  if (status === 'loading') {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
@@ -139,9 +138,14 @@ export default function DashboardLayout({ children, userRole: initialUserRole }:
     );
   }
 
+  // Redirect to signin if not authenticated
+  if (status === 'unauthenticated') {
+    return null;
+  }
+
   // Filter navigation items based on user role
-  const filteredNavItems = navigation.filter(item => 
-    item.roles.includes(role as 'admin' | 'staff' | 'member')
+  const filteredNavItems = navigation.filter(item =>
+    item.roles.includes(role as 'ADMIN' | 'STAFF' | 'MEMBER')
   )
   
   const renderNavItems = () => {
@@ -198,7 +202,7 @@ export default function DashboardLayout({ children, userRole: initialUserRole }:
           <div className="flex h-16 items-center border-b px-4">
             <h1 className="text-xl font-bold text-primary">OmniSpace</h1>
             <Badge variant="secondary" className="ml-2 text-xs">
-              {role.toUpperCase()}
+              {role}
             </Badge>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
@@ -231,16 +235,14 @@ export default function DashboardLayout({ children, userRole: initialUserRole }:
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <div className="flex items-center">
-                    <UserButton 
-                      afterSignOutUrl="/"
-                      appearance={{
-                        elements: {
-                          avatarBox: 'h-8 w-8',
-                        },
-                      }}
-                    />
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={session?.user?.image || ''} alt={session?.user?.name || 'User'} />
+                      <AvatarFallback>
+                        {session?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="ml-2 text-sm font-medium text-gray-700">
-                      {user?.fullName || 'User'}
+                      {session?.user?.name || 'User'}
                     </span>
                   </div>
                 </DropdownMenuTrigger>
@@ -248,17 +250,17 @@ export default function DashboardLayout({ children, userRole: initialUserRole }:
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user?.fullName || 'User'}
+                        {session?.user?.name || 'User'}
                       </p>
-                      {user?.primaryEmailAddress?.emailAddress && (
+                      {session?.user?.email && (
                         <p className="text-xs leading-none text-muted-foreground">
-                          {user.primaryEmailAddress.emailAddress}
+                          {session.user.email}
                         </p>
                       )}
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-red-600 cursor-pointer"
                     onClick={handleSignOut}
                   >

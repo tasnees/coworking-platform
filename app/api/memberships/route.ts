@@ -205,11 +205,8 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     
     // Check if user is admin
-    if (!session?.user || (session.user as any)?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
     
     // Parse request body

@@ -15,11 +15,8 @@ export async function POST(request: Request) {
   try {
     // Verify admin authentication
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const data = await request.json();
@@ -158,11 +155,8 @@ export async function GET(request: Request) {
   try {
     // Verify admin authentication
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);

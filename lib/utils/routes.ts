@@ -1,17 +1,17 @@
 // lib/utils/routes.ts
 
-type UserRole = 'admin' | 'staff' | 'member';
+type UserRole = 'ADMIN' | 'STAFF' | 'MEMBER';
 
 /**
  * Returns the dashboard path based on user role
  */
 export function getDashboardPath(role: UserRole): string {
   switch (role) {
-    case 'admin':
+    case 'ADMIN':
       return '/dashboard/admin';
-    case 'staff':
+    case 'STAFF':
       return '/dashboard/staff';
-    case 'member':
+    case 'MEMBER':
       return '/dashboard/member';
     default:
       return '/dashboard';

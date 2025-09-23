@@ -1,42 +1,45 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'staff' | 'member';
-  password: string;
-}
+import type { JWT } from 'next-auth/jwt';
+import type { UserRole } from '@/lib/auth-types';
+import type { User } from 'next-auth';
 
 interface Credentials {
   email: string;
   password: string;
 }
 
+interface MockUser {
+  id: string;
+  email: string;
+  name: string;
+  role: UserRole;
+  password: string;
+}
+
 // Mock users with hashed passwords
-const users: User[] = [
+const users: MockUser[] = [
   {
     id: "1",
     email: "admin@example.com",
     name: "Admin User",
     password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // admin123
-    role: "admin",
+    role: "ADMIN",
   },
   {
     id: "2",
     email: "staff@example.com",
     name: "Staff User",
     password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // staff123
-    role: "staff",
+    role: "STAFF",
   },
   {
     id: "3",
     email: "member@example.com",
     name: "Member User",
     password: "$2a$10$XKvT7y4Z4d2K8x8vH5k9uO9zY3x8vH5k9uO9zY3x8vH5k9uO9zY3x8v", // member123
-    role: "member",
+    role: "MEMBER",
   },
 ];
 
@@ -61,7 +64,7 @@ export const authOptions = {
             email: user.email,
             name: user.name,
             role: user.role,
-          };
+          } as User;
         }
         
         return null;
@@ -72,14 +75,14 @@ export const authOptions = {
     strategy: "jwt" as const,
   },
   callbacks: {
-    async jwt({ token, user }: { token: any; user?: any }) {
+    async jwt({ token, user }: { token: JWT; user?: any }) {
       if (user) {
         token.id = user.id;
         token.role = user.role;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: any }) {
+    async session({ session, token }: { session: any; token: JWT }) {
       if (token) {
         session.user.id = token.id;
         session.user.role = token.role;

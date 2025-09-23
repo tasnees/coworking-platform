@@ -20,7 +20,7 @@ export default function HomePage() {
     
     if (status === 'authenticated' && !isRedirecting && isClient) {
       setIsRedirecting(true)
-      const role = (session.user.role?.toLowerCase() as 'admin' | 'staff' | 'member') || 'member'
+      const role = (session.user.role as 'ADMIN' | 'STAFF' | 'MEMBER') || 'MEMBER'
       router.push(getDashboardPath(role))
     }
   }, [status, session, isRedirecting, router, isClient])

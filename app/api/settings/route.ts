@@ -45,8 +45,8 @@ export async function PATCH(request: NextRequest) {
     // Type assertion for session user with role
     const user = session.user as { id: string; role?: string };
     
-    if (user.role !== 'admin') {
-      return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const body = await request.json() as SettingsUpdateBody;

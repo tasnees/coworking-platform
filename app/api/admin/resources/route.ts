@@ -9,8 +9,8 @@ export async function GET() {
   try {
     // Check if user is authenticated and has admin role
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'admin') {
-      return new NextResponse(JSON.stringify({ message: 'Unauthorized' }), { status: 401 });
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const resources = await prisma.resource.findMany({
@@ -33,8 +33,8 @@ export async function POST(request: Request) {
   try {
     // Check if user is authenticated and has admin role
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'admin') {
-      return new NextResponse(JSON.stringify({ message: 'Unauthorized' }), { status: 401 });
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
     const data = await request.json();

@@ -12,7 +12,7 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
     
     // Check if user is admin
-    if (!session?.user?.role || session.user.role !== 'admin') {
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 

@@ -1,44 +1,51 @@
-import { authMiddleware } from '@clerk/nextjs';
+import { withAuth } from "next-auth/middleware"
 import { NextResponse } from 'next/server';
 
-// This example protects all routes including api/trpc routes
-// Please edit this to allow other routes to be public as needed.
-// See https://clerk.com/docs/references/nextjs/auth-middleware for more information about configuring your middleware
-export default authMiddleware({
-  publicRoutes: [
-    '/',
-    '/home',
-    '/api/webhook',
-    '/api/trpc(.*)',
-    '/auth/sign-in(.*)',
-    '/auth/sign-up(.*)',
-    '/auth/forgot-password(.*)',
-    '/auth/reset-password(.*)',
-  ],
-  ignoredRoutes: [
-    '/api/webhook',
-    '/api/trpc(.*)',
-  ],
-  afterAuth(auth, req) {
-    const { userId, sessionClaims } = auth;
-    const { pathname } = req.nextUrl;
+export default withAuth(
+  function middleware(req) {
+    const token = req.nextauth.token;
+    const isAuth = !!token;
+    const isAuthPage = req.nextUrl.pathname.startsWith('/auth');
 
-    // If the user is not signed in and the route is private, redirect to sign-in
-    if (!userId && !auth.isPublicRoute) {
-      const signInUrl = new URL('/auth/sign-in', req.url);
-      signInUrl.searchParams.set('redirect_url', req.url);
-      return NextResponse.redirect(signInUrl);
+    // If user is not authenticated and trying to access protected route
+    if (!isAuth && !isAuthPage && req.nextUrl.pathname.startsWith('/dashboard')) {
+      let from = req.nextUrl.pathname;
+      if (req.nextUrl.search) {
+        from += req.nextUrl.search;
+      }
+
+      return NextResponse.redirect(
+        new URL(`/auth/signin?from=${encodeURIComponent(from)}`, req.url)
+      );
     }
 
-    // If the user is signed in and the route is protected, let them view
-    if (userId && !auth.isPublicRoute) {
-      return NextResponse.next();
+    // If user is authenticated and trying to access auth pages, redirect to dashboard
+    if (isAuth && isAuthPage) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
     }
-
-    // Allow users visiting public routes to access them
-    return NextResponse.next();
   },
-});
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
+
+        // Public routes that don't require authentication
+        if (pathname.startsWith('/auth') || pathname === '/' || pathname.startsWith('/api/auth')) {
+          return true;
+        }
+
+        // Protected routes require authentication
+        if (pathname.startsWith('/dashboard')) {
+          return !!token;
+        }
+
+        return true;
+      },
+    },
+  }
+)
 
 export const config = {
   matcher: [

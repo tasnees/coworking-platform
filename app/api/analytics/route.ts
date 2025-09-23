@@ -17,7 +17,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     
     // Check if user is admin
-    if (!session?.user?.role || session.user.role !== 'admin') {
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -28,13 +28,13 @@ export async function GET() {
 
     // Fetch total members
     const totalMembers = await prisma.user.count({
-      where: { role: 'member' }
+      where: { role: 'MEMBER' }
     });
 
     // Fetch new members this month
     const newMembersThisMonth = await prisma.user.count({
       where: {
-        role: 'member',
+        role: 'MEMBER',
         createdAt: { gte: currentMonthStart }
       }
     });
@@ -126,16 +126,15 @@ export async function GET() {
 
     const membersAtStart = await prisma.user.count({
       where: {
-        role: 'member',
+        role: 'MEMBER',
         createdAt: { lte: startOfLastMonth }
       }
     });
 
     const membersAtEnd = await prisma.user.count({
       where: {
-        role: 'member',
-        createdAt: { lte: endOfLastMonth },
-        status: { not: 'cancelled' }
+        role: 'MEMBER',
+        createdAt: { lte: endOfLastMonth }
       }
     });
 

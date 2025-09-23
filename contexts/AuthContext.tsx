@@ -2,8 +2,7 @@
 
 import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useUser, useClerk, useSession } from '@clerk/nextjs'
-import type { User as ClerkUser } from '@clerk/nextjs/server'
+import { useSession, signOut } from 'next-auth/react'
 import { UserRole } from '@/lib/auth-types'
 
 // User type that matches our NextAuth session user
@@ -27,29 +26,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { isLoaded: isUserLoaded, user } = useUser()
-  const { isLoaded: isSessionLoaded, session } = useSession()
-  const { signOut: clerkSignOut } = useClerk()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const [isMounted, setIsMounted] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     setIsMounted(true)
-    if (isUserLoaded && isSessionLoaded) {
-      setIsLoading(false)
-    }
-  }, [isUserLoaded, isSessionLoaded])
+  }, [])
 
   const login = async (email: string, password: string) => {
-    // This will be handled by Clerk's sign-in page
-    return { error: 'Use Clerk sign-in component instead' }
+    // This will be handled by NextAuth sign-in page
+    return { error: 'Use NextAuth sign-in page instead' }
   }
 
   const logout = async () => {
     try {
-      await clerkSignOut()
-      router.push('/auth/sign-in')
+      await signOut({ callbackUrl: '/auth/signin' })
     } catch (error) {
       console.error('Logout error:', error)
     }
@@ -60,20 +52,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null
   }
 
-  const clerkUser = user ? {
-    id: user.id,
-    name: user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-    email: user.primaryEmailAddress?.emailAddress || '',
-    image: user.imageUrl,
-    role: (user.unsafeMetadata?.role as UserRole) || 'member',
+  const user = session?.user ? {
+    id: (session.user as any).id || '',
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image,
+    role: (session.user as any).role || 'MEMBER',
   } : null
 
   const value = {
-    user: clerkUser,
+    user,
     login,
     logout,
-    isLoading: !isUserLoaded || !isSessionLoaded || !isMounted,
-    isAuthenticated: !!user && isMounted,
+    isLoading: status === 'loading',
+    isAuthenticated: status === 'authenticated',
   }
 
   return (
@@ -85,38 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-  
+
   // If we're on the server, return a default context
   if (context === null) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
-  
-  // Get Clerk's auth state directly
-  const { isLoaded: isUserLoaded, user } = useUser()
-  const { isLoaded: isSessionLoaded } = useSession()
-  const { signOut: clerkSignOut } = useClerk()
-  const router = useRouter()
-  
-  // If we have Clerk's auth state, use it to keep the context in sync
-  useEffect(() => {
-    if (isUserLoaded && isSessionLoaded && user) {
-      // The context will be updated by the AuthProvider
-      // This effect just ensures we have the latest auth state
-    }
-  }, [isUserLoaded, isSessionLoaded, user])
-  
-  // Return the context with Clerk's auth state
-  return {
-    ...context,
-    // Override logout to use Clerk's signOut
-    logout: async () => {
-      await clerkSignOut()
-      router.push('/auth/sign-in')
-    },
-    // Keep the rest of the context
-    user: context.user,
-    login: context.login,
-    isLoading: context.isLoading,
-    isAuthenticated: context.isAuthenticated
-  }
+
+  return context
 }

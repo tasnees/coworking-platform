@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import { Request as ExpressRequest, Response, NextFunction, ParamsDictionary } from 'express-serve-static-core';
 
 // Define Role type
-export type Role = 'member' | 'staff' | 'admin';
+export type Role = 'MEMBER' | 'STAFF' | 'ADMIN';
 
 // Define IUserDocument interface
 export interface IUserDocument extends Document {
@@ -61,8 +61,9 @@ const checkRole = (requiredRole: Role) => {
 };
 
 // Role-based middleware
-export const isAdmin = checkRole('admin');
-export const isStaff = checkRole('staff');
+export const isAdmin = checkRole('ADMIN');
+export const isStaff = checkRole('STAFF');
+export const isMember = checkRole('MEMBER');
 
 // Ownership middleware with proper typing
 export const isOwner = <T extends ResourceWithUser>(

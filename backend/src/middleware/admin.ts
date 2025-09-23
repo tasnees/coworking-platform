@@ -24,10 +24,12 @@ class ForbiddenError extends Error {
   }
 }
 
-export const adminMiddleware: RequestHandler = (req, _res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
-    const error = new ForbiddenError('Admin access required');
-    return next(error);
+export const adminMiddleware: RequestHandler = (req, res, next) => {
+  if (!req.user?.role || req.user.role !== 'ADMIN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Admin access required'
+    });
   }
   next();
 };

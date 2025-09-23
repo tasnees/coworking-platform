@@ -44,7 +44,7 @@ export async function GET() {
     const session = await getServerSession(authOptions);
     
     // Check if user is admin
-    if (!session?.user?.role || session.user.role !== 'admin') {
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -52,7 +52,7 @@ export async function GET() {
     const members = await prisma.user.findMany({
       where: {
         role: {
-          not: 'admin'
+          not: 'ADMIN'
         }
       },
       select: {
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     
     // Check if user is admin
-    if (!session?.user?.role || session.user.role !== 'admin') {
+    if (!session?.user?.role || session.user.role !== 'ADMIN') {
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       name, 
       email, 
       password,
-      role = 'member',
+      role = 'MEMBER',
       phone = '', 
       membershipType = 'flex', 
       status = 'active',
@@ -126,9 +126,9 @@ export async function POST(request: Request) {
     } = data;
 
     // Validate role
-    if (!['member', 'staff'].includes(role)) {
+    if (!['MEMBER', 'STAFF'].includes(role)) {
       return NextResponse.json(
-        { message: 'Invalid role. Must be either "member" or "staff"' },
+        { message: 'Invalid role. Must be either "MEMBER" or "STAFF"' },
         { status: 400 }
       );
     }

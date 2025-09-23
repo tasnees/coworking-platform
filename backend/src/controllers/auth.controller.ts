@@ -1,10 +1,12 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { Types } from 'mongoose';
 import { User, IUserDocument } from '../models/User';
-import { generateToken, generateRefreshToken } from '../utils/tokens';
+import { generateToken, generateRefreshToken, TokenUser } from '../utils/jwt';
 import { logger } from '../utils/logger';
-import { Role } from '../middleware/roles';
 import { verify, JwtPayload } from 'jsonwebtoken';
+
+// Define Role type locally to avoid import issues
+type Role = 'MEMBER' | 'STAFF' | 'ADMIN';
 
 export interface AuthResponse {
   success: boolean;
@@ -92,7 +94,8 @@ export const authController = {
         throw new Error('User creation failed - missing _id');
       }
 
-      const token = generateToken(user);
+      const tokens = generateToken(user);
+      const token = tokens.accessToken;
       const refreshToken = generateRefreshToken(user);
 
       return {
@@ -148,9 +151,17 @@ export const authController = {
       user.lastLogin = new Date();
       await user.save();
 
-      // 6. Generate tokens
-      const token = generateToken(user);
-      const refreshToken = generateRefreshToken(user);
+      // 6. Generate tokens with required fields
+      const userForTokens: TokenUser = {
+        _id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        tokenVersion: user.tokenVersion || 0
+      };
+      
+      const tokens = generateToken(userForTokens);
+      const token = tokens.accessToken;
+      const refreshToken = generateRefreshToken(userForTokens);
 
       logger.info(`Successful login for user: ${email}`);
 
@@ -197,8 +208,15 @@ export const authController = {
         throw new Error('User not found');
       }
 
-      const token = generateToken(user);
-      const newRefreshToken = generateRefreshToken(user);
+      const userForTokens: TokenUser = {
+        _id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        tokenVersion: user.tokenVersion || 0
+      };
+      const tokens = generateToken(userForTokens);
+      const token = tokens.accessToken;
+      const newRefreshToken = generateRefreshToken(userForTokens);
 
       const userResponse = {
         id: user._id.toString(),
