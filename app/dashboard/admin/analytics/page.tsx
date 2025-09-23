@@ -20,11 +20,11 @@ export default function AnalyticsPage() {
     peakHour: "",
     churnRate: 0,
   });
-  // Mock trend data for the graph
+  // State for trend data
   const [trendData, setTrendData] = useState({
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-    checkins: [62, 70, 89, 74, 80, 65, 55],
-    revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
+    labels: [] as string[],
+    checkins: [] as number[],
+    revenue: [] as number[],
   });
   // Dynamically import Chart.js and Line component on client side only
   const [Line, setLine] = useState<any>(null);
@@ -49,27 +49,34 @@ export default function AnalyticsPage() {
         setIsLoading(false);
       }
     };
-    // Simulate fetching real data
+    // Fetch real analytics data
     const fetchAnalyticsData = async () => {
       try {
         setIsLoading(true);
-        // Simulate API delay
-        await new Promise((res) => setTimeout(res, 500));
+        const response = await fetch('/api/admin/analytics');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch analytics data');
+        }
+        
+        const data = await response.json();
+        
         setStats({
-          totalMembers: 236,
-          newMembersThisMonth: 18,
-          totalRevenue: 21500,
-          revenueChange: 7.2,
-          occupancyRate: 82,
-          avgDailyCheckins: 74,
-          peakDay: "Wednesday",
-          peakHour: "2:00 PM",
-          churnRate: 2.1,
+          totalMembers: data.stats.totalMembers,
+          newMembersThisMonth: data.stats.newMembersThisMonth,
+          totalRevenue: data.stats.totalRevenue,
+          revenueChange: data.stats.revenueChange,
+          occupancyRate: data.stats.occupancyRate,
+          avgDailyCheckins: data.stats.avgDailyCheckins,
+          peakDay: data.stats.peakDay,
+          peakHour: data.stats.peakHour,
+          churnRate: data.stats.churnRate,
         });
+        
         setTrendData({
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-          checkins: [62, 70, 89, 74, 80, 65, 55],
-          revenue: [2800, 3200, 4100, 3500, 3900, 3100, 2900],
+          labels: data.trendData.labels,
+          checkins: data.trendData.checkins,
+          revenue: data.trendData.revenue,
         });
       } catch (err) {
         console.error('Error fetching analytics data:', err);
@@ -120,11 +127,11 @@ export default function AnalyticsPage() {
   }
   // Chart.js data and options
   const lineData = {
-    labels: trendData.labels,
+    labels: trendData.labels.length > 0 ? trendData.labels : ['Loading...'],
     datasets: [
       {
         label: "Check-ins",
-        data: trendData.checkins,
+        data: trendData.checkins.length > 0 ? trendData.checkins : [0],
         borderColor: "#6366f1",
         backgroundColor: "rgba(99,102,241,0.1)",
         tension: 0.4,
@@ -132,7 +139,7 @@ export default function AnalyticsPage() {
       },
       {
         label: "Revenue ($)",
-        data: trendData.revenue,
+        data: trendData.revenue.length > 0 ? trendData.revenue : [0],
         borderColor: "#22c55e",
         backgroundColor: "rgba(34,197,94,0.1)",
         tension: 0.4,
@@ -197,7 +204,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Total Revenue</CardTitle>
-            <CardDescription>This month</CardDescription>
+            <CardDescription>This month (${stats.totalRevenue.toLocaleString()})</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">

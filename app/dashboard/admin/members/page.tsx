@@ -160,6 +160,22 @@ export default function AdminMembersPage() {
     }
   }, []);
 
+  // Update filtered members when search term changes
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredMembers(members);
+      return;
+    }
+
+    const lowercasedSearch = searchTerm.toLowerCase();
+    const filtered = members.filter(member => 
+      (member.name?.toLowerCase().includes(lowercasedSearch) || 
+       member.email?.toLowerCase().includes(lowercasedSearch))
+    );
+    
+    setFilteredMembers(filtered);
+  }, [searchTerm, members]);
+
   // Initial data fetch
   useEffect(() => {
     fetchMembers();
@@ -177,13 +193,40 @@ export default function AdminMembersPage() {
         body: JSON.stringify({ status: newStatus }),
       });
 
-      if (!response.ok) throw new Error('Failed to update member status');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update member status');
+      }
       
       // Update the local state
       setMembers(prevMembers => 
         prevMembers.map(member => 
           member.id === memberId 
-            ? { ...member, status: newStatus, membership: newStatus } 
+            ? { 
+                ...member, 
+                status: newStatus, 
+                membership: newStatus,
+                // If status is cancelled, update membership end date
+                ...(newStatus === 'cancelled' && { 
+                  membershipEndDate: new Date().toISOString() 
+                })
+              } 
+            : member
+        )
+      );
+      
+      // Also update filtered members
+      setFilteredMembers(prev => 
+        prev.map(member => 
+          member.id === memberId 
+            ? { 
+                ...member, 
+                status: newStatus, 
+                membership: newStatus,
+                ...(newStatus === 'cancelled' && { 
+                  membershipEndDate: new Date().toISOString() 
+                })
+              } 
             : member
         )
       );
@@ -191,7 +234,7 @@ export default function AdminMembersPage() {
       toast.success(`Member status updated to ${newStatus}`);
     } catch (error) {
       console.error('Error updating member status:', error);
-      toast.error('Failed to update member status');
+      toast.error(error instanceof Error ? error.message : 'Failed to update member status');
     } finally {
       setUpdatingMemberId(null);
     }
@@ -271,11 +314,15 @@ export default function AdminMembersPage() {
   const confirmDelete = async () => {
     if (!memberToDelete) return;
     try {
+      setUpdatingMemberId(memberToDelete.id);
       const response = await fetch(`/api/admin/members/${memberToDelete.id}`, {
         method: 'DELETE',
       });
       
-      if (!response.ok) throw new Error('Failed to delete member');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete member');
+      }
       
       // Update local state
       setMembers(prev => prev.filter(m => m.id !== memberToDelete.id));
@@ -284,10 +331,11 @@ export default function AdminMembersPage() {
       toast.success('Member deleted successfully');
     } catch (error) {
       console.error('Error deleting member:', error);
-      toast.error('Failed to delete member');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete member');
     } finally {
       setIsDeleteDialogOpen(false);
       setMemberToDelete(null);
+      setUpdatingMemberId(null);
     }
   };
 
@@ -494,7 +542,7 @@ export default function AdminMembersPage() {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search members..."
+                placeholder="Search by name or email..."
                 className="w-full pl-8"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
