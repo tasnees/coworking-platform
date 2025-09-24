@@ -191,20 +191,20 @@ export default function BookingsPage() {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle dialog open
-  const handleDialogOpen = (open: boolean) => {
-    setOpen(open);
-    if (!open) {
-      // Reset form when dialog closes
-      setFormData({
-        resource: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        startTime: '09:00',
-        endTime: '10:00',
-        notes: ''
-      });
-      setFormErrors({});
-      setRequestSent(false);
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+
+    // Clear error when field is edited
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
   };
 
