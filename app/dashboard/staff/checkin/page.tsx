@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { format, isToday } from "date-fns";
-import { Check, User, Clock, QrCode, X, Search, Loader2 } from "lucide-react";
+import { Check, User, Clock, QrCode, X, Search, Loader2, UserCircle, MapPin, Mail, Phone, Calendar, CheckCircle2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 // Assuming DashboardLayout, Card, Table, and Button components are available
 // from a UI library like shadcn/ui.
@@ -246,6 +246,7 @@ interface Member {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   status: 'checkedIn' | 'checkedOut' | 'absent';
 }
 
@@ -257,11 +258,13 @@ const mockCheckInHistory: CheckInHistory[] = [
 ];
 
 const mockMembers: Member[] = [
-  { id: 'm1', name: 'John Doe', email: 'john.doe@example.com', status: 'checkedIn' },
-  { id: 'm2', name: 'Jane Smith', email: 'jane.smith@example.com', status: 'checkedIn' },
-  { id: 'm3', name: 'Peter Jones', email: 'peter.jones@example.com', status: 'checkedIn' },
-  { id: 'm4', name: 'Sarah Lee', email: 'sarah.lee@example.com', status: 'checkedOut' },
-  { id: 'm5', name: 'Michael Brown', email: 'michael.brown@example.com', status: 'checkedOut' },
+  { id: 'm1', name: 'John Doe', email: 'john.doe@example.com', phone: '+1-555-0123', status: 'checkedIn' },
+  { id: 'm2', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '+1-555-0124', status: 'checkedIn' },
+  { id: 'm3', name: 'Peter Jones', email: 'peter.jones@example.com', phone: '+1-555-0125', status: 'checkedIn' },
+  { id: 'm4', name: 'Sarah Lee', email: 'sarah.lee@example.com', phone: '+1-555-0126', status: 'checkedOut' },
+  { id: 'm5', name: 'Michael Brown', email: 'michael.brown@example.com', phone: '+1-555-0127', status: 'checkedOut' },
+  { id: 'm6', name: 'Emily Davis', email: 'emily.davis@example.com', phone: '+1-555-0128', status: 'absent' },
+  { id: 'm7', name: 'David Wilson', email: 'david.wilson@example.com', phone: '+1-555-0129', status: 'absent' },
 ];
 
 // Helper function to safely get array length
@@ -270,7 +273,7 @@ const getSafeLength = (arr: any[] | undefined): number => {
 }
 
 export default function StaffCheckinPage() {
-  const [checkedInToday, setCheckedInToday] = useState<CheckInHistory[]>([]);
+  const [checkedInToday, setCheckedInToday] = useState<any[]>([]);
   const [totalCheckins, setTotalCheckins] = useState(0);
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState<Member[]>([]);
@@ -278,9 +281,12 @@ export default function StaffCheckinPage() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [showManualCheckin, setShowManualCheckin] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [memberToCheckin, setMemberToCheckin] = useState<Member | null>(null);
+  const [showCheckinConfirmation, setShowCheckinConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -294,27 +300,57 @@ export default function StaffCheckinPage() {
     // Only run on client side
     setIsClient(true);
     setCurrentTime(new Date());
-    
+
     // This effect runs on the client after the component mounts
     setLoading(true);
-    
+
     // Simulate fetching data
-    const loadData = () => {
+    const loadData = async () => {
       try {
-        // In a real app, you would fetch this data from an API
-        setMembers(mockMembers);
-        
-        // Filter check-ins for today
-        const todayCheckins = mockCheckInHistory.filter(item => {
-          if (!currentTime) return false;
-          const checkInDate = new Date(item.timestamp);
-          return isToday(checkInDate);
+        // Fetch members from API
+        const membersResponse = await fetch('/api/users');
+        if (!membersResponse.ok) throw new Error('Failed to fetch members');
+        const membersData = await membersResponse.json();
+
+        // Transform members data
+        const transformedMembers: Member[] = membersData.map((user: any) => ({
+          id: user.id,
+          name: user.name || 'Unknown',
+          email: user.email || 'No email',
+          phone: user.phone,
+          status: 'absent' as const // Default status, will be updated based on check-ins
+        }));
+
+        setMembers(transformedMembers);
+
+        // Fetch active check-ins
+        const checkinsResponse = await fetch('/api/checkins?status=active');
+        if (!checkinsResponse.ok) throw new Error('Failed to fetch check-ins');
+        const checkinsData = await checkinsResponse.json();
+
+        // Transform check-ins data
+        const transformedCheckins = checkinsData.map((checkin: any) => ({
+          id: checkin.id,
+          memberId: checkin.userId,
+          memberName: checkin.user.name,
+          timestamp: checkin.checkInTime,
+          location: checkin.location || 'Main Desk',
+          status: checkin.status
+        }));
+
+        setCheckedInToday(transformedCheckins);
+        setTotalCheckins(transformedCheckins.length);
+
+        // Update member statuses based on check-ins
+        const updatedMembers = transformedMembers.map(member => {
+          const hasActiveCheckin = transformedCheckins.some(checkin => checkin.memberId === member.id);
+          return hasActiveCheckin ? { ...member, status: 'checkedIn' as const } : member;
         });
-        
-        setCheckedInToday(todayCheckins);
-        setTotalCheckins(todayCheckins.length);
+
+        setMembers(updatedMembers);
       } catch (error) {
         console.error("Error loading check-in data:", error);
+        toast.error("Failed to load data from server");
       } finally {
         setLoading(false);
       }
@@ -355,35 +391,104 @@ export default function StaffCheckinPage() {
   const handleManualCheckin = async (member: Member) => {
     try {
       setIsProcessing(true);
-      // In a real app, you would make an API call here
-      // await fetch(`/api/members/${member.id}/checkin`, { method: 'POST' });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
+      // Create check-in via API
+      const response = await fetch('/api/checkins', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: member.id,
+          location: 'Manual Check-in',
+          notes: `Manual check-in by staff`
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create check-in');
+      }
+
+      const newCheckin = await response.json();
+
       // Update local state
-      const updatedMembers = members.map(m => 
+      const updatedMembers = members.map(m =>
         m.id === member.id ? { ...m, status: 'checkedIn' as const } : m
       );
       setMembers(updatedMembers);
-      
+
       // Add to check-in history
-      const newCheckin: CheckInHistory = {
-        id: `checkin-${Date.now()}`,
+      const checkinData = {
+        id: newCheckin.id,
         memberId: member.id,
         memberName: member.name,
-        timestamp: new Date().toISOString(),
-        location: 'Manual Check-in'
+        timestamp: newCheckin.checkInTime,
+        location: newCheckin.location || 'Manual Check-in',
+        status: newCheckin.status
       };
-      
-      setCheckedInToday(prev => [newCheckin, ...prev]);
+
+      setCheckedInToday(prev => [checkinData, ...prev]);
       setTotalCheckins(prev => prev + 1);
-      
+
       toast.success(`Successfully checked in ${member.name}`);
       setShowManualCheckin(false);
     } catch (error) {
       console.error('Error during check-in:', error);
-      toast.error('Failed to process check-in');
+      toast.error(error instanceof Error ? error.message : 'Failed to process check-in');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const confirmCheckin = (member: Member) => {
+    setMemberToCheckin(member);
+    setShowCheckinConfirmation(true);
+  };
+
+  const handleCheckout = async (member: Member) => {
+    try {
+      setIsProcessing(true);
+
+      // Find the active check-in for this member
+      const activeCheckin = checkedInToday.find(checkin => checkin.memberId === member.id && checkin.status === 'active');
+
+      if (!activeCheckin) {
+        toast.error('No active check-in found for this member');
+        return;
+      }
+
+      // Check out via API
+      const response = await fetch(`/api/checkins/${activeCheckin.id}/checkout`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location: 'Manual Check-out',
+          notes: `Manual check-out by staff`
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to check out');
+      }
+
+      // Update local state
+      const updatedMembers = members.map(m =>
+        m.id === member.id ? { ...m, status: 'checkedOut' as const } : m
+      );
+      setMembers(updatedMembers);
+
+      // Remove from active check-ins
+      setCheckedInToday(prev => prev.filter(checkin => checkin.id !== activeCheckin.id));
+      setTotalCheckins(prev => Math.max(0, prev - 1));
+
+      toast.success(`Successfully checked out ${member.name}`);
+    } catch (error) {
+      console.error('Error during check-out:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process check-out');
     } finally {
       setIsProcessing(false);
     }
@@ -394,10 +499,10 @@ export default function StaffCheckinPage() {
       setShowQRScanner(true);
       // In a real app, you would implement QR code scanning logic here
       // This is a simplified version
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
@@ -418,9 +523,10 @@ export default function StaffCheckinPage() {
   };
 
   const filteredMembers = searchQuery
-    ? members.filter(member => 
+    ? members.filter(member =>
         member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase())
+        member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (member.phone && member.phone.toLowerCase().includes(searchQuery.toLowerCase()))
       )
     : [];
 
@@ -572,9 +678,32 @@ export default function StaffCheckinPage() {
                       </TableCell>
                       <TableCell>{getStatusBadge(member.status)}</TableCell>
                       <TableCell className="text-right">
-                        <Button variant="outline" size="sm">
-                          View Profile
-                        </Button>
+                        <div className="flex gap-2 justify-end">
+                          {member.status === 'checkedIn' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCheckout(member)}
+                              disabled={isProcessing}
+                              className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            >
+                              {isProcessing && member.id === member.id ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Clock className="mr-2 h-4 w-4" />
+                              )}
+                              Check Out
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewProfile(member)}
+                            >
+                              View Profile
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -587,57 +716,289 @@ export default function StaffCheckinPage() {
 
       {/* Manual Check-in Dialog */}
       <Dialog open={showManualCheckin} onOpenChange={setShowManualCheckin}>
-        <div className="space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <input
-              placeholder="Search members by name or email..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="max-h-60 overflow-y-auto border rounded-md">
-            {searchQuery && filteredMembers.length > 0 ? (
-              <Table>
-                <TableBody>
+        <div className="max-w-2xl">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold">Manual Member Check-in</h2>
+              <p className="text-muted-foreground">
+                Search for a member and manually check them in to the coworking space.
+              </p>
+            </div>
+
+            {/* Search Section */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search members by name, email, or phone..."
+                className="w-full pl-10 pr-4 py-3 border border-input rounded-lg bg-background text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Members List */}
+            <div className="border rounded-lg max-h-96 overflow-y-auto">
+              {searchQuery && filteredMembers.length > 0 ? (
+                <div className="divide-y">
                   {filteredMembers.map((member) => (
-                    <TableRow 
-                      key={member.id} 
-                      className="cursor-pointer hover:bg-muted/50"
+                    <div
+                      key={member.id}
+                      className="p-4 hover:bg-muted/50 cursor-pointer transition-colors"
                       onClick={() => setSelectedMember(member)}
                     >
-                      <TableCell className="font-medium">{member.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{member.email}</TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleManualCheckin(member);
-                          }}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing && selectedMember?.id === member.id ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          ) : null}
-                          Check In
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          {/* Member Avatar */}
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center">
+                              <UserCircle className="w-6 h-6 text-primary" />
+                            </div>
+                          </div>
+
+                          {/* Member Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <h3 className="font-medium text-foreground truncate">{member.name}</h3>
+                              {getStatusBadge(member.status)}
+                            </div>
+                            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                              <div className="flex items-center space-x-1">
+                                <Mail className="w-3 h-3" />
+                                <span className="truncate">{member.email}</span>
+                              </div>
+                              {member.phone && (
+                                <div className="flex items-center space-x-1">
+                                  <Phone className="w-3 h-3" />
+                                  <span>{member.phone}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-1 mt-1 text-xs text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              <span>
+                                {member.status === 'checkedIn' ? 'Currently checked in' :
+                                 member.status === 'checkedOut' ? 'Checked out' : 'Not checked in today'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Check-in Button */}
+                        <div className="flex-shrink-0">
+                          <Button
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              confirmCheckin(member);
+                            }}
+                            disabled={isProcessing || member.status === 'checkedIn'}
+                            className="min-w-[100px]"
+                          >
+                            {isProcessing && selectedMember?.id === member.id ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Checking in...
+                              </>
+                            ) : member.status === 'checkedIn' ? (
+                              <>
+                                <CheckCircle2 className="mr-2 h-4 w-4" />
+                                Checked In
+                              </>
+                            ) : (
+                              <>
+                                <Check className="mr-2 h-4 w-4" />
+                                Check In
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </TableBody>
-              </Table>
-            ) : searchQuery ? (
-              <div className="p-4 text-center text-muted-foreground">
-                No members found
-              </div>
-            ) : (
-              <div className="p-4 text-center text-muted-foreground">
-                Start typing to search for members
+                </div>
+              ) : searchQuery ? (
+                <div className="p-8 text-center">
+                  <UserCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">No members found</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Try searching with a different name or email
+                  </p>
+                </div>
+              ) : (
+                <div className="p-8 text-center">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">Search for members</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Start typing to find members to check in
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowManualCheckin(false)}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Member Profile Dialog */}
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <div className="max-w-md">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Member Profile</h2>
+              <p className="text-muted-foreground">
+                View detailed information about this member.
+              </p>
+            </div>
+
+            {/* Member Details */}
+            {selectedMember && (
+              <div className="bg-muted/50 rounded-lg p-4 space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center">
+                    <UserCircle className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-lg">{selectedMember.name}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedMember.email}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Status:</span>
+                    {getStatusBadge(selectedMember.status)}
+                  </div>
+
+                  {selectedMember.phone && (
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{selectedMember.phone}</span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {selectedMember.status === 'checkedIn' ? 'Currently checked in' :
+                       selectedMember.status === 'checkedOut' ? 'Checked out' : 'Not checked in today'}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowProfileDialog(false)}
+              >
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  if (selectedMember) {
+                    confirmCheckin(selectedMember);
+                    setShowProfileDialog(false);
+                  }
+                }}
+                disabled={isProcessing || !selectedMember || selectedMember.status === 'checkedIn'}
+              >
+                {selectedMember?.status === 'checkedIn' ? (
+                  <>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Already Checked In
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Check In Member
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* Check-in Confirmation Dialog */}
+      <Dialog open={showCheckinConfirmation} onOpenChange={setShowCheckinConfirmation}>
+        <div className="max-w-md">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="space-y-2">
+              <h2 className="text-xl font-semibold">Confirm Check-in</h2>
+              <p className="text-muted-foreground">
+                Are you sure you want to check in this member?
+              </p>
+            </div>
+
+            {/* Member Details */}
+            {memberToCheckin && (
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center">
+                    <UserCircle className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium">{memberToCheckin.name}</h3>
+                    <p className="text-sm text-muted-foreground">{memberToCheckin.email}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Current Status:</span>
+                  {getStatusBadge(memberToCheckin.status)}
+                </div>
+
+                {memberToCheckin.phone && (
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <Phone className="w-3 h-3" />
+                    <span>{memberToCheckin.phone}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end space-x-3 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setShowCheckinConfirmation(false)}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={proceedWithCheckin}
+                disabled={isProcessing}
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Checking in...
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    Confirm Check-in
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </Dialog>
@@ -667,15 +1028,15 @@ export default function StaffCheckinPage() {
             Position the QR code within the frame to scan
           </div>
           <div className="flex justify-center gap-4 pt-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={stopQRScanner}
               className="flex-1"
             >
               <X className="mr-2 h-4 w-4" />
               Cancel
             </Button>
-            <Button 
+            <Button
               className="flex-1"
               disabled={isProcessing}
               onClick={() => {

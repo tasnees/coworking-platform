@@ -346,13 +346,26 @@ export default function StaffMembersPage() {
     }
   }
   const handleCreateMember = async () => {
+    console.log('🔄 Starting member creation process...');
+
     if (!formData.name || !formData.email) {
+      console.log('❌ Form validation failed - missing required fields');
       alert('Name and email are required');
       return;
     }
 
+    console.log('✅ Form validation passed, sending data:', {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      membershipType: formData.membershipType,
+      notes: formData.notes
+    });
+
     try {
       setIsLoading(true);
+      console.log('📡 Making POST request to /api/staff/members');
+
       const response = await fetch('/api/staff/members', {
         method: 'POST',
         headers: {
@@ -367,18 +380,24 @@ export default function StaffMembersPage() {
         }),
       });
 
+      console.log('📡 Response received:', { status: response.status, ok: response.ok });
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.log('❌ API error response:', errorData);
         throw new Error(errorData.message || 'Failed to create member');
       }
 
       const result = await response.json();
+      console.log('✅ Member created successfully:', result);
       alert(result.message);
 
       // Refresh the members list
+      console.log('🔄 Refreshing members list...');
       await fetchMembers();
 
       // Reset form
+      console.log('🧹 Resetting form and closing dialog');
       setShowCreateDialog(false);
       setFormData({
         name: "",
@@ -393,10 +412,11 @@ export default function StaffMembersPage() {
         notes: ""
       });
     } catch (error) {
-      console.error('Error creating member:', error);
+      console.error('❌ Error creating member:', error);
       alert(error instanceof Error ? error.message : 'An error occurred while creating the member');
     } finally {
       setIsLoading(false);
+      console.log('🏁 Member creation process completed');
     }
   };
   const handleEditMember = () => {

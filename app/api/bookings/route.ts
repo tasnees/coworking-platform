@@ -13,9 +13,9 @@ function calculateBookingPrice(start: Date, end: Date, rate: number): number {
 
 export async function POST(request: Request) {
   try {
-    // Verify admin authentication
+    // Verify admin or staff authentication
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
+    if (!session?.user || !['admin', 'staff'].includes(session.user.role)) {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -23,14 +23,14 @@ export async function POST(request: Request) {
     }
 
     const data = await request.json();
-    const { 
-      userId, 
-      resourceId, 
+    const {
+      userId,
+      resourceId,
       resourceName,
-      startTime, 
-      endTime, 
-      notes, 
-      status = 'confirmed' 
+      startTime,
+      endTime,
+      notes,
+      status = 'confirmed'
     } = data;
     
     // Validate required fields
@@ -156,9 +156,9 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    // Verify admin authentication
+    // Verify authentication
     const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
+    if (!session?.user) {
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -169,9 +169,12 @@ export async function GET(request: Request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
-    const where: any = {
-      status: { not: 'cancelled' },
-    };
+    const where: any = {};
+
+    // If user is not admin, only show their own bookings
+    if (session.user.role !== 'admin' && session.user.role !== 'staff') {
+      where.userId = session.user.id;
+    }
 
     if (startDate) {
       where.startTime = {
@@ -190,6 +193,7 @@ export async function GET(request: Request) {
       include: {
         user: {
           select: {
+            id: true,
             name: true,
             email: true,
           },

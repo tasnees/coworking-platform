@@ -43,8 +43,7 @@ export async function POST(request: Request) {
       resourceName,
       startTime,
       endTime,
-      notes,
-      attendees
+      notes
     } = data;
 
     // Validate required fields
@@ -116,7 +115,6 @@ export async function POST(request: Request) {
         endTime: new Date(endTime),
         status: 'pending', // User bookings start as pending, admin approval needed
         notes,
-        attendees: attendees || 1,
         price: 0, // Will be calculated by admin when approved
         paid: false
       },

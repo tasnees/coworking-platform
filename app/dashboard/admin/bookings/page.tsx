@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { format, addDays } from "date-fns"
+import { format } from "date-fns"
 // Import UI components
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,22 +10,26 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Calendar } from "@/components/ui/calendar"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import DashboardLayout from "@/components/dashboard-layout"
-import { CalendarDays, Clock, MapPin, Plus, Search, Loader2, RefreshCw } from "lucide-react"
+import {
+  CalendarDays,
+  Clock,
+  MapPin,
+  Search,
+  Loader2,
+  RefreshCw,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Users,
+  CheckSquare,
+  FileText
+} from "lucide-react"
 
 // Helper function to get badge variant based on status
 function getStatusColor(status: string) {
-  switch (status.toLowerCase()) {
+  switch (status?.toLowerCase()) {
     case 'confirmed':
       return 'default';
     case 'pending':
@@ -37,149 +41,116 @@ function getStatusColor(status: string) {
   }
 }
 
-// Main bookings page component with client-side rendering
-export default function BookingsPage() {
+// Main admin bookings page component
+export default function AdminBookingsPage() {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date())
+  const [resources] = useState([
+    { id: "507f1f77bcf86cd799439011", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
+    { id: "507f1f77bcf86cd799439012", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
+    { id: "507f1f77bcf86cd799439013", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
+    { id: "507f1f77bcf86cd799439014", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
+  ]);
   const router = useRouter();
-  const [viewMode, setViewMode] = useState("day")
-  // Form state
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
-    member: '',
-    resource: '',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    startTime: '09:00',
-    endTime: '10:00',
-    notes: ''
-  })
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({})
-  
+
   // Bookings data
-  const [bookings, setBookings] = useState<Array<{
+  const [allBookings, setAllBookings] = useState<Array<{
     id: string;
-    member: string;
-    resource: string;
-    type: string;
+    user: { name: string; email: string };
+    resourceName: string;
+    resourceType: string;
     startTime: string;
     endTime: string;
     status: string;
     date: string;
+    notes?: string;
+    price: number;
+    paid: boolean;
   }>>([]);
-  const [resources] = useState([
-    { id: "desk-a12", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
-    { id: "meeting-b", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
-    { id: "office-3", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
-    { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
-  ]);
-  
-  // State for members
-  const [members, setMembers] = useState<Array<{ id: string; name: string; email: string }>>([]);
-  
-  // Fetch members from API
-  useEffect(() => {
-    const fetchMembers = async () => {
-      try {
-        const response = await fetch('/api/users');
-        if (!response.ok) throw new Error('Failed to fetch members');
-        const data = await response.json();
-        setMembers(data);
-      } catch (error) {
-        console.error('Error fetching members:', error);
-        toast.error('Failed to load members');
-      }
-    };
-    
-    fetchMembers();
-  }, []);
+
+  const [pendingBookings, setPendingBookings] = useState<Array<{
+    id: string;
+    user: { name: string; email: string };
+    resourceName: string;
+    resourceType: string;
+    startTime: string;
+    endTime: string;
+    status: string;
+    date: string;
+    notes?: string;
+    price: number;
+    paid: boolean;
+  }>>([]);
+
+  // UI state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   // Load data on component mount
   useEffect(() => {
-    // This effect only runs on the client side
     setIsMounted(true);
-    
+
     const loadData = async () => {
       try {
         setIsLoading(true);
-        
-        // Fetch bookings
-        const [bookingsRes, resourcesRes] = await Promise.all([
-          fetch('/api/bookings'),
-          fetch('/api/resources') // Assuming you have an endpoint to fetch resources
-        ]);
-        
-        if (!bookingsRes.ok) throw new Error('Failed to fetch bookings');
-        if (!resourcesRes.ok) throw new Error('Failed to fetch resources');
-        
-        const [bookingsData, resourcesData] = await Promise.all([
-          bookingsRes.json(),
-          resourcesRes.json()
-        ]);
-        
-        // Transform bookings data to match the expected format
+
+        // Fetch all bookings for admin
+        const bookingsRes = await fetch('/api/bookings');
+
+        if (!bookingsRes.ok) {
+          if (bookingsRes.status === 401) {
+            router.push('/auth/login');
+            return;
+          }
+          throw new Error('Failed to fetch bookings');
+        }
+
+        const bookingsData = await bookingsRes.json();
+
+        // Transform bookings data
         const formattedBookings = bookingsData.map((booking: any) => ({
           id: booking.id,
-          member: booking.user?.name || 'Unknown',
-          resource: booking.resourceName || 'Unknown',
-          type: booking.resourceType || 'Unknown',
-          status: booking.status || 'confirmed',
+          user: booking.user || { name: 'Unknown', email: 'No email' },
+          resourceName: booking.resourceName || 'Unknown',
+          resourceType: booking.resourceType || 'Unknown',
+          status: booking.status || 'pending',
           date: new Date(booking.startTime).toISOString().split('T')[0],
           startTime: new Date(booking.startTime).toTimeString().slice(0, 5),
           endTime: new Date(booking.endTime).toTimeString().slice(0, 5),
+          notes: booking.notes,
+          price: booking.price || 0,
+          paid: booking.paid || false,
         }));
-        
-        setBookings(formattedBookings);
+
+        // Separate pending bookings from all bookings
+        const pending = formattedBookings.filter((b: any) => b.status === 'pending');
+        const all = formattedBookings;
+
+        setPendingBookings(pending);
+        setAllBookings(all);
         setError(null);
+
       } catch (err) {
         console.error('Error fetching data:', err);
-        // Fallback to mock data if API fails
-        const mockBookings = [
-          {
-            id: '1',
-            member: "John Doe",
-            resource: "Desk A-12",
-            type: "Hot Desk",
-            startTime: "09:00",
-            endTime: "17:00",
-            status: "confirmed",
-            date: new Date().toISOString().split('T')[0],
-          },
-          {
-            id: '2',
-            member: "Jane Smith",
-            resource: "Meeting Room B",
-            type: "Meeting Room",
-            startTime: "14:00",
-            endTime: "16:00",
-            status: "pending",
-            date: new Date().toISOString().split('T')[0],
-          },
-          {
-            id: '3',
-            member: "Mike Johnson",
-            resource: "Private Office 3",
-            type: "Private Office",
-            startTime: "10:00",
-            endTime: "18:00",
-            status: "confirmed",
-            date: new Date().toISOString().split('T')[0],
-          },
-        ];
-        setBookings(mockBookings);
-        toast.error('Using mock data. Could not connect to the server.');
+        toast.error('Failed to load bookings data');
+        setPendingBookings([]);
+        setAllBookings([]);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
-    
+
     // Cleanup function
     return () => {
       // Any cleanup if needed
     };
-  }, []);
+  }, [router]);
+
   // Don't render anything until the component is mounted on the client
   if (!isMounted) {
     return (
@@ -188,159 +159,92 @@ export default function BookingsPage() {
       </div>
     );
   }
-  // Form validation
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-    if (!formData.member) errors.member = 'Member is required';
-    if (!formData.resource) errors.resource = 'Resource is required';
-    if (!formData.date) errors.date = 'Date is required';
-    if (!formData.startTime) errors.startTime = 'Start time is required';
-    if (!formData.endTime) errors.endTime = 'End time is required';
-    
-    // Validate time range
-    if (formData.startTime && formData.endTime) {
-      const [startHour, startMinute] = formData.startTime.split(':').map(Number);
-      const [endHour, endMinute] = formData.endTime.split(':').map(Number);
-      
-      const startDate = new Date();
-      startDate.setHours(startHour, startMinute, 0, 0);
-      
-      const endDate = new Date();
-      endDate.setHours(endHour, endMinute, 0, 0);
-      
-      if (endDate <= startDate) {
-        errors.endTime = 'End time must be after start time';
-      }
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-  
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when field is edited
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-  
-  // Handle form submission
-  const handleCreateBooking = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
+
+  // Handle booking approval
+  const handleApproveBooking = async (bookingId: string) => {
     try {
-      // Validate form
-      const errors: Record<string, string> = {};
-      if (!formData.member) errors.member = 'Member is required';
-      if (!formData.resource) errors.resource = 'Resource is required';
-      if (!formData.date) errors.date = 'Date is required';
-      if (!formData.startTime) errors.startTime = 'Start time is required';
-      if (!formData.endTime) errors.endTime = 'End time is required';
-      
-      if (Object.keys(errors).length > 0) {
-        setFormErrors(errors);
-        setIsSubmitting(false);
-        return;
-      }
+      setIsProcessing(true);
 
-      // Create start and end datetime objects
-      const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
-      const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
-
-      // Validate time range
-      if (startDateTime >= endDateTime) {
-        setFormErrors({
-          ...formErrors,
-          endTime: 'End time must be after start time'
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      // Get the selected resource
-      const selectedResource = resources.find(r => r.id === formData.resource);
-      if (!selectedResource) {
-        throw new Error('Selected resource not found');
-      }
-
-      // Prepare booking data
-      const bookingData = {
-        userId: formData.member,
-        resourceId: formData.resource,
-        resourceName: selectedResource.name,
-        startTime: startDateTime.toISOString(),
-        endTime: endDateTime.toISOString(),
-        status: 'confirmed',
-        notes: formData.notes,
-      };
-
-      const response = await fetch('/api/bookings', {
-        method: 'POST',
+      const response = await fetch(`/api/bookings/${bookingId}/approve`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(bookingData),
+        body: JSON.stringify({ status: 'confirmed' }),
       });
-      
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create booking');
+        throw new Error('Failed to approve booking');
       }
-      
-      const newBooking = await response.json();
-      
-      // Get member name for display
-      const member = members.find(m => m.id === formData.member);
-      
-      // Update local state with the new booking
-      setBookings(prev => [{
-        id: newBooking.id,
-        member: member?.name || 'Unknown',
-        resource: selectedResource.name,
-        type: selectedResource.type,
-        status: newBooking.status || 'confirmed',
-        date: formData.date,
-        startTime: formData.startTime,
-        endTime: formData.endTime,
-      }, ...prev]);
-      
-      toast.success('Booking created successfully');
-      
-      // Reset form
-      setFormData({
-        member: '',
-        resource: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        startTime: '09:00',
-        endTime: '10:00',
-        notes: ''
-      });
-      
-      // Close the dialog
-      const dialog = document.getElementById('create-booking-dialog');
-      if (dialog) {
-        (dialog as HTMLDialogElement).close();
-      }
-      
+
+      // Update local state
+      setPendingBookings(prev => prev.filter(b => b.id !== bookingId));
+      setAllBookings(prev => prev.map(b =>
+        b.id === bookingId ? { ...b, status: 'confirmed' } : b
+      ));
+
+      toast.success('Booking approved successfully');
     } catch (error) {
-      console.error('Error creating booking:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create booking');
+      console.error('Error approving booking:', error);
+      toast.error('Failed to approve booking');
     } finally {
-      setIsSubmitting(false);
+      setIsProcessing(false);
     }
   };
-  
+
+  // Handle booking rejection
+  const handleRejectBooking = async (bookingId: string) => {
+    try {
+      setIsProcessing(true);
+
+      const response = await fetch(`/api/bookings/${bookingId}/reject`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'cancelled' }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reject booking');
+      }
+
+      // Update local state
+      setPendingBookings(prev => prev.filter(b => b.id !== bookingId));
+      setAllBookings(prev => prev.map(b =>
+        b.id === bookingId ? { ...b, status: 'cancelled' } : b
+      ));
+
+      toast.success('Booking rejected successfully');
+    } catch (error) {
+      console.error('Error rejecting booking:', error);
+      toast.error('Failed to reject booking');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Filter bookings based on search and status
+  const filteredAllBookings = allBookings.filter(booking => {
+    const matchesSearch =
+      booking.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.resourceName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesStatus = statusFilter === 'all' || booking.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredPendingBookings = pendingBookings.filter(booking => {
+    const matchesSearch =
+      booking.user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      booking.resourceName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesSearch;
+  });
+
   // Show loading state
   if (isLoading) {
     return (
@@ -349,318 +253,291 @@ export default function BookingsPage() {
       </div>
     );
   }
-  // Show error state
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center p-6 max-w-md">
-          <div className="text-red-500 text-4xl mb-4">⚠️</div>
-          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "default"
-      case "pending":
-        return "secondary"
-      case "cancelled":
-        return "destructive"
-      default:
-        return "secondary"
-    }
-  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Bookings Management</h1>
-          <p className="text-muted-foreground">Manage space reservations and availability</p>
+          <h1 className="text-3xl font-bold tracking-tight">Booking Management</h1>
+          <p className="text-muted-foreground">Manage booking requests and view all reservations</p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Booking
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create New Booking</DialogTitle>
-              <DialogDescription>Book a space for a member or walk-in customer.</DialogDescription>
-            </DialogHeader>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleCreateBooking(e);
-            }}>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="member">Member</Label>
-                  <Select 
-                    value={formData.member} 
-                    onValueChange={(value) => setFormData({...formData, member: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {members.map((member) => (
-                        <SelectItem key={member.id} value={member.id}>
-                          {member.name} ({member.email})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {formErrors.member && (
-                    <p className="text-sm text-red-500">{formErrors.member}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="resource">Resource</Label>
-                  <Select 
-                    value={formData.resource} 
-                    onValueChange={(value) => setFormData({...formData, resource: value})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a resource" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {resources.map((resource) => (
-                        <SelectItem key={resource.id} value={resource.id}>
-                          {resource.name} - ${resource.hourlyRate}/hr
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {formErrors.resource && (
-                    <p className="text-sm text-red-500">{formErrors.resource}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
-                  <Input 
-                    id="date" 
-                    type="date" 
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    min={format(new Date(), 'yyyy-MM-dd')}
-                    className={formErrors.date ? 'border-red-500' : ''}
-                  />
-                  {formErrors.date && (
-                    <p className="text-sm text-red-500">{formErrors.date}</p>
-                  )}
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="startTime">Start Time</Label>
-                    <Input 
-                      id="startTime" 
-                      type="time" 
-                      name="startTime"
-                      value={formData.startTime}
-                      onChange={handleInputChange}
-                      className={formErrors.startTime ? 'border-red-500' : ''}
-                    />
-                    {formErrors.startTime && (
-                      <p className="text-sm text-red-500">{formErrors.startTime}</p>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="endTime">End Time</Label>
-                    <Input 
-                      id="endTime" 
-                      type="time" 
-                      name="endTime"
-                      value={formData.endTime}
-                      onChange={handleInputChange}
-                      className={formErrors.endTime ? 'border-red-500' : ''}
-                    />
-                    {formErrors.endTime && (
-                      <p className="text-sm text-red-500">{formErrors.endTime}</p>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (Optional)</Label>
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    className="flex h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Any special requirements or notes..."
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-2 mt-4">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => document.getElementById('close-dialog')?.click()}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : 'Create Booking'}
-                </Button>
-              </div>
-            </form>
-            {/* Hidden close button for programmatic closing */}
-            <button id="close-dialog" className="hidden" onClick={() => {}} />
-          </DialogContent>
-        </Dialog>
       </div>
-      {/* Filters and Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex gap-2">
-              <div className="relative">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search bookings..." className="pl-8" />
-              </div>
-              <Select defaultValue="all">
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Tabs value={viewMode} onValueChange={setViewMode}>
-              <TabsList>
-                <TabsTrigger value="day">Day</TabsTrigger>
-                <TabsTrigger value="week">Week</TabsTrigger>
-                <TabsTrigger value="month">Month</TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Calendar */}
+
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5" />
-              Calendar
-            </CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              className="rounded-md border"
-            />
+            <div className="text-2xl font-bold">{pendingBookings.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting approval
+            </p>
           </CardContent>
         </Card>
-        
-        {/* Bookings List */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>Today's Bookings</CardTitle>
-                <CardDescription>{selectedDate?.toDateString() || "Select a date to view bookings"}</CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => window.location.reload()}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {bookings.map(booking => (
-                <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{booking.member}</p>
-                      <Badge variant={getStatusColor(booking.status as any)}>{booking.status}</Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />
-                        {booking.resource}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {booking.startTime} - {booking.endTime}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
-                    <Button variant="outline" size="sm">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ))}
+            <div className="text-2xl font-bold">{allBookings.length}</div>
+            <p className="text-xs text-muted-foreground">
+              All reservations
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Confirmed</CardTitle>
+            <CheckSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {allBookings.filter(b => b.status === 'confirmed').length}
             </div>
+            <p className="text-xs text-muted-foreground">
+              Active bookings
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${allBookings.filter(b => b.paid).reduce((sum, b) => sum + b.price, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Total paid bookings
+            </p>
           </CardContent>
         </Card>
       </div>
-      {/* Resource Availability */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Resource Availability</CardTitle>
-          <CardDescription>Current status of all bookable resources</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {resources.map((resource) => (
-              <div key={resource.id} className="p-4 border rounded-lg">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium">{resource.name}</h4>
-                  <Badge variant="outline">{resource.type}</Badge>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="pending" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="pending">Pending Requests</TabsTrigger>
+          <TabsTrigger value="all">All Bookings</TabsTrigger>
+        </TabsList>
+
+        {/* Search and Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search bookings..."
+                    className="pl-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <div className="text-sm text-muted-foreground mb-2">
-                  Capacity: {resource.capacity} • ${resource.hourlyRate}/hr
-                </div>
-                <Badge variant="secondary" className="w-full justify-center">
-                  Available
-                </Badge>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="flex gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[150px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pending Bookings Tab */}
+        <TabsContent value="pending" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-500" />
+                Pending Booking Requests
+              </CardTitle>
+              <CardDescription>
+                Review and approve booking requests from members
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendingBookings.length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">No pending requests</p>
+                  <p className="text-sm text-muted-foreground mt-1">All booking requests have been processed</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredPendingBookings.map(booking => (
+                    <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg bg-orange-50/50">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="font-medium">{booking.user.name}</p>
+                            <p className="text-sm text-muted-foreground">{booking.user.email}</p>
+                          </div>
+                          <Badge variant="secondary">{booking.status}</Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {booking.resourceName} ({booking.resourceType})
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {booking.startTime} - {booking.endTime}
+                          </div>
+                        </div>
+                        {booking.notes && (
+                          <p className="text-sm text-muted-foreground bg-white p-2 rounded border">
+                            {booking.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRejectBooking(booking.id)}
+                          disabled={isProcessing}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          {isProcessing ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="mr-2 h-4 w-4" />
+                          )}
+                          Reject
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleApproveBooking(booking.id)}
+                          disabled={isProcessing}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          {isProcessing ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                          )}
+                          Approve
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* All Bookings Tab */}
+        <TabsContent value="all" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                All Bookings
+              </CardTitle>
+              <CardDescription>
+                View and manage all booking reservations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {allBookings.length === 0 ? (
+                <div className="text-center py-8">
+                  <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">No bookings found</p>
+                  <p className="text-sm text-muted-foreground mt-1">No reservations have been made yet</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredAllBookings.map(booking => (
+                    <div key={booking.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-3">
+                          <div>
+                            <p className="font-medium">{booking.user.name}</p>
+                            <p className="text-sm text-muted-foreground">{booking.user.email}</p>
+                          </div>
+                          <Badge variant={getStatusColor(booking.status)}>{booking.status}</Badge>
+                          {booking.paid && (
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                              Paid
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {booking.resourceName} ({booking.resourceType})
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {booking.startTime} - {booking.endTime}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="font-medium">${booking.price}</span>
+                          </div>
+                        </div>
+                        {booking.notes && (
+                          <p className="text-sm text-muted-foreground bg-gray-50 p-2 rounded border">
+                            {booking.notes}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <Button variant="outline" size="sm">
+                          View Details
+                        </Button>
+                        {booking.status === 'pending' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleApproveBooking(booking.id)}
+                            disabled={isProcessing}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            {isProcessing ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="mr-2 h-4 w-4" />
+                            )}
+                            Approve
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

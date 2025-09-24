@@ -122,10 +122,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    console.log('🔐 Staff members POST API called - checking authentication...');
     const session = await getServerSession(authOptions);
+
+    console.log('👤 Session user:', session?.user ? { id: session.user.id, role: session.user.role, email: session.user.email } : 'No session');
 
     // Check if user is staff or admin
     if (!session?.user?.role || !['admin', 'staff'].includes(session.user.role)) {
+      console.log('🚫 Unauthorized access - user role:', session?.user?.role);
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -138,8 +142,11 @@ export async function POST(request: Request) {
       notes = ''
     } = data;
 
+    console.log('📝 Creating member with data:', { name, email, phone, membershipType, notes });
+
     // Validate required fields
     if (!name || !email) {
+      console.log('❌ Validation failed - missing name or email');
       return NextResponse.json(
         { message: 'Name and email are required' },
         { status: 400 }
@@ -147,11 +154,13 @@ export async function POST(request: Request) {
     }
 
     // Check if user already exists
+    console.log('🔍 Checking if user already exists...');
     const existingUser = await prisma.user.findUnique({
       where: { email }
     });
 
     if (existingUser) {
+      console.log('❌ User already exists:', existingUser.email);
       return NextResponse.json(
         { message: 'A user with this email already exists' },
         { status: 400 }
@@ -160,11 +169,13 @@ export async function POST(request: Request) {
 
     // Generate a temporary password for pending users
     const tempPassword = randomBytes(16).toString('hex');
+    console.log('🔐 Generated temporary password for new member');
 
     // Hash the temporary password
     const hashedPassword = await hash(tempPassword, 10);
 
     // Create the new member with pending status
+    console.log('💾 Creating new member in database...');
     const newMember = await prisma.user.create({
       data: {
         name,
@@ -190,6 +201,8 @@ export async function POST(request: Request) {
       }
     });
 
+    console.log('✅ Member created successfully:', newMember.id);
+
     // Prepare response
     const responseData: StaffMemberResponse = {
       id: newMember.id,
@@ -203,10 +216,11 @@ export async function POST(request: Request) {
       message: 'Member created successfully with pending status. Admin approval required.'
     };
 
+    console.log('📦 Returning success response');
     return NextResponse.json(responseData, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating pending member:', error);
+    console.error('❌ Error creating pending member:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

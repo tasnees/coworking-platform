@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { 
   Settings as SettingsIcon, 
   User as UserIcon, 
@@ -34,7 +35,11 @@ import {
   MapPin, 
   Key, 
   Edit3, 
-  ShieldCheck 
+  ShieldCheck, 
+  CheckCircle2, 
+  Activity, 
+  RefreshCw, 
+  Loader2 
 } from 'lucide-react';
 
 interface AdminProfile {
@@ -61,6 +66,20 @@ interface AdminPreferences {
   adminDashboardTips: boolean;
 }
 
+interface CheckIn {
+  id: string;
+  userId: string;
+  user: {
+    name: string;
+    email: string;
+  };
+  checkInTime: string;
+  checkOutTime?: string;
+  status: 'active' | 'completed';
+  location?: string;
+  notes?: string;
+}
+
 interface AdminSettingsState {
   isSaving: boolean;
   isEditing: boolean;
@@ -68,6 +87,8 @@ interface AdminSettingsState {
   showDeleteDialog: boolean;
   profile: AdminProfile;
   editedProfile: Partial<AdminProfile>;
+  checkIns: CheckIn[];
+  isLoadingCheckIns: boolean;
   backupSettings: {
     backupFrequency: string;
     backupRetention: number;
@@ -122,6 +143,8 @@ export default function AdminSettingsPage() {
       lastLogin: new Date().toISOString(),
     },
     editedProfile: {},
+    checkIns: [],
+    isLoadingCheckIns: false,
     backupSettings: {
       backupFrequency: 'daily',
       backupRetention: 30,
@@ -154,6 +177,8 @@ export default function AdminSettingsPage() {
     showDeleteDialog,
     profile,
     editedProfile,
+    checkIns,
+    isLoadingCheckIns,
     backupSettings,
     securityPolicies,
     registrationSettings,
@@ -164,12 +189,77 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     setIsClient(true);
+    loadCheckIns();
     // Simulate loading data
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
     return () => clearTimeout(timer);
   }, []);
+
+  const loadCheckIns = async () => {
+    try {
+      setState(prev => ({ ...prev, isLoadingCheckIns: true }));
+
+      const response = await fetch('/api/checkins');
+      if (!response.ok) throw new Error('Failed to fetch check-ins');
+
+      const checkInsData = await response.json();
+
+      setState(prev => ({
+        ...prev,
+        checkIns: checkInsData,
+        isLoadingCheckIns: false
+      }));
+    } catch (error) {
+      console.error('Error loading check-ins:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load check-ins data',
+        variant: 'destructive'
+      });
+      setState(prev => ({ ...prev, isLoadingCheckIns: false }));
+    }
+  };
+
+  const handleCheckout = async (checkInId: string) => {
+    try {
+      setState(prev => ({ ...prev, isSaving: true }));
+
+      const response = await fetch(`/api/checkins/${checkInId}/checkout`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          location: 'Admin Check-out',
+          notes: 'Checked out by administrator'
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to check out');
+      }
+
+      // Reload check-ins to get updated data
+      await loadCheckIns();
+
+      toast({
+        title: 'Success',
+        description: 'Member checked out successfully',
+      });
+    } catch (error) {
+      console.error('Error checking out:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to check out member',
+        variant: 'destructive'
+      });
+    } finally {
+      setState(prev => ({ ...prev, isSaving: false }));
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -309,6 +399,7 @@ export default function AdminSettingsPage() {
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
+          <TabsTrigger value="checkins">Check-ins</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
@@ -477,6 +568,152 @@ export default function AdminSettingsPage() {
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Check-ins Tab */}
+        <TabsContent value="checkins" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Check-in Management
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor and manage member check-ins across the system
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadCheckIns()}
+                  disabled={isLoadingCheckIns}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingCheckIns ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingCheckIns ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <span className="ml-2">Loading check-ins...</span>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Active Check-ins */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      Active Check-ins ({checkIns.filter(c => c.status === 'active').length})
+                    </h3>
+                    {checkIns.filter(c => c.status === 'active').length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">
+                        No members are currently checked in
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Member</TableHead>
+                            <TableHead>Check-in Time</TableHead>
+                            <TableHead>Location</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {checkIns
+                            .filter(c => c.status === 'active')
+                            .map((checkin) => (
+                              <TableRow key={checkin.id}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{checkin.user.name}</div>
+                                    <div className="text-sm text-muted-foreground">{checkin.user.email}</div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(checkin.checkInTime).toLocaleString()}
+                                </TableCell>
+                                <TableCell>{checkin.location || 'Main Desk'}</TableCell>
+                                <TableCell>
+                                  {Math.floor((Date.now() - new Date(checkin.checkInTime).getTime()) / (1000 * 60))} min
+                                </TableCell>
+                                <TableCell>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleCheckout(checkin.id)}
+                                    disabled={isSaving}
+                                  >
+                                    Check Out
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+
+                  {/* Recent Completed Check-ins */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Clock className="h-5 w-5 text-blue-500" />
+                      Recent Completed Check-ins ({checkIns.filter(c => c.status === 'completed').length})
+                    </h3>
+                    {checkIns.filter(c => c.status === 'completed').length === 0 ? (
+                      <p className="text-muted-foreground text-center py-4">
+                        No completed check-ins yet
+                      </p>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Member</TableHead>
+                            <TableHead>Check-in Time</TableHead>
+                            <TableHead>Check-out Time</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Location</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {checkIns
+                            .filter(c => c.status === 'completed')
+                            .slice(0, 10) // Show only last 10
+                            .map((checkin) => (
+                              <TableRow key={checkin.id}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium">{checkin.user.name}</div>
+                                    <div className="text-sm text-muted-foreground">{checkin.user.email}</div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(checkin.checkInTime).toLocaleString()}
+                                </TableCell>
+                                <TableCell>
+                                  {checkin.checkOutTime ? new Date(checkin.checkOutTime).toLocaleString() : 'N/A'}
+                                </TableCell>
+                                <TableCell>
+                                  {checkin.checkOutTime
+                                    ? Math.floor((new Date(checkin.checkOutTime).getTime() - new Date(checkin.checkInTime).getTime()) / (1000 * 60))
+                                    : 0} min
+                                </TableCell>
+                                <TableCell>{checkin.location || 'Main Desk'}</TableCell>
+                              </TableRow>
+                            ))}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

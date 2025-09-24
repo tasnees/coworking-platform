@@ -48,6 +48,7 @@ export default function BookingsPage() {
 
   // Form state
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [requestSent, setRequestSent] = useState(false)
   const [formData, setFormData] = useState({
     resource: '',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -70,10 +71,10 @@ export default function BookingsPage() {
   }>>([]);
 
   const [resources] = useState([
-    { id: "desk-a12", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
-    { id: "meeting-b", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
-    { id: "office-3", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
-    { id: "phone-1", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
+    { id: "507f1f77bcf86cd799439011", name: "Desk A-12", type: "Hot Desk", capacity: 1, hourlyRate: 15 },
+    { id: "507f1f77bcf86cd799439012", name: "Meeting Room B", type: "Meeting Room", capacity: 8, hourlyRate: 50 },
+    { id: "507f1f77bcf86cd799439013", name: "Private Office 3", type: "Private Office", capacity: 4, hourlyRate: 80 },
+    { id: "507f1f77bcf86cd799439014", name: "Phone Booth 1", type: "Phone Booth", capacity: 1, hourlyRate: 10 },
   ]);
 
   // Load data on component mount
@@ -274,7 +275,9 @@ export default function BookingsPage() {
         notes: formData.notes,
       }, ...prev]);
 
-      toast.success('Booking request submitted successfully! Awaiting approval.');
+      // Show success message and close dialog
+      toast.success('Booking request sent successfully! Awaiting approval.');
+      setRequestSent(true);
 
       // Reset form
       setFormData({
@@ -285,11 +288,14 @@ export default function BookingsPage() {
         notes: ''
       });
 
-      // Close the dialog
-      const dialog = document.getElementById('create-booking-dialog');
-      if (dialog) {
-        (dialog as HTMLDialogElement).close();
-      }
+      // Close the dialog after a brief delay to show the success message
+      setTimeout(() => {
+        const dialog = document.getElementById('create-booking-dialog') as HTMLDialogElement;
+        if (dialog) {
+          dialog.close();
+          setRequestSent(false); // Reset for next time
+        }
+      }, 1500);
 
     } catch (error) {
       console.error('Error creating booking:', error);
@@ -371,7 +377,7 @@ export default function BookingsPage() {
               New Booking
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px]" id="create-booking-dialog">
             <DialogHeader>
               <DialogTitle>Request New Booking</DialogTitle>
               <DialogDescription>Request to book a space. Approval required for all bookings.</DialogDescription>
@@ -465,7 +471,10 @@ export default function BookingsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => document.getElementById('close-dialog')?.click()}
+                  onClick={() => {
+                    const dialog = document.getElementById('create-booking-dialog') as HTMLDialogElement;
+                    if (dialog) dialog.close();
+                  }}
                   disabled={isSubmitting}
                 >
                   Cancel
@@ -474,14 +483,17 @@ export default function BookingsPage() {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
+                      Sending Request...
+                    </>
+                  ) : requestSent ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Request Sent!
                     </>
                   ) : 'Request Booking'}
                 </Button>
               </div>
             </form>
-            {/* Hidden close button for programmatic closing */}
-            <button id="close-dialog" className="hidden" onClick={() => {}} />
           </DialogContent>
         </Dialog>
       </div>
