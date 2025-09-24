@@ -4,7 +4,15 @@ import dynamic from 'next/dynamic'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogFooter, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -202,10 +210,6 @@ const getSafeLength = (arr: any[] | undefined): number => {
 }
 
 export default function StaffMembersPage() {
-  // Show immediate alert to confirm page is loading
-  console.log('🎯 StaffMembersPage component is loading...');
-  alert('Staff Members Page is Loading! Check console for detailed logs.');
-
   // State for client-side rendering
   const [isClient, setIsClient] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -244,17 +248,13 @@ export default function StaffMembersPage() {
   // Fetch members from the API
   const fetchMembers = useCallback(async () => {
     try {
-      console.log('🔍 Fetching members...');
       setIsLoading(true);
       const response = await fetch('/api/staff/members');
-      console.log('📡 Response status:', response.status);
       if (!response.ok) throw new Error('Failed to fetch members');
       const data = await response.json();
-      console.log('📦 Received data:', data);
-      console.log('👥 Number of members:', Array.isArray(data) ? data.length : 'Not an array');
       setMembers(data);
     } catch (error) {
-      console.error('❌ Error fetching members:', error);
+      console.error('Error fetching members:', error);
       // Fallback to empty array if API fails
       setMembers([]);
     } finally {
@@ -264,21 +264,9 @@ export default function StaffMembersPage() {
 
   // Set client-side rendering flag and fetch data
   useEffect(() => {
-    console.log('🚀 Component mounted, setting isClient and fetching data');
-    console.log('🔍 Current state:', { isClient, isLoading, members: members === null ? 'null' : 'not null' });
     setIsClient(true);
     fetchMembers();
-
-    // Fallback: if API fails after 5 seconds, show empty state
-    const fallbackTimer = setTimeout(() => {
-      if (members === null && !isLoading) {
-        console.log('⚠️ API failed to respond, setting empty array');
-        setMembers([]);
-      }
-    }, 5000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, [fetchMembers, members, isLoading]);
+  }, [fetchMembers]);
   // Only process members on client side
   const filteredMembers = useMemo(() => {
     if (!isClient || !Array.isArray(members)) return [];
@@ -446,7 +434,6 @@ export default function StaffMembersPage() {
     setShowViewDialog(true)
   }
   if (isLoading || !isClient || members === null) {
-    console.log('⏳ Loading condition met:', { isLoading, isClient, members: members === null ? 'null' : 'not null', membersLength: Array.isArray(members) ? members.length : 'N/A' });
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
