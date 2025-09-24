@@ -9,8 +9,30 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
+    console.log('Session in bookings API:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email
+    });
+
     if (!session?.user?.id) {
+      console.log('No session or user ID found');
       return new NextResponse('Unauthorized', { status: 401 });
+    }
+
+    // Verify the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
+
+    console.log('User lookup result:', {
+      userFound: !!user,
+      userId: session.user.id
+    });
+
+    if (!user) {
+      console.log('User not found in database:', session.user.id);
+      return new NextResponse('User not found', { status: 404 });
     }
 
     const bookings = await prisma.booking.findMany({
@@ -22,6 +44,7 @@ export async function GET() {
       },
     });
 
+    console.log('Found bookings:', bookings.length);
     return NextResponse.json(bookings);
   } catch (error) {
     console.error('Error fetching user bookings:', error);
@@ -33,7 +56,14 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
+    console.log('POST Session in bookings API:', {
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email
+    });
+
     if (!session?.user?.id) {
+      console.log('No session or user ID found in POST');
       return new NextResponse('Unauthorized', { status: 401 });
     }
 
@@ -59,7 +89,13 @@ export async function POST(request: Request) {
       where: { id: session.user.id }
     });
 
+    console.log('POST User lookup result:', {
+      userFound: !!user,
+      userId: session.user.id
+    });
+
     if (!user) {
+      console.log('POST User not found in database:', session.user.id);
       return NextResponse.json(
         { message: 'User not found' },
         { status: 404 }

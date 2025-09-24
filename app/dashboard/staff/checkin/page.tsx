@@ -242,7 +242,16 @@ interface CheckInHistory {
   location: string;
 }
 
-interface Member {
+interface TransformedCheckin {
+  id: string;
+  memberId: string;
+  memberName: string;
+  timestamp: string;
+  location: string;
+  status: string;
+}
+
+interface TransformedMember {
   id: string;
   name: string;
   email: string;
@@ -257,7 +266,7 @@ const mockCheckInHistory: CheckInHistory[] = [
   { id: '4', memberId: 'm1', memberName: 'John Doe', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), location: 'Lobby Kiosk' },
 ];
 
-const mockMembers: Member[] = [
+const mockMembers: TransformedMember[] = [
   { id: 'm1', name: 'John Doe', email: 'john.doe@example.com', phone: '+1-555-0123', status: 'checkedIn' },
   { id: 'm2', name: 'Jane Smith', email: 'jane.smith@example.com', phone: '+1-555-0124', status: 'checkedIn' },
   { id: 'm3', name: 'Peter Jones', email: 'peter.jones@example.com', phone: '+1-555-0125', status: 'checkedIn' },
@@ -273,17 +282,17 @@ const getSafeLength = (arr: any[] | undefined): number => {
 }
 
 export default function StaffCheckinPage() {
-  const [checkedInToday, setCheckedInToday] = useState<any[]>([]);
+  const [checkedInToday, setCheckedInToday] = useState<TransformedCheckin[]>([]);
   const [totalCheckins, setTotalCheckins] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [members, setMembers] = useState<Member[]>([]);
+  const [members, setMembers] = useState<TransformedMember[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [showManualCheckin, setShowManualCheckin] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [memberToCheckin, setMemberToCheckin] = useState<Member | null>(null);
+  const [selectedMember, setSelectedMember] = useState<TransformedMember | null>(null);
+  const [memberToCheckin, setMemberToCheckin] = useState<TransformedMember | null>(null);
   const [showCheckinConfirmation, setShowCheckinConfirmation] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -308,12 +317,12 @@ export default function StaffCheckinPage() {
     const loadData = async () => {
       try {
         // Fetch members from API
-        const membersResponse = await fetch('/api/users');
+        const membersResponse = await fetch('/api/staff/members');
         if (!membersResponse.ok) throw new Error('Failed to fetch members');
         const membersData = await membersResponse.json();
 
         // Transform members data
-        const transformedMembers: Member[] = membersData.map((user: any) => ({
+        const transformedMembers: TransformedMember[] = membersData.map((user: any) => ({
           id: user.id,
           name: user.name || 'Unknown',
           email: user.email || 'No email',
@@ -343,7 +352,7 @@ export default function StaffCheckinPage() {
 
         // Update member statuses based on check-ins
         const updatedMembers = transformedMembers.map(member => {
-          const hasActiveCheckin = transformedCheckins.some(checkin => checkin.memberId === member.id);
+          const hasActiveCheckin = transformedCheckins.some((checkin: any) => checkin.memberId === member.id);
           return hasActiveCheckin ? { ...member, status: 'checkedIn' as const } : member;
         });
 
@@ -373,7 +382,7 @@ export default function StaffCheckinPage() {
     );
   }
 
-  const getStatusBadge = (status: Member['status']) => {
+  const getStatusBadge = (status: TransformedMember['status']) => {
     switch (status) {
       case 'checkedIn':
         return <Badge variant="default">Checked In</Badge>;
@@ -388,7 +397,7 @@ export default function StaffCheckinPage() {
     return format(new Date(timestamp), 'h:mm a');
   };
 
-  const handleManualCheckin = async (member: Member) => {
+  const handleManualCheckin = async (member: TransformedMember) => {
     try {
       setIsProcessing(true);
 
@@ -430,7 +439,6 @@ export default function StaffCheckinPage() {
 
       setCheckedInToday(prev => [checkinData, ...prev]);
       setTotalCheckins(prev => prev + 1);
-
       toast.success(`Successfully checked in ${member.name}`);
       setShowManualCheckin(false);
     } catch (error) {
@@ -441,12 +449,21 @@ export default function StaffCheckinPage() {
     }
   };
 
-  const confirmCheckin = (member: Member) => {
+  const confirmCheckin = (member: TransformedMember) => {
     setMemberToCheckin(member);
     setShowCheckinConfirmation(true);
   };
 
-  const handleCheckout = async (member: Member) => {
+  const proceedWithCheckin = async (member: TransformedMember) => {
+    await handleManualCheckin(member);
+  };
+
+  const handleViewProfile = (member: TransformedMember) => {
+    setSelectedMember(member);
+    setShowProfileDialog(true);
+  };
+
+  const handleCheckout = async (member: TransformedMember) => {
     try {
       setIsProcessing(true);
 
@@ -983,7 +1000,12 @@ export default function StaffCheckinPage() {
                 Cancel
               </Button>
               <Button
-                onClick={proceedWithCheckin}
+                onClick={() => {
+                  if (memberToCheckin) {
+                    proceedWithCheckin(memberToCheckin);
+                    setShowCheckinConfirmation(false);
+                  }
+                }}
                 disabled={isProcessing}
               >
                 {isProcessing ? (

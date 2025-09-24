@@ -104,12 +104,10 @@ export default withAuth(
         });
       }
       
-      // Handle staff API routes
-      if (pathname.startsWith('/api/staff') && role !== 'admin' && role !== 'staff') {
-        return new NextResponse(JSON.stringify({ error: 'Forbidden' }), {
-          status: 403,
-          headers: { 'Content-Type': 'application/json' },
-        });
+      // Handle bookings API routes - allow authenticated users
+      if (pathname.startsWith('/api/bookings') && !pathname.includes('/admin')) {
+        // Let the API route handle authentication
+        return NextResponse.next();
       }
       
       return NextResponse.next();

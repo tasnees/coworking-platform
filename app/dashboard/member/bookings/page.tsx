@@ -86,11 +86,19 @@ export default function BookingsPage() {
       try {
         setIsLoading(true);
 
+        // Check if user is authenticated by making a test request
+        console.log('Loading bookings data...');
+
         // Fetch user bookings
-        const bookingsRes = await fetch('/api/bookings/user');
+        const bookingsRes = await fetch('/api/bookings/user', {
+          credentials: 'include', // Ensure cookies are sent
+        });
+
+        console.log('Bookings response status:', bookingsRes.status);
 
         if (!bookingsRes.ok) {
           if (bookingsRes.status === 401) {
+            console.log('User not authenticated, redirecting to login');
             // Redirect to login if not authenticated
             router.push('/auth/login');
             return;
@@ -99,6 +107,7 @@ export default function BookingsPage() {
         }
 
         const bookingsData = await bookingsRes.json();
+        console.log('Bookings data received:', bookingsData);
 
         // Transform bookings data to match the expected format
         const formattedBookings = bookingsData.map((booking: any) => ({
@@ -253,6 +262,7 @@ export default function BookingsPage() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify(bookingData),
       });
 
