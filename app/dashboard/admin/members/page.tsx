@@ -612,14 +612,14 @@ export default function AdminMembersPage() {
                 <TableCell>
                   {member.lastVisit ? format(new Date(member.lastVisit), 'MMM d, yyyy') : 'Never'}
                 </TableCell>
-                <TableCell>
+                <TableCell className="relative">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
                         <EllipsisVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent className="absolute right-0 mt-2 z-50">
                       {getMemberActions(member).map((action) => (
                         <DropdownMenuItem 
                           key={action.name}

@@ -26,7 +26,28 @@ const MAX_CONNECTION_ATTEMPTS = 3;
  */
 export async function getDb(): Promise<{ client: MongoClient; db: Db }> {
   const dbName = process.env.DATABASE_NAME || 'coworking-platform';
-  
+
+  // Check if we're in build time - if so, return a mock connection
+  if (process.env.NEXT_PHASE === 'phase-production-build' ||
+      process.env.NODE_ENV === 'production' && process.env.BUILDING) {
+    debugLog('🔧 Build time detected, skipping database connection');
+
+    // Return a mock client and db that won't cause errors
+    const mockClient = {} as MongoClient;
+    const mockDb = {
+      collection: () => ({
+        find: () => ({ toArray: () => Promise.resolve([]) }),
+        findOne: () => Promise.resolve(null),
+        insertOne: () => Promise.resolve({ insertedId: 'mock-id' }),
+        updateOne: () => Promise.resolve({ modifiedCount: 1 }),
+        deleteOne: () => Promise.resolve({ deletedCount: 1 })
+      }),
+      command: () => Promise.resolve({ ok: 1 })
+    } as Db;
+
+    return { client: mockClient, db: mockDb };
+  }
+
   async function attemptConnection(): Promise<{ client: MongoClient; db: Db }> {
     connectionAttempts++;
     debugLog(`🔌 Connection attempt ${connectionAttempts}/${MAX_CONNECTION_ATTEMPTS}...`);

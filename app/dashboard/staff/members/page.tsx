@@ -254,10 +254,10 @@ export default function StaffMembersPage() {
     }
   }, []);
 
-  // Initial data fetch
+  // Set client-side rendering flag
   useEffect(() => {
-    fetchMembers();
-  }, [fetchMembers]);
+    setIsClient(true);
+  }, []);
   // Only process members on client side
   const filteredMembers = useMemo(() => {
     if (!isClient || !Array.isArray(members)) return [];

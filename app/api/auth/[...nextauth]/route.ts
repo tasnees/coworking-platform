@@ -40,7 +40,20 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         console.log('Authorization attempt with credentials:', credentials?.email);
         if (!credentials) return null;
-        
+
+        // Skip database authentication during build time
+        if (process.env.NEXT_PHASE === 'phase-production-build' ||
+            process.env.NODE_ENV === 'production' && process.env.BUILDING) {
+          console.log('Build time detected, returning mock user for NextAuth');
+          return {
+            id: 'mock-user-id',
+            email: credentials.email,
+            role: 'member',
+            name: credentials.email.split('@')[0],
+            image: null
+          };
+        }
+
         try {
           // Direct database authentication instead of API call to avoid circular dependency
           const { default: db } = await import('@/lib/mongodb');

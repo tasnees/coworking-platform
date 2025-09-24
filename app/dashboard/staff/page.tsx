@@ -705,7 +705,7 @@ export default function StaffDashboard() {
               </Badge>
             </div>
 
-            <div className="flex items-center gap-x-4">
+            <div className="flex items-center gap-x-4 relative">
               <Button variant="ghost" size="sm" aria-label="Notifications">
                 <Bell className="h-5 w-5" />
               </Button>
@@ -726,7 +726,7 @@ export default function StaffDashboard() {
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuContent className="w-56 absolute right-0 mt-2 z-50">
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
