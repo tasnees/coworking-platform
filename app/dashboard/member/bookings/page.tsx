@@ -49,6 +49,7 @@ export default function BookingsPage() {
   // Form state
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [requestSent, setRequestSent] = useState(false)
+  const [open, setOpen] = useState(false)
   const [formData, setFormData] = useState({
     resource: '',
     date: format(new Date(), 'yyyy-MM-dd'),
@@ -190,20 +191,20 @@ export default function BookingsPage() {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-
-    // Clear error when field is edited
-    if (formErrors[name]) {
-      setFormErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+  // Handle dialog open
+  const handleDialogOpen = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      // Reset form when dialog closes
+      setFormData({
+        resource: '',
+        date: format(new Date(), 'yyyy-MM-dd'),
+        startTime: '09:00',
+        endTime: '10:00',
+        notes: ''
+      });
+      setFormErrors({});
+      setRequestSent(false);
     }
   };
 
@@ -290,11 +291,8 @@ export default function BookingsPage() {
 
       // Close the dialog after a brief delay to show the success message
       setTimeout(() => {
-        const dialog = document.getElementById('create-booking-dialog') as HTMLDialogElement;
-        if (dialog) {
-          dialog.close();
-          setRequestSent(false); // Reset for next time
-        }
+        setOpen(false);
+        setRequestSent(false); // Reset for next time
       }, 1500);
 
     } catch (error) {
@@ -370,14 +368,14 @@ export default function BookingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">My Bookings</h1>
           <p className="text-muted-foreground">View and manage your space reservations</p>
         </div>
-        <Dialog>
+        <Dialog open={open} onOpenChange={handleDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               New Booking
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]" id="create-booking-dialog">
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Request New Booking</DialogTitle>
               <DialogDescription>Request to book a space. Approval required for all bookings.</DialogDescription>
@@ -471,10 +469,7 @@ export default function BookingsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => {
-                    const dialog = document.getElementById('create-booking-dialog') as HTMLDialogElement;
-                    if (dialog) dialog.close();
-                  }}
+                  onClick={() => setOpen(false)}
                   disabled={isSubmitting}
                 >
                   Cancel
