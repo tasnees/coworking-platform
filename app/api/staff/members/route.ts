@@ -45,12 +45,18 @@ interface StaffMembersListResponse {
 
 export async function GET() {
   try {
+    console.log('🔐 Staff members API called - checking authentication...');
     const session = await getServerSession(authOptions);
+
+    console.log('👤 Session user:', session?.user ? { id: session.user.id, role: session.user.role, email: session.user.email } : 'No session');
 
     // Check if user is staff or admin
     if (!session?.user?.role || !['admin', 'staff'].includes(session.user.role)) {
+      console.log('🚫 Unauthorized access - user role:', session?.user?.role);
       return new NextResponse('Unauthorized', { status: 401 });
     }
+
+    console.log('✅ Authentication successful, fetching members from database...');
 
     // Fetch all members (non-admin users) from the database
     const users = await prisma.user.findMany({
@@ -78,6 +84,9 @@ export async function GET() {
       }
     });
 
+    console.log('📊 Found users in database:', users.length);
+    console.log('👥 User details:', users.map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role, status: u.status })));
+
     // Transform the database users to match the expected interface
     const members: StaffMembersListResponse[] = users.map((user) => {
       const createdAt = user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt);
@@ -91,21 +100,22 @@ export async function GET() {
         joinDate: createdAt.toISOString().split('T')[0],
         membershipType: (user.membershipType as "basic" | "premium" | "enterprise") || 'basic',
         status: (user.status as "active" | "inactive" | "suspended") || 'active',
-        company: '', // Not in database - using empty string as default
-        address: '', // Not in database - using empty string as default
-        city: '', // Not in database - using empty string as default
-        country: '', // Not in database - using empty string as default
+        company: '', // Not in database schema - using empty string as default
+        address: '', // Not in database schema - using empty string as default
+        city: '', // Not in database schema - using empty string as default
+        country: '', // Not in database schema - using empty string as default
         notes: user.notes || '',
         lastVisit: lastLogin?.toISOString(),
-        totalVisits: 0, // Not in database - using 0 as default
+        totalVisits: 0, // Not in database schema - using 0 as default
         profileImage: user.image || undefined
       };
     });
 
+    console.log('📦 Returning members data:', members);
     return NextResponse.json(members);
 
   } catch (error) {
-    console.error('Error fetching members for staff:', error);
+    console.error('❌ Error fetching members for staff:', error);
     return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
