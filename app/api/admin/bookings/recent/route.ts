@@ -27,19 +27,6 @@ export async function GET() {
         startTime: 'asc',
       },
       take: 4,
-      include: {
-        user: {
-          select: {
-            name: true,
-          },
-        },
-        resource: {
-          select: {
-            name: true,
-            type: true,
-          },
-        },
-      },
     });
 
     return NextResponse.json(recentBookings);

@@ -32,16 +32,6 @@ export async function PATCH(
       data: {
         status,
         updatedAt: new Date(),
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
-          }
-        }
       }
     });
 

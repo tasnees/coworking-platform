@@ -207,23 +207,6 @@ export default function BookingsPage() {
     return Object.keys(errors).length === 0;
   };
 
-  // Handle dialog open
-  const handleDialogOpen = (open: boolean) => {
-    setOpen(open);
-    if (!open) {
-      // Reset form when dialog closes
-      setFormData({
-        resource: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        startTime: '09:00',
-        endTime: '10:00',
-        notes: ''
-      });
-      setFormErrors({});
-      setRequestSent(false);
-    }
-  };
-
   // Handle form submission
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -384,9 +367,9 @@ export default function BookingsPage() {
           <h1 className="text-3xl font-bold tracking-tight">My Bookings</h1>
           <p className="text-muted-foreground">View and manage your space reservations</p>
         </div>
-        <Dialog open={open} onOpenChange={handleDialogOpen}>
+        <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => setOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               New Booking
             </Button>
@@ -485,7 +468,19 @@ export default function BookingsPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    setOpen(false);
+                    // Reset form when dialog closes
+                    setFormData({
+                      resource: '',
+                      date: format(new Date(), 'yyyy-MM-dd'),
+                      startTime: '09:00',
+                      endTime: '10:00',
+                      notes: ''
+                    });
+                    setFormErrors({});
+                    setRequestSent(false);
+                  }}
                   disabled={isSubmitting}
                 >
                   Cancel

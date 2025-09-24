@@ -62,15 +62,6 @@ export async function POST(request: Request) {
         status: 'active',
         location: location || 'Main Desk',
         notes
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
       }
     });
 
@@ -113,15 +104,6 @@ export async function GET(request: Request) {
 
     const checkIns = await prisma.checkIn.findMany({
       where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
       orderBy: [
         { checkInTime: 'desc' },
       ],

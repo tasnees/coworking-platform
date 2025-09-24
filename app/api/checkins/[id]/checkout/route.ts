@@ -23,15 +23,6 @@ export async function PATCH(
     // Find the check-in
     const checkIn = await prisma.checkIn.findUnique({
       where: { id: checkInId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
     });
 
     if (!checkIn) {
@@ -62,15 +53,6 @@ export async function PATCH(
         status: 'completed',
         location: location || checkIn.location,
         notes: notes || checkIn.notes
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
       }
     });
 

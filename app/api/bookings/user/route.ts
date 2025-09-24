@@ -54,6 +54,18 @@ export async function POST(request: Request) {
       );
     }
 
+    // Verify the user exists
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: 'User not found' },
+        { status: 404 }
+      );
+    }
+
     // Check if resource exists
     const resource = await prisma.resource.findUnique({
       where: { id: resourceId }
@@ -117,15 +129,6 @@ export async function POST(request: Request) {
         notes,
         price: 0, // Will be calculated by admin when approved
         paid: false
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
       }
     });
 

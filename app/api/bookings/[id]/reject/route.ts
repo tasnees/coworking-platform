@@ -20,15 +20,6 @@ export async function PATCH(
     // Find the booking
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
     });
 
     if (!booking) {
@@ -42,15 +33,6 @@ export async function PATCH(
     const updatedBooking = await prisma.booking.update({
       where: { id: bookingId },
       data: { status: 'cancelled' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
     });
 
     // If booking is cancelled, we might want to send a notification email

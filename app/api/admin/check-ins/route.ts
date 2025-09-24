@@ -26,16 +26,6 @@ export async function POST(request: Request) {
         checkInTime: new Date(checkInTime),
         status: 'scheduled',
         notes: notes || null,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
-          }
-        }
       }
     });
 
@@ -59,16 +49,6 @@ export async function GET() {
       orderBy: {
         checkInTime: 'desc',
       },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true
-          }
-        }
-      }
     });
 
     return NextResponse.json(checkIns);

@@ -132,15 +132,6 @@ export async function POST(request: Request) {
           resource.hourlyRate || 0
         ),
         paid: false
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
       }
     });
 
@@ -190,15 +181,6 @@ export async function GET(request: Request) {
 
     const bookings = await prisma.booking.findMany({
       where,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
       orderBy: [
         { startTime: 'asc' },
       ],
